@@ -1,0 +1,24 @@
+# Dependencies & Store
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.output/
+
+# Environment files (tuyệt đối không commit .env)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# OS & IDE
+.DS_Store
+.vscode/
+.idea/
+coverage/

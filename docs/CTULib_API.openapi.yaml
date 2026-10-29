@@ -1,0 +1,1765 @@
+openapi: 3.0.3
+info:
+  title: CTULib API - Library Management System
+  version: 1.0.0
+  description: 'Hợp đồng REST API dự thảo cho hệ thống quản lý mượn sách Thư viện CTU.
+
+    Phạm vi: xác thực, học liệu, mượn/trả, phiếu phạt, thu tiền mặt và gửi thông báo nội bộ; chưa bao phủ toàn bộ
+    chức năng CTULib.
+
+    Dùng JSON, tên trường camelCase và wrapper status, data, message. Token người dùng: Bearer JWT.
+
+    Các thời điểm dùng date-time RFC 3339 có múi giờ; ví dụ dùng +07:00. Ngày sinh dùng YYYY-MM-DD.
+
+    Bản này chuẩn hóa tài liệu đầu vào, chưa đối chiếu với mã nguồn hoặc kiểm thử máy chủ.
+
+    Giữ các mã PENDING, FINE_PENDING, GOOD của file gốc. Bộ UI dùng RESERVED,
+
+    PENDING_PENALTY, INTACT tương ứng; cần chốt ánh xạ trước tích hợp.
+
+    Các schema Book, Loan và response có kiểu cụ thể là đề xuất hoàn thiện hợp đồng,
+
+    không phải xác nhận cấu trúc backend hiện hữu. Xem CTULib_API.review.md để biết các điểm cần chốt.
+
+    '
+  x-contract-status: draft
+servers:
+- url: http://localhost:5000/api/v1
+  description: Local Development Server
+paths:
+  /auth/register:
+    post:
+      summary: Đăng ký tài khoản độc giả mới
+      description: API dành cho Khách vãng lai khởi tạo tài khoản. Không yêu cầu Token.
+      tags:
+      - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              ctuIdentifier: B2404981
+              email: reader@example.com
+              password: StrongPassword123!
+              fullName: Nguyễn Văn An
+              phoneNumber: 0901234567
+      responses:
+        '201':
+          description: Đăng ký thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                status: success
+                message: Đăng ký thành công
+                data: null
+        '400':
+          description: Lỗi xác thực dữ liệu (Validation Error) hoặc Trùng lặp
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              example:
+                status: error
+                message: Lỗi xác thực dữ liệu (Validation Error) hoặc Trùng lặp
+                data:
+                - field: email
+                  message: Email không đúng định dạng
+      operationId: registerReader
+      security: []
+  /auth/login:
+    post:
+      summary: Đăng nhập hệ thống
+      description: Xác thực người dùng bằng MSSV/MSCB và mật khẩu để lấy Token.
+      tags:
+      - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              ctuIdentifier: B2404981
+              password: StrongPassword123!
+      responses:
+        '200':
+          description: Đăng nhập thành công, trả về Token và thông tin user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccessResponse'
+              example:
+                status: success
+                message: Đăng nhập thành công, trả về Token và thông tin user
+                data:
+                  token: example.jwt.token
+                  user:
+                    accountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                    ctuIdentifier: B2404981
+                    role: READER
+                    fullName: Nguyễn Văn An
+        '400':
+          description: Sai thông tin đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Sai thông tin đăng nhập
+                data: null
+        '403':
+          description: Tài khoản bị khóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Tài khoản bị khóa
+                data: null
+      operationId: login
+      security: []
+  /auth/logout:
+    post:
+      summary: Đăng xuất khỏi hệ thống
+      description: Kết thúc phiên hiện tại. File nguồn chưa quy định token bị thu hồi tại máy chủ hay chỉ xóa phía
+        client; cần chốt trước khi triển khai JWT logout.
+      tags:
+      - Authentication
+      responses:
+        '200':
+          description: Đăng xuất thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                status: success
+                message: Đăng xuất thành công
+                data: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      operationId: logout
+  /books:
+    get:
+      summary: Lấy danh sách ấn phẩm (Có phân trang & lọc)
+      description: Dành cho Khách vãng lai, Độc giả và Admin.
+      tags:
+      - Books
+      parameters:
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Tìm theo tên sách hoặc tên tác giả
+      - in: query
+        name: facultyId
+        schema:
+          type: string
+        description: Lọc theo Khoa/Viện
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBooksResponse'
+              example:
+                status: success
+                message: Lấy danh sách thành công
+                data:
+                  items:
+                  - bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                    title: Lập trình Web với Node.js
+                    facultyId: 64f1b2c3e4b0a1a2b3c4d5e7
+                    authorIds:
+                    - 64f1b2c3e4b0a1a2b3c4d5e8
+                    bookType: TEXTBOOK
+                    totalCopies: 50
+                    coverPrice: 150000
+                    availableCopies: 12
+                  meta:
+                    totalItems: 1
+                    totalPages: 1
+                    currentPage: 1
+                    limit: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+      operationId: listBooks
+      security: []
+    post:
+      summary: Thêm mới ấn phẩm
+      description: Yêu cầu quyền MANAGE_BOOKS. ADMIN không mặc nhiên có quyền kho. Kiểm tra khoa, tác giả và các
+        giá trị số trước khi tạo.
+      tags:
+      - Books
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookRequest'
+            example:
+              title: Lập trình Web với Node.js
+              facultyId: 64f1b2c3e4b0a1a2b3c4d5e7
+              authorIds:
+              - 64f1b2c3e4b0a1a2b3c4d5e8
+              bookType: TEXTBOOK
+              totalCopies: 50
+              coverPrice: 150000
+      responses:
+        '201':
+          description: Thêm thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+              example:
+                status: success
+                message: Thêm thành công
+                data:
+                  bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                  title: Lập trình Web với Node.js
+                  facultyId: 64f1b2c3e4b0a1a2b3c4d5e7
+                  authorIds:
+                  - 64f1b2c3e4b0a1a2b3c4d5e8
+                  bookType: TEXTBOOK
+                  totalCopies: 50
+                  coverPrice: 150000
+                  availableCopies: 12
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+      operationId: createBook
+  /books/{bookId}:
+    get:
+      summary: Xem chi tiết một ấn phẩm
+      description: Yêu cầu đăng nhập (dành cho Độc giả, Thủ thư, Admin).
+      tags:
+      - Books
+      parameters:
+      - $ref: '#/components/parameters/BookId'
+      responses:
+        '200':
+          description: Chi tiết ấn phẩm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+              example:
+                status: success
+                message: Chi tiết ấn phẩm
+                data:
+                  bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                  title: Lập trình Web với Node.js
+                  facultyId: 64f1b2c3e4b0a1a2b3c4d5e7
+                  authorIds:
+                  - 64f1b2c3e4b0a1a2b3c4d5e8
+                  bookType: TEXTBOOK
+                  totalCopies: 50
+                  coverPrice: 150000
+                  availableCopies: 12
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: getBook
+  /loans:
+    get:
+      summary: Lấy danh sách phiếu mượn
+      description: Độc giả chỉ xem phiếu của mình. Nhân viên/ADMIN xem theo quyền được cấp; ADMIN không mặc nhiên
+        xem mọi phiếu. Có phân trang và lọc trạng thái. Tên quyền tra cứu toàn viện cần chốt.
+      tags:
+      - Loans
+      parameters:
+      - in: query
+        name: status
+        schema:
+          $ref: '#/components/schemas/LoanStatus'
+        description: Lọc theo trạng thái (PENDING, BORROWED, OVERDUE, FINE_PENDING, RETURNED, CANCELLED)
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLoansResponse'
+              example:
+                status: success
+                message: Thành công
+                data:
+                  items:
+                  - loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                    bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                    status: PENDING
+                  meta:
+                    totalItems: 1
+                    totalPages: 1
+                    currentPage: 1
+                    limit: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+      operationId: listLoans
+    post:
+      summary: Đăng ký mượn sách trực tuyến
+      description: 'Độc giả đặt một bản cho mỗi yêu cầu. Hạn mức tối đa 3 phiếu chờ nhận/đang mượn; quá hạn, chưa
+        nộp phạt hoặc khóa mượn chặn độc lập. Không có phiếu chưa hoàn tất cùng đầu sách. Máy chủ kiểm tra và trừ
+        đúng 1 khả dụng một cách nguyên tử. Khả dụng trước đặt ≥5: SLA 24 giờ; 1–4: SLA 3 giờ. Cách điều chỉnh theo
+        giờ mở cửa cần chốt. Tạo phiếu PENDING theo mã file gốc.'
+      tags:
+      - Loans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoanRequest'
+            example:
+              bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+      responses:
+        '201':
+          description: Đặt lịch mượn thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanResponse'
+              example:
+                status: success
+                message: Đặt lịch mượn thành công
+                data:
+                  loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                  bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                  status: PENDING
+        '400':
+          description: Lỗi nghiệp vụ (Quá hạn mức, Sách hết tồn kho, Tài khoản bị khóa)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Lỗi nghiệp vụ (Quá hạn mức, Sách hết tồn kho, Tài khoản bị khóa)
+                data: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+      operationId: createLoan
+  /loans/{loanId}/handover:
+    patch:
+      summary: Duyệt bàn giao sách tại quầy
+      description: Yêu cầu APPROVE_HANDOVER. Chỉ PENDING còn hạn được chuyển BORROWED. Ghi nhân viên/ngày giao;
+        hạn trả sau 7 ngày lịch, cuối ngày theo giờ Việt Nam. Không trừ kho lần hai. Máy chủ kiểm tra lại trạng
+        thái và xử lý đồng thời.
+      tags:
+      - Loans
+      parameters:
+      - $ref: '#/components/parameters/LoanId'
+      responses:
+        '200':
+          description: Giao sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanResponse'
+              example:
+                status: success
+                message: Giao sách thành công
+                data:
+                  loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                  bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                  status: BORROWED
+        '400':
+          description: Phiếu đã hết hạn SLA hoặc không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Phiếu đã hết hạn SLA hoặc không hợp lệ
+                data: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: handoverLoan
+  /loans/{loanId}/return:
+    patch:
+      summary: Tiếp nhận hoàn trả sách
+      description: 'Yêu cầu PROCESS_RETURN. Tiếp nhận phiếu BORROWED hoặc OVERDUE, ghi thời điểm nhận trả. Nguyên
+        vẹn không phạt: RETURNED và hoàn 1 khả dụng. Có phạt: FINE_PENDING, chưa hoàn khả dụng. Hư hại chỉ được
+        hoàn sau thu đủ và phục hồi; mất không hoàn khả dụng. Máy chủ tính tiền, không nhận tiền phạt do client
+        tự nhập. Máy chủ tự lập đúng một phiếu phạt PENDING khi tổng>0 trong cùng giao dịch nhận trả; không tạo
+        khi tổng=0. Trả về penaltyId và tổng tiền qua trường penalty. Nhân viên thiếu COLLECT_PENALTY vẫn nhận trả
+        theo PROCESS_RETURN, nhưng không được thu. Thu tiền dùng PATCH /penalties/{penaltyId}/collect. Phục hồi
+        hư hại còn là mở rộng chờ chốt. Phiếu đã nhận trả hoặc trạng thái đổi đồng thời: 409, không tạo phiếu phạt/cộng
+        kho lần hai. Thiếu giá áp dụng hoặc căn cứ tính phạt: 400 và không ghi một phần giao dịch.'
+      tags:
+      - Loans
+      parameters:
+      - $ref: '#/components/parameters/LoanId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReturnLoanRequest'
+            example:
+              condition: DAMAGED
+              damageRatio: 20
+              violationNote: Bìa sách rách, hư hại 20%.
+      responses:
+        '200':
+          description: Đã nhận trả và lập phiếu phạt khi có vi phạm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanDetailResponse'
+              example:
+                status: success
+                message: Đã nhận trả và lập phiếu phạt khi có vi phạm
+                data:
+                  loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                  bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                  readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                  status: FINE_PENDING
+                  actualReturnDate: '2026-10-28T09:00:00+07:00'
+                  returnCondition: DAMAGED
+                  damageRatio: 20
+                  penalty:
+                    penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+                    totalPenalty: 25000
+                    paymentStatus: PENDING
+                    paymentDate: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+      operationId: returnLoan
+  /loans/{loanId}/cancel:
+    patch:
+      summary: Hủy phiếu đặt mượn
+      description: Độc giả hủy phiếu PENDING thuộc mình. Máy chủ chuyển CANCELLED và hoàn 1 khả dụng đúng một lần.
+        Job tự hủy quá SLA là xử lý nội bộ, không suy ra độc giả có quyền hủy phiếu người khác.
+      tags:
+      - Loans
+      parameters:
+      - $ref: '#/components/parameters/LoanId'
+      responses:
+        '200':
+          description: Hủy phiếu thành công, cộng lại tồn kho.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanResponse'
+              example:
+                status: success
+                message: Hủy phiếu thành công, cộng lại tồn kho.
+                data:
+                  loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                  bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                  status: CANCELLED
+        '400':
+          description: Phiếu không ở trạng thái PENDING để có thể hủy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Phiếu không ở trạng thái PENDING để có thể hủy
+                data: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: cancelLoan
+  /webhooks/notify:
+    post:
+      summary: Gửi thông báo đa kênh (Zalo/Telegram)
+      description: Endpoint nội bộ nhận yêu cầu gửi nhắc nhận sách, nhắc trả hoặc nợ phạt qua kênh cấu hình. Không
+        dùng từ trình duyệt độc giả. API key/header X-API-Key là đề xuất sửa mâu thuẫn JWT/API key trong nguồn;
+        cần xác nhận triển khai. HTTP 200 chưa bảo đảm người dùng đã nhận được thông báo.
+      tags:
+      - Webhooks
+      security:
+      - internalApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifyRequest'
+            example:
+              userId: 64f1b2c3e4b0a1a2b3c4d5ea
+              eventType: SLA_REMINDER
+              message: Bạn còn 2 giờ để đến nhận sách.
+      responses:
+        '200':
+          description: Gửi thông báo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                status: success
+                message: Gửi thông báo thành công
+                data: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+      operationId: notifyUser
+      x-contract-status: proposed-auth
+  /loans/{loanId}:
+    get:
+      operationId: getLoan
+      tags:
+      - Loans
+      summary: Xem chi tiết phiếu mượn, kết quả trả và tổng phạt
+      description: Độc giả chỉ được xem phiếu của mình. Nhân viên xem theo quyền thao tác phiếu liên quan hoặc quyền
+        tra cứu được cấp. Thông tin trả gồm ngày nhận thực tế, tình trạng và liên kết phiếu phạt; ngày thu tách
+        khỏi ngày nhận. Không lộ dữ liệu nhân viên thu cho độc giả.
+      x-contract-status: proposed
+      parameters:
+      - $ref: '#/components/parameters/LoanId'
+      responses:
+        '200':
+          description: Lấy chi tiết phiếu thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanDetailResponse'
+              example:
+                status: success
+                message: Lấy chi tiết phiếu thành công
+                data:
+                  loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                  bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                  readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                  status: FINE_PENDING
+                  actualReturnDate: '2026-10-28T09:00:00+07:00'
+                  returnCondition: DAMAGED
+                  damageRatio: 20
+                  penalty:
+                    penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+                    totalPenalty: 25000
+                    paymentStatus: PENDING
+                    paymentDate: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /penalties:
+    get:
+      operationId: listPenalties
+      tags:
+      - Penalties
+      summary: Tra cứu danh sách phiếu phạt
+      description: Dành cho nhân viên có COLLECT_PENALTY; nhân viên chỉ có PROCESS_RETURN tra cứu khoản liên quan
+        qua phiếu mượn. ADMIN không tự có quyền thu. Độc giả dùng GET /loans hoặc GET /loans/{loanId} để xem khoản
+        của mình. Lọc kết hợp AND; sắp issuedDate giảm dần, cùng thời điểm theo penaltyId tăng dần.
+      x-contract-status: proposed
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - name: paymentStatus
+        in: query
+        description: Trạng thái thanh toán, không phải trạng thái phiếu mượn.
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - PAID
+      - name: loanId
+        in: query
+        description: Lọc theo phiếu mượn.
+        schema:
+          $ref: '#/components/schemas/Identifier'
+      - name: readerAccountId
+        in: query
+        description: Lọc theo tài khoản độc giả.
+        schema:
+          $ref: '#/components/schemas/Identifier'
+      responses:
+        '200':
+          description: Lấy danh sách phiếu phạt thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPenaltiesResponse'
+              example:
+                status: success
+                message: Lấy danh sách phiếu phạt thành công
+                data:
+                  items:
+                  - penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+                    loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                    readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                    issuedDate: '2026-10-28T09:00:00+07:00'
+                    overdueDays: 1
+                    appliedCoverPrice: 100000
+                    damagePercentage: 20
+                    overdueFee: 5000
+                    damageFee: 20000
+                    totalPenalty: 25000
+                    violationNote: Bìa sách rách, hư hại 20%.
+                    paymentStatus: PENDING
+                    paymentDate: null
+                    collectorAccountId: null
+                    amountCollected: 0
+                    paymentMethod: null
+                  meta:
+                    totalItems: 1
+                    totalPages: 1
+                    currentPage: 1
+                    limit: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /penalties/{penaltyId}:
+    get:
+      operationId: getPenalty
+      tags:
+      - Penalties
+      summary: Xem chi tiết và căn cứ tính phiếu phạt
+      description: Yêu cầu COLLECT_PENALTY. Trả số ngày trễ, giá áp dụng, tỷ lệ, từng khoản, tổng và thông tin thu.
+        Phiếu đã PAID vẫn tra cứu được. Độc giả xem thông tin tối thiểu qua phiếu của mình.
+      x-contract-status: proposed
+      parameters:
+      - $ref: '#/components/parameters/PenaltyId'
+      responses:
+        '200':
+          description: Lấy chi tiết phiếu phạt thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PenaltyResponse'
+              example:
+                status: success
+                message: Lấy chi tiết phiếu phạt thành công
+                data:
+                  penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+                  loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                  readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                  issuedDate: '2026-10-28T09:00:00+07:00'
+                  overdueDays: 1
+                  appliedCoverPrice: 100000
+                  damagePercentage: 20
+                  overdueFee: 5000
+                  damageFee: 20000
+                  totalPenalty: 25000
+                  violationNote: Bìa sách rách, hư hại 20%.
+                  paymentStatus: PENDING
+                  paymentDate: null
+                  collectorAccountId: null
+                  amountCollected: 0
+                  paymentMethod: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /penalties/{penaltyId}/collect:
+    patch:
+      operationId: collectPenalty
+      tags:
+      - Penalties
+      summary: Xác nhận đã thu đủ tiền phạt bằng tiền mặt
+      description: 'Yêu cầu COLLECT_PENALTY. Chỉ phiếu PENDING gắn với loan FINE_PENDING được thu. expectedTotalPenalty
+        phải bằng tổng máy chủ đã lưu; sai trả 409. Máy chủ tự lấy người thu từ JWT và ngày thu hiện tại, đặt amountCollected=totalPenalty,
+        paymentMethod=CASH, paymentStatus=PAID và loan.status=RETURNED trong một giao dịch nguyên tử. Không đổi
+        actualReturnDate, không tính thêm ngày trễ đến ngày thu. Nguyên vẹn: hoàn khả dụng 1; hư 1–99%: chỉ hoàn
+        khi đã xác nhận phục hồi; mất/hư 100%: giảm tổng 1, không cộng khả dụng. Mỗi biến động kho chỉ thực hiện
+        một lần. Tính lại mọi nghĩa vụ và khóa thủ công của độc giả. Thu đồng thời hoặc thu lặp trả 409, không thu
+        lần hai. Khi mất kết nối, đọc lại chi tiết trước khi quyết định gửi lại. Không thu từng phần, miễn giảm,
+        sửa tiền hoặc hoàn tác thu.'
+      x-contract-status: proposed
+      parameters:
+      - $ref: '#/components/parameters/PenaltyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectPenaltyRequest'
+            example:
+              confirmFullCashReceived: true
+              expectedTotalPenalty: 25000
+      responses:
+        '200':
+          description: Đã ghi nhận thu đủ tiền phạt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectPenaltyResponse'
+              example:
+                status: success
+                message: Đã ghi nhận thu đủ tiền phạt
+                data:
+                  penalty:
+                    penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+                    loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                    readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                    issuedDate: '2026-10-28T09:00:00+07:00'
+                    overdueDays: 1
+                    appliedCoverPrice: 100000
+                    damagePercentage: 20
+                    overdueFee: 5000
+                    damageFee: 20000
+                    totalPenalty: 25000
+                    violationNote: Bìa sách rách, hư hại 20%.
+                    paymentStatus: PAID
+                    paymentDate: '2026-10-28T10:00:00+07:00'
+                    collectorAccountId: 64f1b2c3e4b0a1a2b3c4d5ec
+                    amountCollected: 25000
+                    paymentMethod: CASH
+                  loan:
+                    loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+                    bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+                    readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                    status: RETURNED
+                    actualReturnDate: '2026-10-28T09:00:00+07:00'
+                    returnCondition: DAMAGED
+                    damageRatio: 20
+                    penalty:
+                      penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+                      totalPenalty: 25000
+                      paymentStatus: PAID
+                      paymentDate: '2026-10-28T10:00:00+07:00'
+                  isBorrowingBlocked: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT của người dùng qua Authorization: Bearer <token>. Phân quyền và phạm vi dữ liệu kiểm tra
+        tại máy chủ.'
+    internalApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Đề xuất chuẩn hóa ghi chú API key nội bộ trong file gốc. Tên header và cơ chế kiểm tra chưa được
+        xác nhận với backend.
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+      - ctuIdentifier
+      - email
+      - password
+      - fullName
+      - phoneNumber
+      properties:
+        ctuIdentifier:
+          type: string
+          example: B2404981
+          description: MSSV hoặc MSCB
+          minLength: 1
+        email:
+          type: string
+          format: email
+          example: datb2404981@student.ctu.edu.vn
+          minLength: 1
+        password:
+          type: string
+          format: password
+          example: StrongPassword123!
+          minLength: 1
+          writeOnly: true
+        fullName:
+          type: string
+          example: Nguyễn Văn Đạt
+          minLength: 1
+        phoneNumber:
+          type: string
+          example: 0901234567
+          minLength: 1
+        dateOfBirth:
+          type: string
+          format: date
+          example: '2004-01-01'
+          minLength: 1
+          description: Ngày sinh, chỉ gồm ngày; nếu cung cấp phải trước ngày hiện tại. Kiểm tra động tại máy chủ.
+        address:
+          type: string
+          example: Cần Thơ
+          minLength: 1
+        facultyId:
+          type: string
+          example: 64f1b2c3e4b0a1a2b3c4d5e7
+          minLength: 1
+      description: Giữ danh sách trường bắt buộc từ file đầu vào. Email, họ tên và số điện thoại đang khác yêu cầu
+        đăng ký tối thiểu trong bộ UI; cần chốt trước triển khai.
+    LoginRequest:
+      type: object
+      required:
+      - ctuIdentifier
+      - password
+      properties:
+        ctuIdentifier:
+          type: string
+          example: B2404981
+          minLength: 1
+        password:
+          type: string
+          format: password
+          example: StrongPassword123!
+          minLength: 1
+          writeOnly: true
+    CreateBookRequest:
+      type: object
+      required:
+      - title
+      - facultyId
+      - authorIds
+      - totalCopies
+      - coverPrice
+      properties:
+        title:
+          type: string
+          example: Lập trình Web với Node.js
+          minLength: 1
+        facultyId:
+          $ref: '#/components/schemas/Identifier'
+        authorIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Identifier'
+          example:
+          - 64f1b2c3e4b0a1a2b3c4d5e8
+          minItems: 1
+          uniqueItems: true
+        bookType:
+          type: string
+          enum:
+          - TEXTBOOK
+          - REFERENCE
+          example: TEXTBOOK
+        totalCopies:
+          type: integer
+          example: 50
+          minimum: 0
+        coverPrice:
+          type: number
+          example: 150000
+          minimum: 0
+          description: Giá bìa theo VND; quy tắc làm tròn cần thống nhất với backend.
+        coverImageUrl:
+          type: string
+          example: https://example.com/cover.jpg
+          format: uri
+      description: Tạo ấn phẩm. availableCopies do máy chủ quản lý, không nhận từ client.
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          enum:
+          - success
+        message:
+          type: string
+          example: Thao tác thành công
+        data:
+          type: object
+          nullable: true
+      required:
+      - status
+      - data
+      - message
+      description: Phản hồi thao tác chung. data có thể null nếu thao tác không trả tài nguyên.
+    LoginSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          enum:
+          - success
+        message:
+          type: string
+          example: Đăng nhập thành công
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+              description: 'JWT truy cập. Gửi Authorization: Bearer <token>; giá trị ví dụ chỉ minh họa, không dùng
+                để xác thực.'
+            user:
+              type: object
+              properties:
+                accountId:
+                  type: string
+                  example: 64f1b2c3e4b0a1a2b3c4d5e6
+                ctuIdentifier:
+                  type: string
+                  example: B2404981
+                role:
+                  type: string
+                  example: READER
+                  description: Ví dụ READER. Bộ UI dùng READER, EMPLOYEE, ADMIN; chưa khóa enum khi chưa đối chiếu
+                    backend. Quyền chức năng tách khỏi role.
+                fullName:
+                  type: string
+                  example: Nguyễn Văn Đạt
+              required:
+              - accountId
+              - ctuIdentifier
+              - role
+              - fullName
+          required:
+          - token
+          - user
+      required:
+      - status
+      - data
+      - message
+    PaginatedBooksResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          enum:
+          - success
+        message:
+          type: string
+          example: Lấy danh sách thành công
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Book'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+          required:
+          - items
+          - meta
+      required:
+      - status
+      - data
+      - message
+    PaginatedLoansResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          enum:
+          - success
+        message:
+          type: string
+          example: Lấy danh sách thành công
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Loan'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+          required:
+          - items
+          - meta
+      required:
+      - status
+      - data
+      - message
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+          enum:
+          - error
+        message:
+          type: string
+          example: 'Thông báo lỗi từ server (VD: Sai thông tin đăng nhập, Tài khoản bị khóa)'
+        data:
+          type: object
+          nullable: true
+      required:
+      - status
+      - data
+      - message
+      description: Lỗi nghiệp vụ hoặc xác thực. data là object chi tiết hoặc null; lỗi theo trường dùng ValidationErrorResponse.
+    ValidationErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+          enum:
+          - error
+        message:
+          type: string
+          example: Dữ liệu đầu vào không hợp lệ
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: email
+              message:
+                type: string
+                example: Email không đúng định dạng
+            required:
+            - field
+            - message
+      required:
+      - status
+      - data
+      - message
+    Identifier:
+      type: string
+      minLength: 1
+      description: Định danh tài nguyên. Không áp pattern MongoDB khi chưa xác nhận cách lưu backend.
+      example: 64f1b2c3e4b0a1a2b3c4d5e6
+    LoanStatus:
+      type: string
+      enum:
+      - PENDING
+      - BORROWED
+      - OVERDUE
+      - FINE_PENDING
+      - RETURNED
+      - CANCELLED
+      description: 'Mã giữ từ file gốc: PENDING tương ứng RESERVED trong bộ UI; FINE_PENDING tương ứng PENDING_PENALTY.
+        Không phải trạng thái thanh toán.'
+      example: PENDING
+    PaginationMeta:
+      type: object
+      properties:
+        totalItems:
+          type: integer
+          minimum: 0
+          example: 45
+        totalPages:
+          type: integer
+          minimum: 0
+          example: 5
+        currentPage:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          example: 10
+      required:
+      - totalItems
+      - totalPages
+      - currentPage
+      - limit
+      description: Phân trang theo trang, bắt đầu từ 1. Quy ước totalPages khi danh sách rỗng cần thống nhất với
+        backend.
+    Book:
+      type: object
+      description: 'Schema phản hồi đề xuất từ dữ liệu tạo sách. Bất biến: 0 ≤ availableCopies ≤ totalCopies; máy
+        chủ kiểm tra.'
+      x-contract-status: proposed
+      properties:
+        bookId:
+          $ref: '#/components/schemas/Identifier'
+        title:
+          type: string
+          example: Lập trình Web với Node.js
+          minLength: 1
+        facultyId:
+          $ref: '#/components/schemas/Identifier'
+        authorIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Identifier'
+          example:
+          - 64f1b2c3e4b0a1a2b3c4d5e8
+          minItems: 1
+          uniqueItems: true
+        bookType:
+          type: string
+          enum:
+          - TEXTBOOK
+          - REFERENCE
+          example: TEXTBOOK
+        totalCopies:
+          type: integer
+          example: 50
+          minimum: 0
+        coverPrice:
+          type: number
+          example: 150000
+          minimum: 0
+          description: Giá bìa theo VND; quy tắc làm tròn cần thống nhất với backend.
+        coverImageUrl:
+          type: string
+          example: https://example.com/cover.jpg
+          format: uri
+        availableCopies:
+          type: integer
+          minimum: 0
+          readOnly: true
+          example: 12
+      required:
+      - bookId
+      - title
+      - facultyId
+      - authorIds
+      - totalCopies
+      - coverPrice
+      - availableCopies
+      example:
+        bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+        title: Lập trình Web với Node.js
+        facultyId: 64f1b2c3e4b0a1a2b3c4d5e7
+        authorIds:
+        - 64f1b2c3e4b0a1a2b3c4d5e8
+        bookType: TEXTBOOK
+        totalCopies: 50
+        coverPrice: 150000
+        availableCopies: 12
+    Loan:
+      type: object
+      description: Schema phản hồi tối thiểu đề xuất. Các trường độc giả, hạn nhận, ngày giao, hạn trả, ngày nhận
+        và phạt cần chốt tên/nullable với backend. penalty là tổng hợp tối thiểu nếu đã phát sinh phạt; xem chi
+        tiết nhận trả qua GET /loans/{loanId}.
+      x-contract-status: proposed
+      properties:
+        loanId:
+          $ref: '#/components/schemas/Identifier'
+        bookId:
+          $ref: '#/components/schemas/Identifier'
+        status:
+          $ref: '#/components/schemas/LoanStatus'
+        penalty:
+          $ref: '#/components/schemas/PenaltySummary'
+      required:
+      - loanId
+      - bookId
+      - status
+      example:
+        loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+        bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+        status: PENDING
+    CreateLoanRequest:
+      type: object
+      properties:
+        bookId:
+          $ref: '#/components/schemas/Identifier'
+      required:
+      - bookId
+    ReturnLoanRequest:
+      type: object
+      description: 'GOOD: không gửi damageRatio, máy chủ quy đổi 0%. DAMAGED: bắt buộc tỷ lệ nguyên 1–100%; hư 100%
+        xử lý mất khả năng phục hồi như mất. LOST: không gửi damageRatio, máy chủ quy đổi 100%. Hư/mất bắt buộc
+        violationNote. Giữ GOOD từ nguồn, UI dùng INTACT.'
+      required:
+      - condition
+      properties:
+        condition:
+          type: string
+          enum:
+          - GOOD
+          - DAMAGED
+          - LOST
+          example: GOOD
+        damageRatio:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 25
+          description: Phần trăm hư hại, chỉ gửi khi condition=DAMAGED.
+        violationNote:
+          type: string
+          description: Ghi chú vi phạm; hư/mất bắt buộc có nội dung không chỉ khoảng trắng, máy chủ kiểm tra sau
+            trim.
+          minLength: 1
+      oneOf:
+      - properties:
+          condition:
+            enum:
+            - DAMAGED
+        required:
+        - damageRatio
+        - violationNote
+      - properties:
+          condition:
+            enum:
+            - GOOD
+        not:
+          required:
+          - damageRatio
+      - properties:
+          condition:
+            enum:
+            - LOST
+        required:
+        - violationNote
+        not:
+          required:
+          - damageRatio
+    NotifyRequest:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/Identifier'
+        eventType:
+          type: string
+          enum:
+          - SLA_REMINDER
+          - RETURN_REMINDER
+          - FINE_NOTICE
+          example: SLA_REMINDER
+        message:
+          type: string
+          minLength: 1
+          example: 'Bạn còn 2 giờ để đến nhận sách: Cấu trúc dữ liệu.'
+      required:
+      - userId
+      - eventType
+      - message
+    BookResponse:
+      type: object
+      description: Phản hồi có kiểu dữ liệu đề xuất; cần xác nhận dữ liệu thao tác mà backend thực tế trả về.
+      x-contract-status: proposed
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+          example: success
+        message:
+          type: string
+          example: Thao tác thành công
+        data:
+          $ref: '#/components/schemas/Book'
+      required:
+      - status
+      - message
+      - data
+    LoanResponse:
+      type: object
+      description: Phản hồi có kiểu dữ liệu đề xuất; cần xác nhận dữ liệu thao tác mà backend thực tế trả về.
+      x-contract-status: proposed
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+          example: success
+        message:
+          type: string
+          example: Thao tác thành công
+        data:
+          $ref: '#/components/schemas/Loan'
+      required:
+      - status
+      - message
+      - data
+    Penalty:
+      type: object
+      properties:
+        penaltyId:
+          $ref: '#/components/schemas/Identifier'
+        loanId:
+          $ref: '#/components/schemas/Identifier'
+        readerAccountId:
+          $ref: '#/components/schemas/Identifier'
+        issuedDate:
+          type: string
+          format: date-time
+        overdueDays:
+          type: integer
+          minimum: 0
+        appliedCoverPrice:
+          type: number
+          minimum: 0
+          nullable: true
+          description: Giá chốt lúc giao; bắt buộc có giá trị khi bồi thường >0.
+        damagePercentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        overdueFee:
+          type: number
+          minimum: 0
+          description: overdueDays × 5.000 VND; dừng tính tại ngày nhận trả.
+        damageFee:
+          type: number
+          minimum: 0
+          description: appliedCoverPrice × damagePercentage /100; quy tắc làm tròn chưa chốt.
+        totalPenalty:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          description: Tổng tiền >0, bằng overdueFee + damageFee sau quy tắc tiền đã chốt.
+        violationNote:
+          type: string
+          description: Bắt buộc có nội dung khi hư/mất.
+          nullable: true
+        paymentStatus:
+          type: string
+          enum:
+          - PENDING
+          - PAID
+        paymentDate:
+          type: string
+          format: date-time
+          nullable: true
+        collectorAccountId:
+          type: string
+          nullable: true
+          minLength: 1
+        amountCollected:
+          type: number
+          minimum: 0
+          description: 0 trước thu; bằng totalPenalty khi PAID.
+        paymentMethod:
+          type: string
+          nullable: true
+          enum:
+          - CASH
+          - null
+      description: Phiếu phạt do máy chủ tính và lập trong giao dịch nhận trả, tối đa một phiếu cho mỗi loanId.
+        Các trường chỉ đọc đối với client. Quy tắc liên trường tổng tiền, giá và ghi chú được máy chủ kiểm tra.
+      x-contract-status: proposed
+      required:
+      - penaltyId
+      - loanId
+      - readerAccountId
+      - issuedDate
+      - overdueDays
+      - appliedCoverPrice
+      - damagePercentage
+      - overdueFee
+      - damageFee
+      - totalPenalty
+      - violationNote
+      - paymentStatus
+      - paymentDate
+      - collectorAccountId
+      - amountCollected
+      - paymentMethod
+      allOf:
+      - oneOf:
+        - properties:
+            paymentStatus:
+              enum:
+              - PENDING
+            paymentDate:
+              type: string
+              nullable: true
+              enum:
+              - null
+            collectorAccountId:
+              type: string
+              nullable: true
+              enum:
+              - null
+            amountCollected:
+              type: number
+              enum:
+              - 0
+            paymentMethod:
+              type: string
+              nullable: true
+              enum:
+              - null
+        - properties:
+            paymentStatus:
+              enum:
+              - PAID
+            paymentDate:
+              type: string
+              format: date-time
+            collectorAccountId:
+              type: string
+              minLength: 1
+            amountCollected:
+              type: number
+              minimum: 0
+              exclusiveMinimum: true
+            paymentMethod:
+              type: string
+              enum:
+              - CASH
+      example:
+        penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+        loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+        readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+        issuedDate: '2026-10-28T09:00:00+07:00'
+        overdueDays: 1
+        appliedCoverPrice: 100000
+        damagePercentage: 20
+        overdueFee: 5000
+        damageFee: 20000
+        totalPenalty: 25000
+        violationNote: Bìa sách rách, hư hại 20%.
+        paymentStatus: PENDING
+        paymentDate: null
+        collectorAccountId: null
+        amountCollected: 0
+        paymentMethod: null
+    PenaltySummary:
+      type: object
+      properties:
+        penaltyId:
+          $ref: '#/components/schemas/Identifier'
+        totalPenalty:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        paymentStatus:
+          type: string
+          enum:
+          - PENDING
+          - PAID
+        paymentDate:
+          type: string
+          format: date-time
+          nullable: true
+      description: Thông tin phạt tối thiểu cho độc giả; không lộ định danh nhân viên thu.
+      required:
+      - penaltyId
+      - totalPenalty
+      - paymentStatus
+      - paymentDate
+      nullable: true
+    LoanDetail:
+      type: object
+      properties:
+        loanId:
+          $ref: '#/components/schemas/Identifier'
+        bookId:
+          $ref: '#/components/schemas/Identifier'
+        readerAccountId:
+          $ref: '#/components/schemas/Identifier'
+        status:
+          $ref: '#/components/schemas/LoanStatus'
+        actualReturnDate:
+          type: string
+          format: date-time
+          nullable: true
+        returnCondition:
+          type: string
+          nullable: true
+          enum:
+          - GOOD
+          - DAMAGED
+          - LOST
+          - null
+        damageRatio:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+        penalty:
+          $ref: '#/components/schemas/PenaltySummary'
+      description: Kết quả nhận trả nằm trên phiếu mượn, không tạo thực thể phiếu trả riêng. Trước nhận trả các
+        trường trả sách và penalty là null. GOOD=0%, LOST=100%, DAMAGED=1–100%. penalty=null khi không phạt; FINE_PENDING
+        phải liên kết phiếu PENDING, RETURNED có phạt phải PAID. Máy chủ kiểm tra các bất biến này.
+      x-contract-status: proposed
+      required:
+      - loanId
+      - bookId
+      - readerAccountId
+      - status
+      - actualReturnDate
+      - returnCondition
+      - damageRatio
+      - penalty
+      example:
+        loanId: 64f1b2c3e4b0a1a2b3c4d5e9
+        bookId: 64f1b2c3e4b0a1a2b3c4d5e6
+        readerAccountId: 64f1b2c3e4b0a1a2b3c4d5ea
+        status: FINE_PENDING
+        actualReturnDate: '2026-10-28T09:00:00+07:00'
+        returnCondition: DAMAGED
+        damageRatio: 20
+        penalty:
+          penaltyId: 64f1b2c3e4b0a1a2b3c4d5eb
+          totalPenalty: 25000
+          paymentStatus: PENDING
+          paymentDate: null
+    LoanDetailResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/LoanDetail'
+      description: Chi tiết phiếu mượn và kết quả nhận trả, kèm tổng phạt theo quyền xem.
+      x-contract-status: proposed
+      required:
+      - status
+      - message
+      - data
+    PenaltyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Penalty'
+      description: Chi tiết đầy đủ phiếu phạt dành cho nhân viên được cấp quyền.
+      x-contract-status: proposed
+      required:
+      - status
+      - message
+      - data
+    PaginatedPenaltiesResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Penalty'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+          required:
+          - items
+          - meta
+      required:
+      - status
+      - message
+      - data
+    CollectPenaltyRequest:
+      type: object
+      properties:
+        confirmFullCashReceived:
+          type: boolean
+          enum:
+          - true
+          description: Nhân viên xác nhận đã nhận đủ tiền mặt.
+        expectedTotalPenalty:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          description: Tổng tiền mà nhân viên vừa đối chiếu; dùng phát hiện dữ liệu cũ, không phải số tiền muốn
+            thu hoặc giá trị ghi đè khoản phạt.
+      additionalProperties: false
+      description: Chỉ thu đủ một lần. Không nhận ngày thu, người thu, trạng thái, phương thức khác hoặc số tiền
+        thu từng phần từ client.
+      required:
+      - confirmFullCashReceived
+      - expectedTotalPenalty
+    CollectPenaltyResult:
+      type: object
+      properties:
+        penalty:
+          $ref: '#/components/schemas/Penalty'
+        loan:
+          $ref: '#/components/schemas/LoanDetail'
+        isBorrowingBlocked:
+          type: boolean
+          description: Kết quả tính lại mọi quá hạn/nợ phạt và khóa thủ công, không tự mở chỉ vì thu xong phiếu
+            này.
+      required:
+      - penalty
+      - loan
+      - isBorrowingBlocked
+    CollectPenaltyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/CollectPenaltyResult'
+      description: Kết quả thu phạt và trạng thái phiếu mượn cập nhật cùng một giao dịch.
+      x-contract-status: proposed
+      required:
+      - status
+      - message
+      - data
+  responses:
+    UnauthorizedError:
+      description: Thiếu hoặc sai thông tin xác thực, token hết hạn.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: error
+            message: Thiếu hoặc sai thông tin xác thực, token hết hạn.
+            data: null
+    ForbiddenError:
+      description: Đã xác thực nhưng thiếu quyền chức năng hoặc quyền trên tài nguyên.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: error
+            message: Đã xác thực nhưng thiếu quyền chức năng hoặc quyền trên tài nguyên.
+            data: null
+    NotFoundError:
+      description: Không tìm thấy tài nguyên theo định danh.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: error
+            message: Không tìm thấy tài nguyên theo định danh.
+            data: null
+    BadRequest:
+      description: Yêu cầu không hợp lệ hoặc vi phạm điều kiện nghiệp vụ; chi tiết trong message/data.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: error
+            message: Yêu cầu không hợp lệ hoặc vi phạm điều kiện nghiệp vụ; chi tiết trong message/data.
+            data: null
+    ValidationError:
+      description: Dữ liệu đầu vào không hợp lệ; data liệt kê lỗi theo trường.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+          example:
+            status: error
+            message: Dữ liệu đầu vào không hợp lệ; data liệt kê lỗi theo trường.
+            data:
+            - field: email
+              message: Email không đúng định dạng
+    ConflictError:
+      description: Trạng thái đã thay đổi, phiếu đã thu hoặc dữ liệu đối chiếu không còn khớp. Tải lại dữ liệu;
+        không tự gửi lại thao tác thu.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: error
+            message: Phiếu phạt đã được xác nhận thu. Vui lòng tải lại.
+            data: null
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Số trang, bắt đầu từ 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+    Limit:
+      name: limit
+      in: query
+      description: Số bản ghi mỗi trang; chưa quy định giới hạn tối đa trong nguồn.
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+        example: 10
+    BookId:
+      name: bookId
+      in: path
+      required: true
+      description: Định danh ấn phẩm.
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    LoanId:
+      name: loanId
+      in: path
+      required: true
+      description: Định danh phiếu mượn.
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    PenaltyId:
+      name: penaltyId
+      in: path
+      required: true
+      description: Định danh phiếu phạt.
+      schema:
+        $ref: '#/components/schemas/Identifier'
+tags:
+- name: Authentication
+  description: Đăng ký, đăng nhập và đăng xuất.
+- name: Books
+  description: Tra cứu và quản lý ấn phẩm.
+- name: Loans
+  description: Đặt mượn, giao, nhận trả và hủy phiếu.
+- name: Webhooks
+  description: Endpoint nội bộ nhận yêu cầu gửi thông báo; không phải callback gửi tới ứng dụng khách.
+- name: Penalties
+  description: Tra cứu phiếu phạt và xác nhận đã thu đủ tiền mặt tại quầy; không tích hợp cổng thanh toán.
+security:
+- bearerAuth: []

@@ -1,0 +1,17 @@
+{
+  "name": "CTULib",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "dev:api": "pnpm --filter @ctulib/api dev",
+    "dev:web": "pnpm --filter @ctulib/web dev",
+    "build": "pnpm --recursive build",
+    "lint": "pnpm --recursive lint",
+    "audit": "pnpm audit --prod",
+    "test": "pnpm --recursive test",
+    "docker:dev": "docker compose -f infra/docker/docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker compose -f infra/docker/docker-compose.dev.yml down"
+  }
+}
