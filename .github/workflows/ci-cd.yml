@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run Lint Check
+        run: pnpm lint
+
       - name: Run Audit Check (Security)
         run: pnpm audit --prod
 
@@ -36,8 +39,16 @@ jobs:
     needs: quality-check
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
+
+      # 1. Chuyển tên Repo thành chữ thường (Bắt buộc cho Docker)
+      - name: Lowercase Repository Name
+        run: |
+          echo "IMAGE_NAME=ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/backend:${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -46,14 +57,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 2. Build và đẩy lên GHCR bằng tên đã viết thường
       - name: Build & Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/backend/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/backend:${{ github.ref_name }}
+          tags: ${{ env.IMAGE_NAME }}
 
+      # 3. Chạy test Apidog
+      - name: Install Apidog CLI
+        run: npm install -g apidog-cli
+
+      - name: Running Test Scenario Module Authentication
+        continue-on-error: true
+        run: |
+          apidog run --access-token ${{ secrets.APIDOG_TOKEN }} --test-suite 7294 -e 6926376 -r html,cli
+
+      # 4. Kích hoạt Webhook Deploy lên Render
       - name: Trigger Render Zero-Downtime Deploy Webhook
         if: env.RENDER_WEBHOOK != ''
         env:
