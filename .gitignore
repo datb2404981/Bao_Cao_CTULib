@@ -22,3 +22,5 @@ logs/
 .vscode/
 .idea/
 coverage/
+.agents/
+.apidog/
