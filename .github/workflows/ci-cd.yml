@@ -2,61 +2,61 @@ name: CTULib CI/CD Pipeline
 
 on:
   push:
-    branches: [main,staging]
+    branches: [main, staging]
   pull_request:
     branches: [main, staging]
 
 jobs:
   quality-check:
-    runs-on: ubutu-latest
+    runs-on: ubuntu-latest
     steps:
-    -uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    -name: Setup pnpm
-    uses: pnpm/action-setup@v4
-    with:
-      version: 9.15.9
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
 
-    -name: Setup Node.js
-    uses: actions/setup-node@v4
-    with: 
-      node-version: 22
-      cache: "pnpm"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with: 
+          node-version: 22
+          cache: "pnpm"
 
-    -name: Install dependencies
-    run: pnpm install --frozen -lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-    -name: Run Audi Check (Security)
-    run: pnpm audit --prod
+      - name: Run Audit Check (Security)
+        run: pnpm audit --prod
 
-    -name: Build Packages
-    run: pnpm build
+      - name: Build Packages
+        run: pnpm build
 
-deploy-backend:
-  needs: quality-check
-  if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
-  runs-on: ubuntu-latest
-  steps:
-    -user: actions/checkout@v4
+  deploy-backend:
+    needs: quality-check
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    -name: Log in to GitHub Container Registry
-    uses: docker/login-action@v3
-    with:
-      registry:ghcr.io
-      username:${{github.actor}}
-      password:${{secrets.GITHUB_TOKENT}}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    -name: Build & Push Docker Image
-    uses: docker/build-push-action@v5
-    with:
-      context: .
-      file: apps/backend/Dockerfile
-      push: true
-      tags: ghcr.io/${{github.repository}}/api:${{github.ref_name}}
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/backend:${{ github.ref_name }}
 
-    -name: Trigger Render Zero-Downtime Deploy Webhook
-    if: env.RENDER_WEBHOOK != ''
-    env:
-      RENDER_WEBHOOK: ${{secrets.RENDER_DEPLOY_HOOK_URL}}
-    run: |
-      curl -X POST "$RENDER_WEBHOOK"
+      - name: Trigger Render Zero-Downtime Deploy Webhook
+        if: env.RENDER_WEBHOOK != ''
+        env:
+          RENDER_WEBHOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl -X POST "$RENDER_WEBHOOK"

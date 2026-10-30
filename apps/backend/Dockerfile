@@ -1,19 +1,19 @@
 # Build & Dependencis
-FROM node:22-apline AS builder
+FROM node:22-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 WORKDIR /app
 
 # copy root workspace files
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
-COPY apps/backend/package.json ./apps/api/
+COPY apps/backend/package.json ./apps/backend/
 
 # install dependencies 
-RUN pnpm install --frozen-lockfile -filter @ctulib/backed...
+RUN pnpm install --frozen-lockfile --filter @ctulib/backend...
 
 # copy source code and build
-COPY apps/backend ./apps/api
-RUN pnpm --filter @ctulib/api build
-RUN pnpm --filter @ctulib/api --prod deploy /prod/api
+COPY apps/backend ./apps/backend
+RUN pnpm --filter @ctulib/backend build
+RUN pnpm --filter @ctulib/backend --prod deploy /prod/api
 
 # Runtime production
 FROM node:20-alpine as runner

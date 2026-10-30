@@ -1,0 +1,21 @@
+# Git
+.git
+.github
+
+# Dependencies
+**/node_modules
+
+# Build outputs
+**/dist
+**/coverage
+
+# Environment & secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+**/*.log
+
+# System files
+.DS_Store
