@@ -98,6 +98,8 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
 | **COND-OUT-03** | `POST /auth/logout` | EP / Security | Cookie thiếu/sai/hết hạn; origin không hợp lệ; DB lỗi không được báo thành công giả. |
 | **COND-REF-01** | `POST /auth/refresh` | Use Case / State Transition | Cấp access token mới và rotate refresh token nguyên tử. |
 | **COND-REF-02** | `POST /auth/refresh` | EP / BVA / Security | Hết hạn, thu hồi, replay, race, khóa tài khoản, CSRF và lỗi DB. |
+| **COND-SES-01** | `POST /auth/login` | Security / Integration | Cookie, lưu hash phiên, claims, lỗi DB và Origin/CORS. |
+| **COND-JWT-01** | `GET /loans` | EP / Security | JWT thiếu, sai Bearer, giả mạo, sai thuật toán, issuer hoặc audience. |
 
 ---
 
@@ -319,7 +321,7 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
   ```
 - **Kết quả mong đợi**:
   - HTTP `200 OK`
-  - Body: `status: "success"`, `message: "Đăng nhập thành công, trả về Token và thông tin user"`
+  - Body: `status: "success"`, `message: "Đăng nhập thành công"`
   - `data.token`: Access JWT hợp lệ; `data.tokenType: "Bearer"`, `data.expiresIn: 900`.
   - Cookie `refreshToken` được cấp; tạo một phiên mới và lưu bản băm token trong DB. Không trả refresh token trong JSON.
   - Áp dụng đầy đủ hợp đồng v3 ở mục 0; kiểm tra cookie, DB và token như TC-SES-001–006.
@@ -956,6 +958,84 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
 
 ---
 
+### PHẦN VI: Access JWT trên endpoint bảo vệ
+
+Các ca này giữ lại coverage JWT thiếu/sai/giả mạo trước đây đặt ở logout; logout v3 dùng refresh cookie. Dùng GET /loans có yêu cầu Bearer, không dùng API sách công khai.
+
+#### TC-JWT-001: API bảo vệ thiếu Authorization
+- **Yêu cầu / điều kiện**: REQ-AUTH-06 / COND-JWT-01.
+- **Mục tiêu**: API bảo vệ thiếu Authorization.
+- **Endpoint**: `GET /loans`.
+- **Priority / Risk**: High / High.
+- **Kỹ thuật**: EP / Security.
+- **Tiền điều kiện / dữ liệu**: Tài khoản có quyền GET /loans; cookie jar rỗng. Token chỉ nằm trong fixture local của runner.
+- **Bước thực hiện**: Không gửi Authorization.
+- **Kết quả mong đợi**: HTTP 401, status=error, data=null; không truy cập dữ liệu bảo vệ.
+- **Hậu điều kiện**: Không tạo, rotate hoặc thu hồi refresh token.
+- **Trạng thái thực thi**: Not Run; xác minh token fixture đúng nguyên nhân cần kiểm tra.
+
+#### TC-JWT-002: API bảo vệ thiếu tiền tố Bearer
+- **Yêu cầu / điều kiện**: REQ-AUTH-06 / COND-JWT-01.
+- **Mục tiêu**: API bảo vệ thiếu tiền tố Bearer.
+- **Endpoint**: `GET /loans`.
+- **Priority / Risk**: High / High.
+- **Kỹ thuật**: EP / Security.
+- **Tiền điều kiện / dữ liệu**: fixtureAccessToken là JWT hợp lệ, chưa hết hạn. Token chỉ nằm trong fixture local của runner.
+- **Bước thực hiện**: Gửi Authorization chứa token trực tiếp, không có Bearer.
+- **Kết quả mong đợi**: HTTP 401, status=error, data=null; không truy cập dữ liệu bảo vệ.
+- **Hậu điều kiện**: Không tạo, rotate hoặc thu hồi refresh token.
+- **Trạng thái thực thi**: Not Run; xác minh token fixture đúng nguyên nhân cần kiểm tra.
+
+#### TC-JWT-003: API bảo vệ từ chối chữ ký JWT bị sửa
+- **Yêu cầu / điều kiện**: REQ-AUTH-06 / COND-JWT-01.
+- **Mục tiêu**: API bảo vệ từ chối chữ ký JWT bị sửa.
+- **Endpoint**: `GET /loans`.
+- **Priority / Risk**: High / High.
+- **Kỹ thuật**: EP / Security.
+- **Tiền điều kiện / dữ liệu**: JWT gốc hợp lệ; chỉ sửa một ký tự signature, giữ nguyên payload. Token chỉ nằm trong fixture local của runner.
+- **Bước thực hiện**: Gửi Bearer token đã sửa signature.
+- **Kết quả mong đợi**: HTTP 401, status=error, data=null; không truy cập dữ liệu bảo vệ.
+- **Hậu điều kiện**: Không tạo, rotate hoặc thu hồi refresh token.
+- **Trạng thái thực thi**: Not Run; xác minh token fixture đúng nguyên nhân cần kiểm tra.
+
+#### TC-JWT-004: API bảo vệ từ chối thuật toán ngoài allowlist
+- **Yêu cầu / điều kiện**: REQ-AUTH-06 / COND-JWT-01.
+- **Mục tiêu**: API bảo vệ từ chối thuật toán ngoài allowlist.
+- **Endpoint**: `GET /loans`.
+- **Priority / Risk**: High / High.
+- **Kỹ thuật**: EP / Security.
+- **Tiền điều kiện / dữ liệu**: Fixture JWT alg=none, exp còn hạn và các claims khác đúng. Token chỉ nằm trong fixture local của runner.
+- **Bước thực hiện**: Gửi Bearer JWT alg=none.
+- **Kết quả mong đợi**: HTTP 401, status=error, data=null; không truy cập dữ liệu bảo vệ.
+- **Hậu điều kiện**: Không tạo, rotate hoặc thu hồi refresh token.
+- **Trạng thái thực thi**: Not Run; xác minh token fixture đúng nguyên nhân cần kiểm tra.
+
+#### TC-JWT-005: API bảo vệ từ chối issuer khác
+- **Yêu cầu / điều kiện**: REQ-AUTH-06 / COND-JWT-01.
+- **Mục tiêu**: API bảo vệ từ chối issuer khác.
+- **Endpoint**: `GET /loans`.
+- **Priority / Risk**: High / High.
+- **Kỹ thuật**: EP / Security.
+- **Tiền điều kiện / dữ liệu**: Fixture JWT ký đúng key test HS256, chưa hết hạn, aud đúng nhưng iss khác ctulib-api. Token chỉ nằm trong fixture local của runner.
+- **Bước thực hiện**: Gửi Bearer JWT sai issuer.
+- **Kết quả mong đợi**: HTTP 401, status=error, data=null; không truy cập dữ liệu bảo vệ.
+- **Hậu điều kiện**: Không tạo, rotate hoặc thu hồi refresh token.
+- **Trạng thái thực thi**: Not Run; xác minh token fixture đúng nguyên nhân cần kiểm tra.
+
+#### TC-JWT-006: API bảo vệ từ chối audience khác
+- **Yêu cầu / điều kiện**: REQ-AUTH-06 / COND-JWT-01.
+- **Mục tiêu**: API bảo vệ từ chối audience khác.
+- **Endpoint**: `GET /loans`.
+- **Priority / Risk**: High / High.
+- **Kỹ thuật**: EP / Security.
+- **Tiền điều kiện / dữ liệu**: Fixture JWT ký đúng key test HS256, chưa hết hạn, iss đúng nhưng aud khác ctulib-web. Token chỉ nằm trong fixture local của runner.
+- **Bước thực hiện**: Gửi Bearer JWT sai audience.
+- **Kết quả mong đợi**: HTTP 401, status=error, data=null; không truy cập dữ liệu bảo vệ.
+- **Hậu điều kiện**: Không tạo, rotate hoặc thu hồi refresh token.
+- **Trạng thái thực thi**: Not Run; xác minh token fixture đúng nguyên nhân cần kiểm tra.
+
+---
+
 ## 4. MA TRẬN TRUY XUẤT NGUỒN GỐC (REQUIREMENTS TRACEABILITY MATRIX)
 
 | Mã Yêu cầu | Endpoint API | Test Cases Tương Ứng (Atomic IDs) | Trạng thái bao phủ |
@@ -965,6 +1045,7 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
 | **REQ-AUTH-03** (Đăng xuất) | `POST /auth/logout` | `TC-OUT-001–015` | Thiết kế, Not Run |
 | **REQ-AUTH-04** (Refresh) | `POST /auth/refresh` và endpoint bảo vệ | `TC-REF-001–023` | Thiết kế, Not Run |
 | **REQ-AUTH-05** (Phiên / cookie) | `POST /auth/login` | `TC-SES-001–010` | Thiết kế, Not Run |
+| **REQ-AUTH-06** (Access JWT) | `GET /loans` | `TC-JWT-001–006`, `TC-REF-016`, `TC-REF-023` | Thiết kế, Not Run |
 
 ---
 
@@ -987,3 +1068,11 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
 - Sửa scenario auth smoke: login → lưu cookie và access token → gọi API bảo vệ → refresh → logout → refresh cũ bị từ chối. Không lưu raw token vào báo cáo.
 - Module Authentication / Full System Test: thêm refresh và session cases, cập nhật dữ liệu cookie riêng từng test. Case DB/clock/race/browser cần fixture chuyên dụng, không đánh Passed chỉ từ assertion HTTP.
 - Backend chưa triển khai hợp đồng mới; không chạy suite vào server hiện tại rồi diễn giải lỗi là hồi quy đã xác nhận.
+
+### Cấu hình fixture cho các test case v3 trên Apidog
+
+- `clientOrigin`: origin frontend chính xác, ví dụ `http://localhost:5173`; phải khớp CLIENT_URL. Không tự suy ra từ base URL API.
+- `authFixtureId`: mã case đã chuẩn bị, ví dụ `TC-REF-001`. Preprocessor dừng request nếu mã này không khớp, tránh chạy nhầm fixture hoặc báo pass giả.
+- `fixtureIdentifier`, `fixturePassword`: tài khoản tổng hợp trong DB test. `fixtureRefreshToken`, `fixtureAccessToken`: chỉ nạp vào biến tạm/local của test runner khi case yêu cầu; không lưu token thật vào cấu hình đồng bộ cloud hoặc tài liệu.
+- Fixture chịu trách nhiệm làm sạch cookie jar, chuẩn bị trạng thái DB/clock và account theo từng ca. Test hai phiên dùng jar A/B riêng. Case clock/race/fault/browser/DB chưa được tự động hóa hoàn chỉnh: phải thực hiện các bước/hậu điều kiện trong tài liệu bằng runner phù hợp và ghi bằng chứng riêng.
+- Assertion trên Apidog chỉ kiểm tra phần quan sát được qua HTTP/JSON/cookie. Một lần chạy HTTP xanh không đủ đánh Passed toàn bộ case nếu hậu điều kiện DB hoặc bước song song chưa được xác minh.

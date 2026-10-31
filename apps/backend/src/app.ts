@@ -6,12 +6,16 @@ import morgan from "morgan";
 import { logger } from "./config/logger.js";
 import routes from "./routes/index.js";
 import { errorHandler, notFound } from "./middlewares/error.middleware.js";
+import cookieParser from "cookie-parser";
 
 export const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*'
+  origin: process.env.CLIENT_URL || '*',
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 
@@ -33,6 +37,7 @@ app.use(
   }),
 );
 
+app.use(cookieParser());
 app.use(routes);
 app.use(notFound);
 app.use(errorHandler);

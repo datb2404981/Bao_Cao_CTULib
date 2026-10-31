@@ -163,6 +163,12 @@ paths:
                 status: error
                 message: Sai thông tin đăng nhập
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
         '403':
           description: Origin không hợp lệ hoặc tài khoản bị khóa
           content:
@@ -173,6 +179,12 @@ paths:
                 status: error
                 message: Origin không hợp lệ hoặc tài khoản bị khóa
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
         '503':
           description: Dịch vụ xác thực tạm thời không khả dụng
           content:
@@ -183,6 +195,12 @@ paths:
                 status: error
                 message: Dịch vụ xác thực tạm thời không khả dụng
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
       operationId: login
       security: []
       parameters:
@@ -193,6 +211,7 @@ paths:
           type: string
           format: uri
         description: Phải khớp CLIENT_URL; thiếu/null/khác trả 403. Apidog dùng {{clientOrigin}}.
+      x-apidog-status: designing
   "/auth/logout":
     post:
       summary: Đăng xuất khỏi hệ thống
@@ -236,6 +255,12 @@ paths:
                 status: error
                 message: Origin không hợp lệ
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
         '503':
           description: Dịch vụ xác thực tạm thời không khả dụng
           content:
@@ -246,6 +271,12 @@ paths:
                 status: error
                 message: Dịch vụ xác thực tạm thời không khả dụng
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
         '400':
           description: Dữ liệu không hợp lệ
           content:
@@ -256,6 +287,12 @@ paths:
                 status: error
                 message: Dữ liệu không hợp lệ
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
       operationId: logout
       parameters:
       - in: header
@@ -274,6 +311,7 @@ paths:
               type: object
               additionalProperties: false
             example: {}
+      x-apidog-status: designing
   "/auth/refresh":
     post:
       summary: Làm mới access token và rotate refresh token
@@ -341,6 +379,12 @@ paths:
                 status: error
                 message: Dữ liệu không hợp lệ
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
         '401':
           description: Phiên đăng nhập không hợp lệ hoặc đã hết hạn
           content:
@@ -373,6 +417,17 @@ paths:
                 status: error
                 message: Origin không hợp lệ hoặc tài khoản bị khóa
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+            Set-Cookie:
+              description: Chỉ xóa cookie khi account LOCKED; lỗi Origin không thay
+                cookie.
+              schema:
+                type: string
         '503':
           description: Dịch vụ xác thực tạm thời không khả dụng
           content:
@@ -383,6 +438,13 @@ paths:
                 status: error
                 message: Dịch vụ xác thực tạm thời không khả dụng
                 data: 
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+      x-apidog-status: designing
   /books:
     get:
       summary: Lấy danh sách ấn phẩm (Có phân trang & lọc)
