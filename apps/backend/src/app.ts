@@ -11,8 +11,12 @@ import cookieParser from "cookie-parser";
 export const app = express();
 
 app.use(helmet());
+const clientOrigin = process.env.CLIENT_URL;
+if (!clientOrigin || clientOrigin === "*") {
+  throw new Error("CLIENT_URL phải là origin cụ thể");
+}
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: clientOrigin,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]

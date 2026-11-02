@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import jwt, { SignOptions } from "jsonwebtoken";
-import { token } from "morgan";
+import jwt from "jsonwebtoken";
+import { AppError } from "./app-error.js";
 
 export interface TokenPayload {
   accountId: string;
@@ -13,30 +13,70 @@ export interface AuthToken {
   refreshToken: string;
 }
 
-const ACCESS_TOKEN_SECRET_KEY: string = process.env.ACCESS_TOKEN_SECRET_KEY as string;
-const REFRESH_TOKEN_SECRET_KEY: string = process.env.REFRESH_TOKEN_SECRET_KEY as string;
-const ACCESS_TOKEN_EXPIRY: string = process.env.ACCESS_TOKEN_EXPIRY as string;
-const REFRESH_TOKEN_EXPIRY: string = process.env.REFRESH_TOKEN_EXPIRY as string;
+export const ACCESS_TOKEN_SECONDS = 900;
+export const SESSION_SECONDS = 7 * 24 * 60 * 60;
 
-export const genarateTokens = (payload: TokenPayload): AuthToken => {
-  const accessToken = jwt.sign(payload, ACCESS_TOKEN_SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRY } as SignOptions);
+const getAccessSecret = (): string => {
+  const secret = process.env.ACCESS_TOKEN_SECRET_KEY;
+  if (!secret) throw new AppError("Dịch vụ xác thực tạm thời không khả dụng", 503);
+  return secret;
+};
 
-  const refreshToken =  jwt.sign(payload, REFRESH_TOKEN_SECRET_KEY, { expiresIn: REFRESH_TOKEN_EXPIRY } as SignOptions);
+export const generateAccessToken = (payload: TokenPayload): string => {
+  return jwt.sign(payload, getAccessSecret(), {
+    algorithm: "HS256",
+    expiresIn: ACCESS_TOKEN_SECONDS,
+    subject: payload.accountId,
+    issuer: "ctulib-api",
+    audience: "ctulib-web",
+    jwtid: crypto.randomUUID(),
+  });
+};
 
-  return {
-    accessToken,
-    refreshToken
-  };
+export const generateRefreshToken = (): string => {
+  return crypto.randomBytes(32).toString("base64url");
 };
 
 export const hashToken = (token: string): string => {
-  return crypto.createHash('sha256').update(token).digest('hex');
-}
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+export const verifyToken = (value: string): TokenPayload => {
+  try {
+    const decoded = jwt.verify(value, getAccessSecret(), {
+      algorithms: ["HS256"],
+      issuer: "ctulib-api",
+      audience: "ctulib-web",
+    });
 
-export const verifyToken = (token: string): TokenPayload => {
-  return jwt.verify(token, ACCESS_TOKEN_SECRET_KEY) as TokenPayload;
+    if (
+      typeof decoded === "string" ||
+      typeof decoded.sub !== "string" ||
+      decoded.accountId !== decoded.sub ||
+      typeof decoded.ctuIdentifier !== "string" ||
+      !["READER", "EMPLOYEE", "ADMIN"].includes(decoded.role)
+    ) {
+      throw new AppError("Access token không hợp lệ", 401);
+    }
+
+    return {
+      accountId: decoded.sub,
+      ctuIdentifier: decoded.ctuIdentifier,
+      role: decoded.role,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new AppError("Access token không hợp lệ hoặc đã hết hạn", 401);
+    }
+
+    // Lỗi cấu hình hoặc lỗi hệ thống vẫn để middleware xử lý 500.
+    throw error;
+  }
 };
 
-export const verifyRefreshToken = (token: string): TokenPayload => {
-  return jwt.verify(token, REFRESH_TOKEN_SECRET_KEY) as TokenPayload;
+export const isRefreshToken = (value: unknown): value is string => {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{43}$/.test(value);
 };

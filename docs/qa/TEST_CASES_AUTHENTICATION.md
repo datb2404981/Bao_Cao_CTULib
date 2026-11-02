@@ -4,10 +4,13 @@
 - **Tiêu chuẩn áp dụng**: ISTQB Certified Tester Foundation Level (CTFL v4.0)
 - **Phương pháp tiếp cận**: Shift-Left, Contract-First Testing, Risk-based Testing
 - **Tài liệu cơ sở (Test Basis)**: Đặc tả OpenAPI 3.0.3 / 3.1.0 (`CTULib API` - Apidog Project ID: `1405851`)
-- **Ngày cập nhật**: 30/10/2026
+- **Ngày cập nhật**: 31/10/2026
 - **Trạng thái**: Thiết kế cập nhật, chưa thực thi; không xác nhận backend đã triển khai. Bộ tài liệu phiên bản v3.0 (Access JWT + refresh token có quản lý phiên)
 
 ---
+
+
+> **Bộ login đang chạy:** suite `7295` gồm 15 case theo backend hiện tại (access JWT 1800 giây, refresh JWT, cookie Lax/Path=/, 7 ngày). Suite `7296` giữ 8 yêu cầu v3/DB/fault/browser ở trạng thái chờ. Các mục v3 bên dưới là test basis thiết kế; xem `LOGIN_CURRENT_CONTRACT.md` cho oracle đang chạy, không áp nguyên bộ v3 vào login hiện tại.
 
 ## 0. Hợp đồng xác thực v3 — quyết định thiết kế mới
 
@@ -66,10 +69,7 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
 | Mã phát hiện (Finding ID) | Vị trí đặc tả | Vấn đề phát hiện trong tài liệu hợp đồng | Rủi ro phát sinh | Đề xuất xử lý / Tiêu chuẩn kiểm thử |
 | :--- | :--- | :--- | :--- | :--- |
 | **ST-AUTH-01** | Login / refresh / logout | Thay JWT đơn bằng access JWT + refresh token có rotation. | Token cũ có thể bị phát lại; logout không tự vô hiệu access JWT. | Áp dụng hợp đồng v3 bên dưới; kiểm tra DB, cookie và replay theo từng phiên. |
-| **ST-AUTH-02** | `RegisterRequest` | Schema OpenAPI thiếu `additionalProperties: false`, chưa khóa trường lạ. | Nguy cơ **Mass Assignment**: Hacker tiêm `"role": "ADMIN"` lúc đăng ký để leo thang đặc quyền. | Bổ sung `TC-REG-013` kiểm tra chống leo thang đặc quyền lúc đăng ký. |
-| **ST-AUTH-03** | Apidog `_auth_register.json` | Example trường `phoneNumber: 901234567` (kiểu `number`, mất số 0), trong khi schema là `type: string`. | Lệch kiểu dữ liệu giữa mock example và schema validator. | Bắt buộc client gửi chuỗi định dạng số di động có số 0 ở đầu (`"0901234567"`). |
-| **ST-AUTH-04** | `POST /auth/register` (400) | Response `400` chỉ khai báo `ValidationErrorResponse` (data dạng mảng `[{field, message}]`). Chưa quy định rõ lỗi trùng dữ liệu (Unique constraint). | Trùng `ctuIdentifier`/`email` sẽ trả về `ValidationErrorResponse` hay `ErrorResponse` (hoặc chuẩn RESTful `409 Conflict`)? | Kiểm tra tính nhất quán: Bắt buộc trả về đúng cấu trúc JSON thông báo trường bị trùng lặp, không được trả về `500`. |
-| **ST-AUTH-05** | `dateOfBirth` | Ràng buộc *"trước ngày hiện tại"* phụ thuộc vào múi giờ (Timezone). | Chênh lệch giữa server UTC và client `+07:00` (Việt Nam) lúc nửa đêm có thể gây lỗi xác thực sai lệch. | Kiểm tra dynamic boundary tính theo múi giờ hệ thống `+07:00`. |
+| **ST-AUTH-02** | `RegisterRequest` | Hợp đồng đăng ký tối giản dùng `additionalProperties: false`, chỉ nhận ba trường tài khoản. | Nguy cơ **Mass Assignment**: Hacker tiêm `"role": "ADMIN"` lúc đăng ký để leo thang đặc quyền. | Đã chốt additionalProperties=false; TC-REG-013 phải trả 400. |
 
 ---
 
@@ -77,13 +77,13 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
 
 | Mã ĐK | Endpoint | Kỹ thuật ISTQB | Mục tiêu điều kiện kiểm thử |
 | :--- | :--- | :--- | :--- |
-| **COND-REG-01** | `POST /auth/register` | Use Case / Happy Path | Đăng ký thành công (đủ trường hoặc chỉ trường bắt buộc). |
+| **COND-REG-01** | `POST /auth/register` | Use Case / Happy Path | Đăng ký thành công chỉ với ba trường tài khoản, không cần profile. |
 | **COND-REG-02** | `POST /auth/register` | Equivalence Partitioning (EP) | Bắt lỗi thiếu từng trường bắt buộc theo schema. |
 | **COND-REG-03** | `POST /auth/register` | EP / BVA | Xác thực định dạng và độ dài của `ctuIdentifier` (MSSV/MSCB). |
 | **COND-REG-04** | `POST /auth/register` | EP / BVA | Xác thực định dạng email hợp lệ / không hợp lệ theo RFC 5322. |
 | **COND-REG-05** | `POST /auth/register` | EP / BVA | Xác thực độ mạnh và độ dài mật khẩu `password`. |
-| **COND-REG-06** | `POST /auth/register` | EP / BVA | Xác thực định dạng số điện thoại `phoneNumber`. |
-| **COND-REG-07** | `POST /auth/register` | BVA (Timezone aware) | Kiểm tra ngày sinh `dateOfBirth` trước ngày hiện tại (múi giờ +07:00). |
+| **COND-REG-06** | `POST /auth/register` | EP / BVA | Từ chối trường phoneNumber ngoài hợp đồng đăng ký (không kiểm tra định dạng profile). |
+| **COND-REG-07** | `POST /auth/register` | BVA (Timezone aware) | Từ chối trường dateOfBirth ngoài hợp đồng đăng ký (không kiểm tra ngày sinh profile). |
 | **COND-REG-08** | `POST /auth/register` | Decision Table / Conflict | Xử lý trùng lặp `ctuIdentifier` hoặc `email`. |
 | **COND-REG-09** | `POST /auth/register` | Security / Mass Assignment | Ngăn chặn leo thang quyền hạn bằng cách tiêm `"role": "ADMIN"`. |
 | **COND-REG-10** | `POST /auth/register` | Concurrency / Race Condition | Hai request đăng ký cùng MSSV đồng thời không làm crash server (không lỗi 500). |
@@ -107,189 +107,473 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
 
 > **Nguyên tắc thiết kế ISTQB**: Mỗi ca kiểm thử dưới đây là **nguyên tử (Atomic)**: 1 dữ liệu đầu vào $\rightarrow$ 1 luồng thực thi $\rightarrow$ 1 kết quả mong đợi duy nhất. Không gộp chung luồng Pass và Fail.
 
-### PHẦN I: `POST /auth/register` (ĐĂNG KÝ TÀI KHOẢN ĐỘC GIẢ)
+### PHẦN I: `POST /auth/register` — đăng ký tối giản
 
-#### TC-REG-001: Đăng ký thành công với đầy đủ thông tin hợp lệ
-- **ID**: `TC-REG-001`
-- **Mục tiêu**: Đăng ký thành công tài khoản mới với tất cả các trường hợp lệ (bắt buộc + tùy chọn).
-- **Kỹ thuật**: Use Case Testing | **Priority**: High | **Risk**: High
-- **Tiền điều kiện**: `ctuIdentifier` "B2404981" và `email` "datb2404981@student.ctu.edu.vn" chưa tồn tại. Mã khoa `64f1b2c3e4b0a1a2b3c4d5e7` tồn tại trong hệ thống.
-- **Payload kiểm thử**:
-  ```json
-  {
-    "ctuIdentifier": "B2404981",
-    "email": "datb2404981@student.ctu.edu.vn",
-    "password": "StrongPassword123!",
-    "fullName": "Nguyễn Văn Đạt",
-    "phoneNumber": "0901234567",
-    "dateOfBirth": "2004-05-15",
-    "address": "Khu II, ĐH Cần Thơ",
-    "facultyId": "64f1b2c3e4b0a1a2b3c4d5e7"
-  }
-  ```
-- **Kết quả mong đợi**:
-  - HTTP `201 Created`
-  - Body:
-    ```json
-    {
-      "status": "success",
-      "message": "Đăng ký thành công",
-      "data": null
-    }
-    ```
-  - **Hậu điều kiện**: Bản ghi độc giả được lưu vào DB với vai trò mặc định `READER`, mật khẩu được băm an toàn (`bcrypt`), không lưu plain-text.
+**Đăng ký cấp token ngay:** HTTP 201, message `Đăng ký tài khoản thành công, trả về Token và Thông tin user`, `data: {token, tokenType: "Bearer", expiresIn: 1800, user: {accountId, ctuIdentifier, email, role}}`. Không còn data=null cho đăng ký thành công. Refresh token chỉ qua cookie HttpOnly; không trả password/passwordHash/tokenHash trong JSON. Đây là cập nhật riêng cho register theo controller hiện tại; hợp đồng login/refresh v3 không tự thay đổi theo.
 
----
+**Dữ liệu động trên Apidog:** mỗi request tự sinh `caseIdentifier` dạng `B` + 7 chữ số (8 ký tự) và `caseEmail` hợp lệ; chỉ thay các trường hợp lệ, giữ dữ liệu cố ý sai/thiếu của từng ca. Script nguồn: `docs/qa/apidog/register-data.pre-request.js`. Không đổi thông tin login fixture ngẫu nhiên. Hai ca 009/010 tự tạo account seed bằng cùng endpoint (cần HTTP 201), rồi chỉ lặp đúng MSSV hoặc email; seed lỗi làm ca thất bại. Chỉ chạy trên DB test: seed tạo account thật và không tự dọn dữ liệu. Mã số có không gian hữu hạn nên random không bảo đảm duy nhất tuyệt đối với DB; nếu ca thành công gặp 409 thật, kiểm tra xung đột rồi chạy lại trên dữ liệu test sạch.
 
-#### TC-REG-002: Đăng ký thành công chỉ với các trường bắt buộc (Không gửi optional fields)
-- **ID**: `TC-REG-002`
-- **Mục tiêu**: Xác nhận hệ thống chấp nhận đăng ký khi không gửi `dateOfBirth`, `address`, `facultyId`.
-- **Kỹ thuật**: Boundary Value Analysis | **Priority**: High | **Risk**: Medium
-- **Tiền điều kiện**: `ctuIdentifier` "B2404982" và `email` "mai.b2404982@student.ctu.edu.vn" chưa tồn tại.
-- **Payload kiểm thử**:
-  ```json
-  {
-    "ctuIdentifier": "B2404982",
-    "email": "mai.b2404982@student.ctu.edu.vn",
-    "password": "StrongPassword123!",
-    "fullName": "Trần Thị Mai",
-    "phoneNumber": "0912345678"
-  }
-  ```
-- **Kết quả mong đợi**: HTTP `201 Created`, `status: "success"`.
+Chốt ngày 31/10/2026: chỉ nhận ba trường bắt buộc `ctuIdentifier`, `email`, `password`. Account mặc định `role: READER`, `isActive: true`; mật khẩu được băm. Thông tin cá nhân cập nhật qua profile sau đăng ký, không thuộc payload đăng ký. Schema strict: trường ngoài hợp đồng trả 400.
 
----
+Giữ mã case và Apidog ID để bảo toàn tham chiếu; các mã 003D/E, 007, 008, 011, 012A đã đổi mục tiêu. Tất cả Not Run. Dùng DB test cô lập; dữ liệu hợp lệ phải chưa tồn tại, trừ case trùng dữ liệu. Mỗi case: gửi một POST với payload bên dưới; kiểm tra HTTP, status, message và data. Case 201 phải kiểm tra thêm DB: account có mật khẩu băm, role READER, isActive true; case lỗi không tạo account. Các hậu điều kiện DB cần runner/quan sát riêng.
 
-#### TC-REG-003: Bắt lỗi validation khi thiếu từng trường bắt buộc
-- **Nhóm ca kiểm thử**: `TC-REG-003A` đến `TC-REG-003E`
-- **Kỹ thuật**: Equivalence Partitioning (Negative) | **Priority**: High | **Risk**: High
-- **Bảng ca kiểm thử nguyên tử**:
+#### TC-REG-001: Đăng ký thành công với đúng ba trường tài khoản
+- **Apidog ID**: `62448339`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-01.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 201; status=success; message=Đăng ký tài khoản thành công, trả về Token và Thông tin user; data là object có access token, tokenType=Bearer, expiresIn=1800 và user/account.
 
-| Test Case ID | Trường bị thiếu trong Payload | Kết quả mong đợi (HTTP & Schema) |
-| :--- | :--- | :--- |
-| **TC-REG-003A** | Thiếu `ctuIdentifier` | HTTP `400 Bad Request`, `data` chứa item có `field: "ctuIdentifier"` |
-| **TC-REG-003B** | Thiếu `email` | HTTP `400 Bad Request`, `data` chứa item có `field: "email"` |
-| **TC-REG-003C** | Thiếu `password` | HTTP `400 Bad Request`, `data` chứa item có `field: "password"` |
-| **TC-REG-003D** | Thiếu `fullName` | HTTP `400 Bad Request`, `data` chứa item có `field: "fullName"` |
-| **TC-REG-003E** | Thiếu `phoneNumber` | HTTP `400 Bad Request`, `data` chứa item có `field: "phoneNumber"` |
+#### TC-REG-002: Đăng ký không cần thông tin profile
+- **Apidog ID**: `62448340`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-01.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 201; status=success; message=Đăng ký tài khoản thành công, trả về Token và Thông tin user; data là object có access token, tokenType=Bearer, expiresIn=1800 và user/account.
 
----
+#### TC-REG-003A: Bắt lỗi validation khi thiếu ctuIdentifier
+- **Apidog ID**: `62448341`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "email": "{{caseEmail}}",
+  "password": "Pass123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=ctuIdentifier.
 
-#### TC-REG-004: Xác thực định dạng mã định danh `ctuIdentifier` theo chuẩn CTU
-- **Nhóm ca kiểm thử nguyên tử**:
-  - **TC-REG-004A (Rỗng hoặc khoảng trắng)**: Gửi `"ctuIdentifier": "    "` $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-004B (Sai định dạng CTU)**: Gửi `"ctuIdentifier": "K123456"` (không bắt đầu bằng B hoặc CB) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-004C (Sai độ dài MSSV)**: Gửi `"ctuIdentifier": "B240498"` (chỉ có 6 số thay vì 7 số) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-004D (Hợp lệ chuẩn CTU)**: Gửi `"ctuIdentifier": "B2404981"` $\rightarrow$ HTTP `201 Created`.
+#### TC-REG-003B: Bắt lỗi validation khi thiếu email
+- **Apidog ID**: `62448342`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "password": "Pass123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=email.
 
----
+#### TC-REG-003C: Bắt lỗi validation khi thiếu password
+- **Apidog ID**: `62448343`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=password.
 
-#### TC-REG-005: Từ chối đăng ký khi email sai định dạng RFC 5322
-- **Nhóm ca kiểm thử nguyên tử**:
-  - **TC-REG-005A**: Gửi email thiếu ký tự `@` (`"datb2404981student.ctu.edu.vn"`) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-005B**: Gửi email thiếu domain (`"datb2404981@"`) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-005C**: Gửi email thiếu username (`"@student.ctu.edu.vn"`) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-005D**: Gửi email chứa khoảng trắng (`"dat b2404981@student.ctu.edu.vn"`) $\rightarrow$ HTTP `400 Bad Request`.
-- **Kết quả mong đợi chung**: HTTP `400 Bad Request`, `field: "email"`, thông báo "Email không đúng định dạng".
+#### TC-REG-003D: Từ chối ctuIdentifier kiểu object
+- **Apidog ID**: `62448344`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": {
+    "$ne": null
+  },
+  "email": "{{caseEmail}}",
+  "password": "Pass123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=ctuIdentifier.
 
----
+#### TC-REG-003E: Từ chối email kiểu number
+- **Apidog ID**: `62448345`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": 123,
+  "password": "Pass123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=email.
 
-#### TC-REG-006: Kiểm tra chính sách độ an toàn mật khẩu (Password Policy)
-- **Nhóm ca kiểm thử nguyên tử**:
-  - **TC-REG-006A (Biên dưới không hợp lệ)**: Gửi mật khẩu rỗng `""` $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-006B (Dưới ngưỡng biên 8 ký tự)**: Gửi mật khẩu độ dài 7 ký tự (`"1234567"`) $\rightarrow$ HTTP `400 Bad Request` (Chính sách: Mật khẩu tối thiểu 8 ký tự).
-  - **TC-REG-006C (Tại điểm biên hợp lệ)**: Gửi mật khẩu đúng 8 ký tự (`"12345678"`) $\rightarrow$ HTTP `201 Created` (Không bắt buộc ký tự đặc biệt).
-  - **TC-REG-006D (Biên trên hợp lệ)**: Gửi mật khẩu độ dài 128 ký tự $\rightarrow$ HTTP `201 Created`.
+#### TC-REG-004A: Từ chối ctuIdentifier là chuỗi rỗng hoặc toàn khoảng trắng
+- **Apidog ID**: `62448346`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "    ",
+  "email": "{{caseEmail}}",
+  "password": "Pass123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=ctuIdentifier.
 
----
+#### TC-REG-004B: Từ chối ctuIdentifier sai chuẩn định dạng Đại học Cần Thơ
+- **Apidog ID**: `62448347`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "K123456",
+  "email": "{{caseEmail}}",
+  "password": "Pass123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=ctuIdentifier.
 
-#### TC-REG-007: Xác thực số điện thoại di động Việt Nam (`phoneNumber`)
-- **Nhóm ca kiểm thử nguyên tử**:
-  - **TC-REG-007A (Thiếu chữ số)**: Gửi `"phoneNumber": "090123456"` (9 số) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-007B (Thừa chữ số)**: Gửi `"phoneNumber": "090123456789"` (12 số) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-007C (Chứa chữ cái)**: Gửi `"phoneNumber": "0901234abc"` $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-007D (Đầu số chuẩn 10 số hợp lệ)**: Gửi `"phoneNumber": "0901234567"` $\rightarrow$ HTTP `201 Created`.
+#### TC-REG-005A: Từ chối email thiếu ký tự @
+- **Apidog ID**: `62448348`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "invalidemail.ctu.edu.vn",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=email.
 
----
+#### TC-REG-006A: Từ chối mật khẩu rỗng
+- **Apidog ID**: `62448349`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": ""
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=password.
 
-#### TC-REG-008: Kiểm tra quy tắc ngày sinh `dateOfBirth` theo múi giờ (+07:00)
-- **Nhóm ca kiểm thử nguyên tử**:
-  - **TC-REG-008A (Ngày tương lai)**: Gửi `dateOfBirth` lớn hơn ngày hiện tại $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-008B (Ngày hiện tại - Boundary)**: Gửi `dateOfBirth` bằng chính ngày hôm nay (tính theo giờ VN +07:00) $\rightarrow$ HTTP `400 Bad Request` (Đặc tả: *"phải trước ngày hiện tại"*).
-  - **TC-REG-008C (Ngày hôm qua - Boundary hợp lệ)**: Gửi `dateOfBirth` là ngày hôm qua $\rightarrow$ Hợp lệ về mặt kỹ thuật trường date.
-  - **TC-REG-008D (Sai định dạng ISO)**: Gửi `dateOfBirth: "15/05/2004"` (định dạng DD/MM/YYYY) $\rightarrow$ HTTP `400 Bad Request`.
-  - **TC-REG-008E (Ngày không tồn tại)**: Gửi `dateOfBirth: "2023-02-29"` (năm không nhuận) $\rightarrow$ HTTP `400 Bad Request`.
+#### TC-REG-006B: Từ chối mật khẩu dưới ngưỡng biên 8 ký tự (7 ký tự)
+- **Apidog ID**: `62448350`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "1234567"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=password.
 
----
+#### TC-REG-006C: Chấp nhận mật khẩu đúng 8 ký tự (Tại điểm biên hợp lệ)
+- **Apidog ID**: `62448351`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-01.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "password"
+}
+```
+- **Kết quả mong đợi**: HTTP 201; status=success; message=Đăng ký tài khoản thành công, trả về Token và Thông tin user; data là object có access token, tokenType=Bearer, expiresIn=1800 và user/account.
 
-#### TC-REG-009: Đăng ký thất bại do trùng lặp `ctuIdentifier` (HTTP 409 Conflict)
-- **ID**: `TC-REG-009`
-- **Mục tiêu**: Kiểm tra tính duy nhất (Uniqueness) của mã định danh trường.
-- **Tiền điều kiện**: Tài khoản `ctuIdentifier: "B2404981"` đã tồn tại trong DB.
-- **Payload**: Gửi payload đăng ký với `ctuIdentifier: "B2404981"` và email mới chưa dùng.
-- **Kết quả mong đợi**:
-  - HTTP `409 Conflict` (Chuẩn RESTful về xung đột tài nguyên đã tồn tại)
-  - Body trả về cấu trúc lỗi rõ ràng: thông báo trùng lặp tại trường `ctuIdentifier`.
-  - Không tạo thêm tài khoản mới trong cơ sở dữ liệu.
+#### TC-REG-007A: Từ chối trường profile phoneNumber (A)
+- **Apidog ID**: `62448352`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "phoneNumber": "090123456"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=phoneNumber.
 
----
+#### TC-REG-008A: Từ chối trường profile dateOfBirth (A)
+- **Apidog ID**: `62448353`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "dateOfBirth": "2099-01-01"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=dateOfBirth.
 
-#### TC-REG-010: Đăng ký thất bại do trùng lặp `email` (HTTP 409 Conflict)
-- **ID**: `TC-REG-010`
-- **Mục tiêu**: Kiểm tra tính duy nhất của email người dùng.
-- **Tiền điều kiện**: Email `reader@example.com` đã được liên kết với một tài khoản độc giả khác.
-- **Payload**: Gửi `ctuIdentifier` mới nhưng `email: "reader@example.com"`.
-- **Kết quả mong đợi**: HTTP `409 Conflict`, thông báo lỗi email đã được sử dụng.
+#### TC-REG-009: Đăng ký thất bại do trùng lặp ctuIdentifier (HTTP 409 Conflict)
+- **Apidog ID**: `62448354`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-08.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{duplicateIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 409; status=error; message không rỗng; không lộ E11000; chuẩn bị sẵn account trùng đúng trường, trường còn lại không trùng.
 
----
+#### TC-REG-010: Đăng ký thất bại do trùng lặp email (HTTP 409 Conflict)
+- **Apidog ID**: `62448355`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-08.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{duplicateEmail}}",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 409; status=error; message không rỗng; không lộ E11000; chuẩn bị sẵn account trùng đúng trường, trường còn lại không trùng.
 
-#### TC-REG-011: Đăng ký thất bại khi `facultyId` không tồn tại
-- **ID**: `TC-REG-011`
-- **Mục tiêu**: Xác thực tính toàn vẹn khóa ngoại tham chiếu đến bảng Khoa/Viện.
-- **Payload**: `"facultyId": "000000000000000000000000"` (Cú pháp ObjectId hợp lệ nhưng không có trong DB).
-- **Kết quả mong đợi**: HTTP `400 Bad Request`, thông báo mã khoa không tồn tại.
+#### TC-REG-013: Từ chối tự gán role ADMIN khi đăng ký
+- **Apidog ID**: `62448356`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "role": "ADMIN"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=role.
 
----
+#### TC-REG-004C: Từ chối MSSV sai độ dài 6 chữ số
+- **Apidog ID**: `62491179`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "B240498",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=ctuIdentifier.
 
-#### TC-REG-012: Kiểm tra chống tấn công XSS và Injection trong form đăng ký
-- **Nhóm ca kiểm thử nguyên tử**:
-  - **TC-REG-012A (Stored XSS)**: Gửi `fullName: "<script>alert('xss')</script> Nguyễn Văn An"` $\rightarrow$ Backend phải sanitize mã độc hoặc encode HTML entities khi lưu trữ; không làm hỏng phản hồi JSON.
-  - **TC-REG-012B (SQL/NoSQL Injection)**: Gửi `ctuIdentifier: "B2404981' OR '1'='1"` $\rightarrow$ Hệ thống xử lý an toàn dưới dạng chuỗi thuần túy, không gây lỗi cú pháp DB.
+#### TC-REG-004D: Chấp nhận MSSV đúng định dạng CTU
+- **Apidog ID**: `62491236`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-01.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 201; status=success; message=Đăng ký tài khoản thành công, trả về Token và Thông tin user; data là object có access token, tokenType=Bearer, expiresIn=1800 và user/account.
 
----
+#### TC-REG-005B: Từ chối email thiếu domain
+- **Apidog ID**: `62491237`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "user@",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=email.
 
-#### TC-REG-013: Phòng thủ tấn công leo thang quyền hạn (Mass Assignment Defense)
-- **ID**: `TC-REG-013`
-- **Mục tiêu**: Đảm bảo khách vãng lai không thể tự cấp quyền `ADMIN` hoặc thay đổi trạng thái khi đăng ký.
-- **Kỹ thuật**: Security / Adversarial Testing | **Priority**: Critical | **Risk**: Critical
-- **Payload kiểm thử**:
-  ```json
-  {
-    "ctuIdentifier": "B2404990",
-    "email": "hacker@student.ctu.edu.vn",
-    "password": "StrongPassword123!",
-    "fullName": "Kẻ Tấn Công",
-    "phoneNumber": "0909999999",
-    "role": "ADMIN",
-    "status": "ACTIVE",
-    "permissions": ["MANAGE_BOOKS", "SUPER_ADMIN"]
-  }
-  ```
-- **Kết quả mong đợi**:
-  - Cách 1 (Khuyến nghị): HTTP `400 Bad Request` nếu backend cấu hình strict schema (`additionalProperties: false`).
-  - Cách 2: HTTP `201 Created` NHƯNG trong cơ sở dữ liệu, tài khoản mới tạo **bắt buộc chỉ có `role: "READER"`**, các trường `role`, `status`, `permissions` bị filter bỏ hoàn toàn.
+#### TC-REG-005C: Từ chối email thiếu username
+- **Apidog ID**: `62491238`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "@student.ctu.edu.vn",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=email.
 
----
+#### TC-REG-005D: Từ chối email chứa khoảng trắng
+- **Apidog ID**: `62491239`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "dat b2404981@student.ctu.edu.vn",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=email.
 
-#### TC-REG-014: Kiểm tra Race Condition khi gửi đồng thời 2 request đăng ký cùng MSSV
-- **ID**: `TC-REG-014`
-- **Mục tiêu**: Kiểm tra tính bất biến (Concurrency Integrity) khi có 2 request đăng ký cùng `ctuIdentifier: "B2404991"` trong cùng 1 mili-giây.
-- **Kỹ thuật**: Concurrency / Non-functional Testing | **Priority**: High | **Risk**: High
-- **Hành động**: Dùng kịch bản tự động bắn 2 request đồng thời.
-- **Kết quả mong đợi**:
-  - Chính xác 1 request thành công (`201 Created`).
-  - Request còn lại nhận về HTTP `409 Conflict`.
-  - **Tuyệt đối không được xảy ra mã lỗi `500 Internal Server Error`** do unhandled Mongo `E11000 duplicate key error`.
+#### TC-REG-006D: Chấp nhận mật khẩu dài 128 ký tự
+- **Apidog ID**: `62491240`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-01.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+}
+```
+- **Kết quả mong đợi**: HTTP 201; status=success; message=Đăng ký tài khoản thành công, trả về Token và Thông tin user; data là object có access token, tokenType=Bearer, expiresIn=1800 và user/account.
+
+#### TC-REG-007B: Từ chối trường profile phoneNumber (B)
+- **Apidog ID**: `62491241`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "phoneNumber": "090123456789"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=phoneNumber.
+
+#### TC-REG-007C: Từ chối trường profile phoneNumber (C)
+- **Apidog ID**: `62491242`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "phoneNumber": "0901234abc"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=phoneNumber.
+
+#### TC-REG-007D: Từ chối trường profile phoneNumber (D)
+- **Apidog ID**: `62491243`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "phoneNumber": "0901234567"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=phoneNumber.
+
+#### TC-REG-008B: Từ chối trường profile dateOfBirth (B)
+- **Apidog ID**: `62491244`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "dateOfBirth": "2004-05-15"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=dateOfBirth.
+
+#### TC-REG-008C: Từ chối trường profile dateOfBirth (C)
+- **Apidog ID**: `62491245`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "dateOfBirth": "2000-01-01"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=dateOfBirth.
+
+#### TC-REG-008D: Từ chối trường profile dateOfBirth (D)
+- **Apidog ID**: `62491246`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "dateOfBirth": "15/05/2004"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=dateOfBirth.
+
+#### TC-REG-008E: Từ chối trường profile dateOfBirth (E)
+- **Apidog ID**: `62491247`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "dateOfBirth": "2023-02-29"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=dateOfBirth.
+
+#### TC-REG-011: Từ chối trường profile facultyId khi đăng ký
+- **Apidog ID**: `62491248`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "facultyId": "000000000000000000000000"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=facultyId.
+
+#### TC-REG-012A: Từ chối trường fullName chứa script khi đăng ký
+- **Apidog ID**: `62491249`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-09.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "{{caseIdentifier}}",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!",
+  "fullName": "<script>alert('xss')</script> Nguyễn Văn An"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=fullName.
+
+#### TC-REG-012B: Từ chối chuỗi SQL injection ở MSSV
+- **Apidog ID**: `62491250`; **Yêu cầu / điều kiện**: REQ-AUTH-01 / COND-REG-02.
+- **Priority / Risk**: High / High; **Kỹ thuật**: EP / BVA; **Trạng thái**: Not Run.
+- **Payload**:
+```json
+{
+  "ctuIdentifier": "B2404981' OR '1'='1",
+  "email": "{{caseEmail}}",
+  "password": "StrongPassword123!"
+}
+```
+- **Kết quả mong đợi**: HTTP 400; status=error; message không rỗng; data là mảng chứa field=ctuIdentifier.
+
+#### TC-REG-014: Hai request đăng ký cùng MSSV đồng thời
+- REQ-AUTH-01 / COND-REG-10; High / High; Concurrency; Not Run.
+- Chuẩn bị MSSV chưa tồn tại và hai email khác nhau chưa tồn tại; mỗi body chỉ có ctuIdentifier, email, password hợp lệ. Gửi đồng thời hai POST cùng MSSV.
+- Đúng một 201 và một 409, không 500; DB chỉ có một account cho MSSV. Cần runner song song và bằng chứng DB.
 
 ---
 
@@ -325,7 +609,7 @@ Trước khi thực thi kiểm thử động (Dynamic Testing), theo nguyên lý
   - `data.token`: Access JWT hợp lệ; `data.tokenType: "Bearer"`, `data.expiresIn: 900`.
   - Cookie `refreshToken` được cấp; tạo một phiên mới và lưu bản băm token trong DB. Không trả refresh token trong JSON.
   - Áp dụng đầy đủ hợp đồng v3 ở mục 0; kiểm tra cookie, DB và token như TC-SES-001–006.
-  - `data.user`: Chứa `accountId`, `ctuIdentifier: "B2404981"`, `role: "READER"`, `fullName`.
+  - `data.user`: Chứa `accountId`, `ctuIdentifier: "B2404981"`, `email`, `role: "READER"`, `isActive: true`; không trả password/passwordHash hoặc thông tin profile.
 
 ---
 

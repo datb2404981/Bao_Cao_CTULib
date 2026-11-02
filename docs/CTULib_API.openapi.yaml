@@ -30,7 +30,7 @@ paths:
   /auth/register:
     post:
       summary: Đăng ký tài khoản độc giả mới
-      description: API dành cho Khách vãng lai khởi tạo tài khoản. Không yêu cầu Token.
+      description: Đăng ký ba trường tài khoản và cấp access token cùng account ngay khi thành công. Không yêu cầu token đầu vào; refresh token trả qua cookie HttpOnly.
       tags:
       - Authentication
       requestBody:
@@ -43,19 +43,30 @@ paths:
               ctuIdentifier: B2404981
               email: reader@example.com
               password: StrongPassword123!
-              fullName: Nguyễn Văn An
-              phoneNumber: 0901234567
       responses:
         '201':
-          description: Đăng ký thành công
+          description: Đăng ký thành công và cấp token cùng account
+          headers:
+            Set-Cookie:
+              description: Cookie refreshToken HttpOnly; không trả refresh token trong JSON.
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                "$ref": "#/components/schemas/RegisterSuccessResponse"
               example:
                 status: success
-                message: Đăng ký thành công
-                data: null
+                message: Đăng ký tài khoản thành công, trả về Token và Thông tin user
+                data:
+                  token: example.jwt.token
+                  tokenType: Bearer
+                  expiresIn: 1800
+                  user:
+                    accountId: 64f1b2c3e4b0a1a2b3c4d5ea
+                    ctuIdentifier: B2404981
+                    email: reader@example.com
+                    role: READER
         '400':
           description: Lỗi xác thực dữ liệu (Validation Error) hoặc Trùng lặp
           content:
@@ -73,44 +84,12 @@ paths:
   "/auth/login":
     post:
       summary: Đăng nhập hệ thống
-      description: |+
-        Hợp đồng v3. ### 0.1. Token, cookie và client
-  
-        - Giữ `data.token` để tương thích tên field cũ: đây là **access token**, JWT HS256, thời hạn 900 giây (15 phút). Login trả `data: {token, tokenType: "Bearer", expiresIn: 900, user}`; refresh trả `data: {token, tokenType: "Bearer", expiresIn: 900}`. Không trả refresh token trong JSON.
-        - Access JWT có `sub` (account ID), `role`, `iat`, `exp`, `iss: "ctulib-api"`, `aud: "ctulib-web"`, `jti` duy nhất. Xác thực chữ ký, thuật toán cho phép, issuer, audience và thời hạn; decode đơn thuần không xác minh chữ ký. Tại `now >= exp` phải từ chối. Không đưa password/passwordHash vào JWT.
-        - Refresh token là chuỗi opaque ngẫu nhiên mật mã 32 byte, mã hóa base64url không padding (43 ký tự); chỉ client nhận giá trị gốc qua cookie. Access JWT không thể dùng thay refresh token và ngược lại.
-        - Cookie tên `refreshToken`: `HttpOnly; SameSite=Strict; Path=/api/v1/auth`; không đặt Domain (host-only). Production HTTPS bắt buộc `Secure`; chỉ local HTTP development được bỏ Secure. Cookie login có `Max-Age=604800` giây. Không lưu refresh token vào LocalStorage, sessionStorage, biến JS frontend hoặc log.
-        - Phiên có thời hạn tuyệt đối 7 ngày kể từ login; rotation không kéo dài hạn phiên. Cookie sau refresh có Max-Age bằng số giây còn lại, làm tròn xuống; dưới 1 giây thì từ chối. Frontend giữ access token trong bộ nhớ, gửi `Authorization: Bearer <token>` cho API bảo vệ; gọi refresh sau reload để lấy access mới và chỉ chạy một refresh tại một thời điểm.
-        - Login, refresh và logout trả `Cache-Control: no-store`. Refresh/logout không dùng Bearer access token để xác thực và không nhận refresh token trong body, query hoặc Authorization header.
-        - Web deployment phải cùng site. CORS chỉ cho origin cấu hình trong `CLIENT_URL`, `Access-Control-Allow-Credentials: true`, không dùng wildcard. Trước xử lý login/refresh/logout, bắt buộc header `Origin` khớp origin cấu hình; thiếu, `null` hoặc khác origin trả 403, không thay đổi DB/cookie. Apidog phải gửi Origin hợp lệ. Đây là hợp đồng CSRF mới; test login cũ cần bổ sung header này.
-  
-        ### 0.2. Collection `refresh_tokens`
-  
-        | Field | Kiểu | Quy định |
-        | :--- | :--- | :--- |
-        | `_id` | ObjectId | ID bản ghi token, tự tạo. |
-        | `accountId` | ObjectId | Bắt buộc, tham chiếu Account; index để tra phiên của tài khoản. |
-        | `sessionId` | String | UUID ngẫu nhiên cho một lần login; index, giữ nguyên trong các lần rotation của phiên. |
-        | `tokenHash` | String | SHA-256 dạng hex của refresh token ngẫu nhiên; required, unique index. Không dùng mật khẩu làm token. |
-        | `expiresAt` | Date | Hạn tuyệt đối của phiên, không đổi khi rotate. Kiểm tra trực tiếp mỗi request, không dựa vào TTL đã xóa hay chưa. |
-        | `isRevoked` | Boolean | required, mặc định false; true khi logout, rotation hoặc phát hiện replay. |
-        | `revokedAt` | Date | Thời điểm thu hồi, chỉ có khi đã thu hồi. |
-        | `replacedByTokenId` | ObjectId | Tham chiếu bản ghi token kế tiếp khi rotate; dùng phân biệt token đã dùng với logout. |
-        | `createdAt`, `updatedAt` | Date | Mongoose timestamps. |
-  
-        Giữ bản ghi token đã rotate cho đến `expiresAt` để phát hiện replay; TTL index `{expiresAt: 1}`, `expireAfterSeconds: 0` chỉ dọn dữ liệu. Không lưu access token trong collection này. Không trả tokenHash hoặc thông tin phiên nội bộ ra API.
-  
-        ### 0.3. Endpoint và trạng thái phiên
-  
-        1. `POST /auth/login`: kiểm tra tài khoản/mật khẩu như các test cũ, sau khi qua Origin guard. Mỗi login tạo sessionId riêng. Chỉ trả 200 và Set-Cookie sau khi lưu DB thành công; DB lỗi trả 503, không cấp token/cookie.
-        2. `POST /auth/refresh`: body vắng mặt hoặc `{}`; Origin hợp lệ và cookie `refreshToken` bắt buộc. Body có field lạ/sai kiểu trả 400 trước xử lý token. Hợp lệ → 200, cấp JWT mới và cookie mới, đánh dấu token cũ revoked và liên kết token mới **nguyên tử** (transaction hoặc cơ chế tương đương). Không yêu cầu access token còn hạn.
-        3. Refresh token thiếu, sai định dạng, không tìm thấy, hết hạn hoặc revoked → 401 chung `Phiên đăng nhập không hợp lệ hoặc đã hết hạn`, `data: null`; xóa refresh cookie. Token đã rotate bị dùng lại → 401 và thu hồi mọi token còn hiệu lực cùng sessionId. Không thu hồi phiên khác của cùng tài khoản.
-        4. Hai refresh đồng thời với cùng token: tối đa một request 200; request còn lại 401 và thu hồi phiên do replay. Sau khi cả hai hoàn tất, token mới từ request thắng cũng không thể refresh tiếp. Không chấp nhận hai nhánh token còn hiệu lực, không trả 500. Client phải serialize refresh để tránh tự gây replay.
-        5. Tài khoản bị xóa → refresh 401 và thu hồi phiên; `LOCKED` → refresh 403 `Tài khoản bị khóa`, thu hồi mọi phiên của tài khoản, xóa cookie. Role trong access token mới lấy từ Account hiện tại, không lấy từ dữ liệu client hoặc snapshot cũ.
-        6. `POST /auth/logout`: Origin hợp lệ, body vắng mặt hoặc `{}`; không yêu cầu access JWT. Cookie hợp lệ/đã dùng → thu hồi toàn bộ sessionId, xóa cookie và trả 200 `{status: "success", message: "Đăng xuất thành công", data: null}`. Cookie thiếu, sai, hết hạn, không tồn tại hoặc đã revoked cũng trả cùng 200 (idempotent), không làm lộ phiên. Không thu hồi phiên khác. Cookie xóa dùng cùng Path, HttpOnly, SameSite, Secure production và `Max-Age=0`.
-        7. Logout **không** vô hiệu access JWT đã cấp ngay lập tức: JWT vẫn hợp lệ đến exp (tối đa 15 phút), trừ khi endpoint có kiểm tra trạng thái tài khoản riêng. Không triển khai blacklist trong phạm vi này. Không dùng GET /books công khai để kiểm tra JWT bị từ chối; dùng endpoint thực sự yêu cầu Bearer token.
-        8. Refresh/logout gặp DB lỗi khi cần đọc/ghi phiên → 503 `Dịch vụ xác thực tạm thời không khả dụng`, không cấp token/cookie mới hoặc tuyên bố thu hồi thành công. Transaction rotation phải rollback; token cũ dùng được khi DB phục hồi nếu chưa hết hạn/thu hồi. Frontend chỉ báo logout server thành công khi nhận 200.
-  
+      description: 'Hợp đồng backend hiện tại: HTTP 200, access JWT HS256 1800 giây với
+        accountId/ctuIdentifier/role/iat/exp; refresh JWT qua cookie HttpOnly; SameSite=Lax;
+        Path=/; Max-Age=604800. JSON chỉ chứa access token và account, không yêu cầu fullName/isActive.
+        Chưa yêu cầu iss/aud/jti, opaque refresh, no-store hoặc Origin guard v3 trong
+        suite hiện tại. Các yêu cầu này được giữ ở suite chờ triển khai riêng. CORS/browser
+        đầy đủ cần kiểm thử thủ công riêng.'
       tags:
       - Authentication
       requestBody:
@@ -127,66 +106,53 @@ paths:
           description: Đăng nhập thành công
           headers:
             Set-Cookie:
-              description: refreshToken=<opaque 43 ký tự>; HttpOnly; SameSite=Strict;
-                Path=/api/v1/auth; Max-Age bằng thời gian phiên còn lại; Secure trên
-                HTTPS production; không Domain. Logout/401 xóa bằng Max-Age=0.
+              description: refreshToken=<JWT>; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800;
+                Secure khi production HTTPS.
               schema:
                 type: string
-            Cache-Control:
-              schema:
-                type: string
-                enum:
-                - no-store
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/LoginSuccessResponse"
               example:
                 status: success
-                message: Đăng nhập thành công
+                message: Đăng nhập thành công, trả về Token và Thông tin user
                 data:
                   token: example.jwt.token
                   tokenType: Bearer
-                  expiresIn: 900
+                  expiresIn: 1800
                   user:
                     accountId: 64f1b2c3e4b0a1a2b3c4d5ea
                     ctuIdentifier: B2404981
+                    email: reader@example.com
                     role: READER
-                    fullName: Người dùng kiểm thử
         '400':
           description: Sai thông tin đăng nhập
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/ErrorResponse"
+                oneOf:
+                - "$ref": "#/components/schemas/ErrorResponse"
+                - "$ref": "#/components/schemas/ValidationErrorResponse"
               example:
                 status: error
                 message: Sai thông tin đăng nhập
                 data: 
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                enum:
-                - no-store
+          headers: {}
         '403':
-          description: Origin không hợp lệ hoặc tài khoản bị khóa
+          description: Tài khoản đã bị khóa
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
               example:
                 status: error
-                message: Origin không hợp lệ hoặc tài khoản bị khóa
+                message: Tài khoản đã bị khóa
                 data: 
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                enum:
-                - no-store
+          headers: {}
         '503':
-          description: Dịch vụ xác thực tạm thời không khả dụng
+          description: "[Chờ triển khai/fault fixture] Dịch vụ xác thực tạm thời không
+            khả dụng"
           content:
             application/json:
               schema:
@@ -195,22 +161,18 @@ paths:
                 status: error
                 message: Dịch vụ xác thực tạm thời không khả dụng
                 data: 
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                enum:
-                - no-store
+          headers: {}
       operationId: login
       security: []
       parameters:
       - in: header
         name: Origin
-        required: true
+        required: false
         schema:
           type: string
           format: uri
-        description: Phải khớp CLIENT_URL; thiếu/null/khác trả 403. Apidog dùng {{clientOrigin}}.
+        description: Origin frontend để kiểm tra CORS; backend hiện tại chưa có Origin
+          guard v3.
       x-apidog-status: designing
   "/auth/logout":
     post:
@@ -1099,49 +1061,35 @@ components:
       - ctuIdentifier
       - email
       - password
-      - fullName
-      - phoneNumber
       properties:
         ctuIdentifier:
           type: string
-          example: B2404981
           description: MSSV hoặc MSCB
           minLength: 1
+          examples:
+          - B2404981
+          maxLength: 10
+          pattern: "^(B\\d{7}|CB\\d{5}|ADMIN\\d*)$"
         email:
           type: string
           format: email
-          example: datb2404981@student.ctu.edu.vn
           minLength: 1
+          examples:
+          - datb2404981@student.ctu.edu.vn
         password:
           type: string
           format: password
-          example: StrongPassword123!
           minLength: 1
           writeOnly: true
-        fullName:
-          type: string
-          example: Nguyễn Văn Đạt
-          minLength: 1
-        phoneNumber:
-          type: string
-          example: 0901234567
-          minLength: 1
-        dateOfBirth:
-          type: string
-          format: date
-          example: '2004-01-01'
-          minLength: 1
-          description: Ngày sinh, chỉ gồm ngày; nếu cung cấp phải trước ngày hiện tại. Kiểm tra động tại máy chủ.
-        address:
-          type: string
-          example: Cần Thơ
-          minLength: 1
-        facultyId:
-          type: string
-          example: 64f1b2c3e4b0a1a2b3c4d5e7
-          minLength: 1
-      description: Giữ danh sách trường bắt buộc từ file đầu vào. Email, họ tên và số điện thoại đang khác yêu cầu
-        đăng ký tối thiểu trong bộ UI; cần chốt trước triển khai.
+          examples:
+          - StrongPassword123!
+      description: Đăng ký chỉ nhận ctuIdentifier, email, password; thông tin profile
+        cập nhật riêng. Dữ liệu test được sinh ở pre-request.
+      x-apidog-orders:
+      - ctuIdentifier
+      - email
+      - password
+      additionalProperties: false
     LoginRequest:
       type: object
       required:
@@ -1220,25 +1168,88 @@ components:
       - data
       - message
       description: Phản hồi thao tác chung. data có thể null nếu thao tác không trả tài nguyên.
+    RegisterSuccessResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      - message
+      - data
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+        message:
+          type: string
+          enum:
+          - Đăng ký tài khoản thành công, trả về Token và Thông tin user
+        data:
+          type: object
+          additionalProperties: false
+          required:
+          - token
+          - tokenType
+          - expiresIn
+          - user
+          properties:
+            token:
+              type: string
+              minLength: 1
+              description: Access JWT được cấp ngay sau đăng ký; không phải refresh token.
+            tokenType:
+              type: string
+              enum:
+              - Bearer
+            expiresIn:
+              type: integer
+              enum:
+              - 1800
+            user:
+              type: object
+              additionalProperties: false
+              required:
+              - accountId
+              - ctuIdentifier
+              - email
+              - role
+              properties:
+                accountId:
+                  type: string
+                  pattern: "^[a-fA-F0-9]{24}$"
+                ctuIdentifier:
+                  type: string
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum:
+                  - READER
+                isActive:
+                  type: boolean
+                  enum:
+                  - true
     LoginSuccessResponse:
       type: object
       properties:
         status:
           type: string
-          example: success
           enum:
           - success
+          example: success
         message:
           type: string
-          example: Đăng nhập thành công
+          example: Đăng nhập thành công, trả về Token và Thông tin user
         data:
           type: object
           properties:
             token:
               type: string
+              description: 'JWT truy cập. Gửi Authorization: Bearer <token>; giá trị ví
+                dụ chỉ minh họa, không dùng để xác thực.'
               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-              description: Access JWT HS256, 900 giây; không lưu DB. Claims sub, role,
-                iat, exp, iss=ctulib-api, aud=ctulib-web, jti.
             user:
               type: object
               properties:
@@ -1250,17 +1261,23 @@ components:
                   example: B2404981
                 role:
                   type: string
-                  example: READER
                   description: Ví dụ READER. Bộ UI dùng READER, EMPLOYEE, ADMIN; chưa
                     khóa enum khi chưa đối chiếu backend. Quyền chức năng tách khỏi role.
-                fullName:
+                  example: READER
+                email:
                   type: string
-                  example: Nguyễn Văn Đạt
+                  format: email
+                  example: reader@example.com
+                isActive:
+                  type: boolean
+                  description: Tùy chọn nếu backend trả trạng thái account.
               required:
               - accountId
               - ctuIdentifier
+              - email
               - role
-              - fullName
+              description: Thông tin account; không bắt buộc profile/fullName và không
+                trả mật khẩu.
             tokenType:
               type: string
               enum:
@@ -1268,7 +1285,7 @@ components:
             expiresIn:
               type: integer
               enum:
-              - 900
+              - 1800
           required:
           - token
           - tokenType
