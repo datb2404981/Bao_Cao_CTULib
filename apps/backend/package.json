@@ -6,6 +6,7 @@
   "scripts": {
     "seed:admin": "tsx src/scripts/seed-admin.ts",
     "seed:employee": "tsx src/scripts/seed-employee.ts",
+    "seed:books": "tsx src/scripts/seed-books-qa.ts",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",

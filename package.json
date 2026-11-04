@@ -12,6 +12,7 @@
     "build": "pnpm --recursive build",
     "lint": "pnpm --recursive lint",
     "audit": "pnpm audit --prod",
+    "seed:books": "pnpm --filter @ctulib/backend seed:books",
     "test": "pnpm --recursive test",
     "docker:dev": "docker compose -f infra/docker/docker-compose.dev.yml up --build",
     "docker:dev:down": "docker compose -f infra/docker/docker-compose.dev.yml down"

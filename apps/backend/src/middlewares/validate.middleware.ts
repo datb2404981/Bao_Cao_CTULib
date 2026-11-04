@@ -22,7 +22,7 @@ export const validate = (schema: ZodType): RequestHandler => {
       res.status(400).json({
         status: "error",
         message: "Dữ liệu gửi lên không hợp lệ",
-        data:errors,
+        data: null,
       })
       return;
     }

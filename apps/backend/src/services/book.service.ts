@@ -50,9 +50,6 @@ const checkRelations = async (facultyId?: string, authorIds?: string[]) => {
 
 export const createBook = async (input: CreateBookInput) => {
   await checkRelations(input.facultyId, input.authorIds);
-  if (await BookModel.exists({ title: input.title })) {
-    throw new AppError("Sách đã tồn tại", 400);
-  }
 
   // availableCopies do server tính từ totalCopies, không nhận từ client
   const book = await BookModel.create({

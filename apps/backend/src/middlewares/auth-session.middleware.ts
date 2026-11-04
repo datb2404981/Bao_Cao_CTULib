@@ -7,12 +7,18 @@ export const authNoStore: RequestHandler = (_req, res, next) => {
 };
 
 export const requireTrustedOrigin: RequestHandler = (req, _res, next) => {
+  const origin = req.get("Origin");
+  if (!origin && process.env.NODE_ENV !== "production") {
+    next();
+    return;
+  }
+
   const expected = process.env.CLIENT_URL;
   if (!expected || expected === "*") {
     next(new AppError("Dịch vụ xác thực tạm thời không khả dụng", 503));
     return;
   }
-  if (req.get("Origin") !== expected) {
+  if (origin !== expected) {
     next(new AppError("Origin không được phép", 403));
     return;
   }

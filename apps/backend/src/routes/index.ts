@@ -8,6 +8,8 @@ const router = Router();
 
 router.get("/health", getHealth);
 router.use(AUTH_PATH, authRouter);
+router.use("/auth", authRouter);
+router.use("/api/v1/books", bookRouter);
 router.use("/books", bookRouter);
 
 export default router;
