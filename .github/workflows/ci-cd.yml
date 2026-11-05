@@ -2,9 +2,9 @@ name: CTULib CI/CD Pipeline
 
 on:
   push:
-    branches: [main, staging]
+    branches: [main]
   pull_request:
-    branches: [main, staging]
+    branches: [main]
 
 jobs:
   quality-check:
@@ -37,7 +37,7 @@ jobs:
 
   deploy-backend:
     needs: quality-check
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -84,15 +84,8 @@ jobs:
         continue-on-error: true
         run: |
           apidog run --access-token ${{ secrets.APIDOG_TOKEN }} --test-suite 7398 -e 6934714 -r html,cli
-      # 4. Chỉ gọi webhook của đúng môi trường sau khi push.
+
       - name: Trigger production Render deploy
-        if: github.ref == 'refs/heads/main'
         env:
           RENDER_WEBHOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: if [ -n "$RENDER_WEBHOOK" ]; then curl -fsS -X POST "$RENDER_WEBHOOK"; fi
-
-      - name: Trigger staging Render deploy
-        if: github.ref == 'refs/heads/staging'
-        env:
-          RENDER_STAGING_WEBHOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
-        run: if [ -n "$RENDER_STAGING_WEBHOOK" ]; then curl -fsS -X POST "$RENDER_STAGING_WEBHOOK"; fi
