@@ -3,7 +3,7 @@ import { AppError } from "../utils/app-error.js";
 
 export interface IFaculty {
   facultyName: string;
-  description?: String;
+  description?: string;
 }
 
 export const createFaculty = async (input: IFaculty) => {
