@@ -4,6 +4,7 @@ import authRouter from "./auth.route.js";
 import bookRouter from "./book.route.js";
 import { AUTH_PATH } from "../utils/auth-cookie.util.js";
 import facultyRouter from "./faculty.route.js";
+import authorRouter from "./author.route.js";
 
 const router = Router();
 
@@ -12,6 +13,6 @@ router.use(AUTH_PATH, authRouter);
 router.use("/auth", authRouter);
 router.use("/book", bookRouter);
 router.use("/faculty", facultyRouter);
-router.use("/author", authRouter);
+router.use("/author", authorRouter);
 
 export default router;

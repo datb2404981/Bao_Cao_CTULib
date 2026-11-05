@@ -8,7 +8,7 @@ def read(name): return json.loads((OUT/name).read_text())
 def dump(name,data): (OUT/name).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
 def cli(*args):
     p=subprocess.run(['apidog',*map(str,args)],capture_output=True,text=True)
-    try: result=json.loads(p.stdout)
+    try: result=json.loads(p.stdout[p.stdout.find("{\n"):])
     except ValueError: raise RuntimeError(p.stdout[:1000]+p.stderr[:300])
     if p.returncode or not result.get('success'): raise RuntimeError(json.dumps(result,ensure_ascii=False))
     return result.get('data')

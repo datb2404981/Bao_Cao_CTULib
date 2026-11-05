@@ -4,8 +4,9 @@ import { authenticate, AuthError, currentUser, logout, refreshSession } from './
 import BookCatalogView from './views/BookCatalogView.vue'
 import BookManagementView from './views/BookManagementView.vue'
 import FacultyManagementView from './views/FacultyManagementView.vue'
+import AuthorManagementView from './views/AuthorManagementView.vue'
 
-export type AppView = 'catalog' | 'management' | 'faculty' | 'auth'
+export type AppView = 'catalog' | 'management' | 'faculty' | 'author' | 'auth'
 
 // View routing state
 const currentView = ref<AppView>('catalog')
@@ -42,6 +43,13 @@ function syncViewFromHash() {
       currentView.value = 'catalog'
       window.location.hash = '#/catalog'
     }
+  } else if (hash === '#/author' || hash === '#/authors') {
+    if (canManageBooks.value) {
+      currentView.value = 'author'
+    } else {
+      currentView.value = 'catalog'
+      window.location.hash = '#/catalog'
+    }
   } else if (hash === '#/auth' || hash === '#/login' || hash === '#/register') {
     currentView.value = 'auth'
   } else {
@@ -50,7 +58,7 @@ function syncViewFromHash() {
 }
 
 function navigateTo(view: AppView) {
-  if ((view === 'management' || view === 'faculty') && !canManageBooks.value) {
+  if ((view === 'management' || view === 'faculty' || view === 'author') && !canManageBooks.value) {
     view = 'auth'
   }
   currentView.value = view
@@ -59,6 +67,7 @@ function navigateTo(view: AppView) {
   if (view === 'catalog') window.location.hash = '#/catalog'
   else if (view === 'management') window.location.hash = '#/manage'
   else if (view === 'faculty') window.location.hash = '#/faculty'
+  else if (view === 'author') window.location.hash = '#/author'
   else if (view === 'auth') window.location.hash = '#/auth'
 }
 
@@ -239,6 +248,14 @@ onUnmounted(() => {
             Khoa/Viện
           </a>
           <a
+            v-if="canManageBooks"
+            :class="{ active: currentView === 'author' }"
+            href="#/author"
+            @click.prevent="navigateTo('author')"
+          >
+            Tác giả
+          </a>
+          <a
             v-if="currentUser"
             :class="{ active: currentView === 'auth' }"
             href="#/auth"
@@ -334,6 +351,19 @@ onUnmounted(() => {
               </button>
 
               <button
+                v-if="canManageBooks"
+                class="dropdown-item"
+                type="button"
+                @click="navigateTo('author')"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="8" r="3"/>
+                  <path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3"/>
+                </svg>
+                <span>Quản lý Tác giả</span>
+              </button>
+
+              <button
                 class="dropdown-item logout-btn"
                 type="button"
                 :disabled="busy"
@@ -376,6 +406,11 @@ onUnmounted(() => {
       <!-- 3. Faculty Management View (SC15) -->
       <section v-else-if="currentView === 'faculty'" aria-label="Quản lý Khoa/Viện">
         <FacultyManagementView />
+      </section>
+
+      <!-- 4. Author Management View (SC16) -->
+      <section v-else-if="currentView === 'author'" aria-label="Quản lý Tác giả">
+        <AuthorManagementView />
       </section>
 
       <!-- 3. Auth Layout (SC01) -->

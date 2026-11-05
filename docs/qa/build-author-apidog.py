@@ -78,7 +78,7 @@ for key,name,path in [('GET_LIST','Danh sách tác giả','/author'),('GET','Chi
     codes=sorted({c['code'] for c in cases if c['method']==key})
     ep=dict(name=name,method=verb,path=path,status='testing',tags=['Author'],auth={'type':'noauth'},
             description='Hợp đồng kiểm thử đề xuất ngày 05/11/2026, chưa phải đặc tả author có sẵn. ID sai: 400/Mã tác giả không hợp lệ; không tồn tại: 404/Tác giả không tồn tại; trùng tên: 409/Tác giả đã tồn tại. Validation: 400/Dữ liệu gửi lên không hợp lệ. Backend hiện mount nhầm authRouter; xem báo cáo trong repository.',
-            parameters={'path':[{'name':'id','required':True,'type':'string','schema':{'type':'string','pattern':'^[a-fA-F0-9]{24}$'}}] if '{id}' in path else [],'query':[],'header':[],'cookie':[]},
+            parameters={'path':[{'id':'author-id','name':'id','required':True,'type':'string','schema':{'type':'string','pattern':'^[a-fA-F0-9]{24}$'}}] if '{id}' in path else [],'query':[],'header':[],'cookie':[]},
             requestBody={'type':'application/json','required':True,'jsonSchema':input_schema} if key in ['POST','PUT'] else {'type':'none'},
             responses=[{'name':str(c),'code':c,'contentType':'json','jsonSchema':wrapper(c,key=='GET_LIST')} for c in codes])
     endpoints.append({'key':key,'payload':ep})

@@ -2,7 +2,11 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { currentUser } from '../services/auth';
 import { getAllBooks, createBook, BookApiError } from '../services/book';
+import { getAllAuthors } from '../services/author';
+import { getAllFaculties } from '../services/faculty';
 import type { Book, CreateBookPayload, PaginationMeta } from '../types/book';
+import type { Author } from '../types/author';
+import type { Faculty } from '../types/faculty';
 import { FACULTIES, AUTHORS } from '../types/book';
 import BookManagementTable from '../components/management/BookManagementTable.vue';
 import BookFormModal from '../components/management/BookFormModal.vue';
@@ -35,7 +39,17 @@ const serverFieldErrors = ref<Record<string, string>>({});
 const selectedBook = ref<Book | null>(null);
 const isDetailModalOpen = ref(false);
 
+// Dynamic catalog options
+const dynamicAuthors = ref<Author[]>([]);
+const dynamicFaculties = ref<Faculty[]>([]);
+
 const facultyOptions = computed(() => {
+  if (dynamicFaculties.value.length > 0) {
+    return dynamicFaculties.value.map((f) => ({
+      _id: f._id,
+      facultyName: f.facultyName,
+    }));
+  }
   return FACULTIES.map((f) => ({
     _id: f.facultyId,
     facultyName: f.facultyName,
@@ -43,6 +57,13 @@ const facultyOptions = computed(() => {
 });
 
 const authorOptions = computed(() => {
+  if (dynamicAuthors.value.length > 0) {
+    return dynamicAuthors.value.map((a) => ({
+      _id: a._id,
+      fullName: a.fullName,
+      affiliation: a.affiliation,
+    }));
+  }
   return AUTHORS.map((a) => ({
     _id: a.authorId,
     fullName: a.fullName,
@@ -55,6 +76,9 @@ const facultiesMap = computed(() => {
   for (const f of FACULTIES) {
     map[f.facultyId] = f.facultyName;
   }
+  for (const f of dynamicFaculties.value) {
+    map[f._id] = f.facultyName;
+  }
   return map;
 });
 
@@ -63,8 +87,28 @@ const authorsMap = computed(() => {
   for (const a of AUTHORS) {
     map[a.authorId] = a.fullName;
   }
+  for (const a of dynamicAuthors.value) {
+    map[a._id] = a.fullName;
+  }
   return map;
 });
+
+async function loadCatalogs() {
+  try {
+    const [fetchedAuthors, fetchedFaculties] = await Promise.allSettled([
+      getAllAuthors(),
+      getAllFaculties(),
+    ]);
+    if (fetchedAuthors.status === 'fulfilled' && Array.isArray(fetchedAuthors.value)) {
+      dynamicAuthors.value = fetchedAuthors.value;
+    }
+    if (fetchedFaculties.status === 'fulfilled' && Array.isArray(fetchedFaculties.value)) {
+      dynamicFaculties.value = fetchedFaculties.value;
+    }
+  } catch {
+    // Graceful fallback to static options
+  }
+}
 
 async function loadManagementBooks() {
   if (!isAuthorized.value) return;
@@ -149,6 +193,7 @@ function closeDetailModal() {
 onMounted(() => {
   if (isAuthorized.value) {
     void loadManagementBooks();
+    void loadCatalogs();
   }
 });
 </script>

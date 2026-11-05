@@ -88,6 +88,7 @@
       "parameters": {
         "path": [
           {
+            "id": "author-id",
             "name": "id",
             "required": true,
             "type": "string",
@@ -438,6 +439,7 @@
       "parameters": {
         "path": [
           {
+            "id": "author-id",
             "name": "id",
             "required": true,
             "type": "string",
@@ -674,6 +676,7 @@
       "parameters": {
         "path": [
           {
+            "id": "author-id",
             "name": "id",
             "required": true,
             "type": "string",

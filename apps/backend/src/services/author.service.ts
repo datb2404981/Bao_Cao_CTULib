@@ -3,7 +3,7 @@ import { AppError } from "../utils/app-error.js";
 
 export const createAuthor = async (input: AuthorType) => {
   const extingAuthor = await authorModel.findOne({ fullName: input.fullName });
-  if (!extingAuthor) throw new AppError("Tác giả đã tồn tại", 409);
+  if (extingAuthor) throw new AppError("Tác giả đã tồn tại", 409);
 
   return await authorModel.create(input);
 };
