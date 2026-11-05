@@ -172,16 +172,15 @@ onMounted(() => {
     <template v-else>
       <div class="page-head">
         <div>
-          <p class="eyebrow">QUẢN TRỊ THƯ VIỆN</p>
-          <h1>Quản lý danh mục sách & lưu thông</h1>
-          <p>Xem toàn bộ ấn phẩm trong kho, theo dõi số bản khả dụng và thêm mới sách vào hệ thống.</p>
+          <h1>Sách</h1>
+          <p>Quản lý danh mục và số bản trong kho.</p>
         </div>
         <button class="btn primary" type="button" @click="openAddBookModal">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Thêm sách mới
+          Thêm sách
         </button>
       </div>
 

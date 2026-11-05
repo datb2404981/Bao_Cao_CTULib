@@ -156,9 +156,8 @@ onMounted(() => {
   <div class="catalog-view container">
     <div class="page-head">
       <div>
-        <p class="eyebrow">TRA CỨU TÀI LIỆU</p>
-        <h1>Danh mục sách thư viện</h1>
-        <p>Khám phá kho tàng tri thức với hàng ngàn đầu sách và tài liệu học tập tại Đại học Cần Thơ.</p>
+        <h1>Tìm sách</h1>
+        <p>Giáo trình và sách tham khảo tại CTULib.</p>
       </div>
     </div>
 
