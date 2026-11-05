@@ -79,7 +79,6 @@ jobs:
         continue-on-error: true
         run: |
           apidog run --access-token ${{ secrets.APIDOG_TOKEN }} --test-suite 7341 -e 6926376 -r html,cli
-
       # 4. Chỉ gọi webhook của đúng môi trường sau khi push.
       - name: Trigger production Render deploy
         if: github.ref == 'refs/heads/main'
