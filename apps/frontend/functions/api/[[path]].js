@@ -3,8 +3,9 @@ export async function onRequest({ request, env }) {
   let origin;
   try {
     const hostname = new URL(request.url).hostname;
-    const configuredOrigin = env.API_ORIGIN || (hostname === 'staging.bao-cao-ctulib.pages.dev'
-      ? 'https://ctulib-api-staging.onrender.com' : '');
+    const isPagesDev = hostname.endsWith('.pages.dev') || hostname === 'localhost' || hostname === '127.0.0.1';
+    const fallbackOrigin = isPagesDev ? 'https://ctulib-api-staging.onrender.com' : '';
+    const configuredOrigin = env.API_ORIGIN || fallbackOrigin;
     origin = new URL(configuredOrigin);
     if (origin.protocol !== 'https:' || origin.username || origin.password ||
         origin.pathname !== '/' || origin.search || origin.hash ||

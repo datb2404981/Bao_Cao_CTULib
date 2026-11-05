@@ -58,7 +58,6 @@ const authorsMap = computed(() => {
   return map;
 });
 
-// Tự động kích hoạt tìm kiếm khi filters.search thay đổi sau debounce 300ms
 watch(
   () => filters.search,
   (newVal, oldVal) => {
@@ -83,7 +82,6 @@ async function loadBooks() {
     });
 
     let items: Book[] = res.items || [];
-    // Client-side filter for bookType if specified
     if (filters.bookType) {
       items = items.filter((b: Book) => b.bookType === filters.bookType);
       books.value = items;
@@ -121,6 +119,24 @@ function onResetFilters() {
   void loadBooks();
 }
 
+function resetAllAndScrollTop() {
+  onResetFilters();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function focusSearchInput() {
+  const el = document.getElementById('catalog-search-input');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.focus();
+  }
+}
+
+defineExpose({
+  resetAllAndScrollTop,
+  focusSearchInput,
+});
+
 function onPageChange(page: number) {
   pagination.currentPage = page;
   void loadBooks();
@@ -154,15 +170,22 @@ onMounted(() => {
 
 <template>
   <div class="catalog-view container">
-    <div class="page-head">
-      <div>
-        <p class="eyebrow">TRA CỨU TÀI LIỆU</p>
+    <!-- Khung cổng CTU: Tiêu đề học thuật hiện đại → Lọc/Thao tác → Nội dung -->
+    <div class="page-head catalog-hero-banner">
+      <div class="hero-banner-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          <span>MỤC LỤC TRỰC TUYẾN OPAC · ĐẠI HỌC CẦN THƠ</span>
+        </div>
         <h1>Danh mục sách thư viện</h1>
-        <p>Khám phá kho tàng tri thức với hàng ngàn đầu sách và tài liệu học tập tại Đại học Cần Thơ.</p>
+        <p>Tra cứu học liệu, giáo trình và sách tham khảo theo khoa/viện tại Thư viện Đại học Cần Thơ.</p>
+      </div>
+      <div v-if="!loading && !error" class="hero-counter-card">
+        <span class="counter-value num">{{ pagination.totalItems }}</span>
+        <span class="counter-label">Ấn phẩm hiện hành</span>
       </div>
     </div>
 
-    <!-- Bộ lọc tìm kiếm -->
     <BookFilters
       v-model:search="filters.search"
       v-model:faculty-id="filters.facultyId"
@@ -173,12 +196,10 @@ onMounted(() => {
       @reset="onResetFilters"
     />
 
-    <!-- Kết quả tìm kiếm và số lượng -->
     <p v-if="!loading && !error" class="results-line">
       Tìm thấy <strong class="num">{{ pagination.totalItems }}</strong> ấn phẩm phù hợp.
     </p>
 
-    <!-- Lưới sách -->
     <BookGrid
       :books="books"
       :loading="loading"
@@ -190,7 +211,6 @@ onMounted(() => {
       @reset-filters="onResetFilters"
     />
 
-    <!-- Phân trang -->
     <BookPagination
       v-if="!loading && !error && pagination.totalPages > 1"
       :current-page="pagination.currentPage"
@@ -202,7 +222,6 @@ onMounted(() => {
       @change-limit="onLimitChange"
     />
 
-    <!-- Modal chi tiết sách -->
     <BookDetailModal
       :is-open="isDetailModalOpen"
       :book-id="selectedBook?.bookId || null"
@@ -214,3 +233,75 @@ onMounted(() => {
     />
   </div>
 </template>
+
+<style scoped>
+.catalog-hero-banner {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: 0 2px 8px -2px rgba(29, 78, 216, 0.05);
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #1d4ed8;
+  margin-bottom: 8px;
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+.hero-counter-card {
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.06);
+}
+
+.counter-value {
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #1d4ed8;
+}
+
+.counter-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+@media (max-width: 767px) {
+  .catalog-hero-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px 20px;
+  }
+
+  .hero-counter-card {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
+</style>

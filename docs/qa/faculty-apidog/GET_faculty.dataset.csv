@@ -1,0 +1,2 @@
+caseId,method,path,body,fixture,expectedCode,expectedMessage,errorField
+FAC-GET_LIST-001,GET,/faculty,,none,200,,

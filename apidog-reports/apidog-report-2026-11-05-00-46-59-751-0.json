@@ -1,0 +1,959 @@
+{
+  "result": {
+    "stats": {
+      "steps": {
+        "total": 54,
+        "passed": 54,
+        "failed": 0
+      },
+      "iterations": {
+        "total": 5,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "items": {
+        "total": null,
+        "passed": null,
+        "failed": null
+      },
+      "scripts": {
+        "total": 108,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "prerequests": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "requests": {
+        "total": 113,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "socketRequests": {
+        "total": 0,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "tests": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "assertions": {
+        "total": 224,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "testScripts": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "prerequestScripts": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      }
+    },
+    "timings": {
+      "responseTime": 72,
+      "responseAverage": 50.24840909090909,
+      "responseMin": 72,
+      "responseMax": 72,
+      "responseSd": 0,
+      "dnsAverage": 0,
+      "dnsMin": 0,
+      "dnsMax": 0,
+      "dnsSd": 0,
+      "firstByteAverage": 0,
+      "firstByteMin": 0,
+      "firstByteMax": 0,
+      "firstByteSd": 0,
+      "started": 1793814422151,
+      "completed": 1793814436549
+    },
+    "transfers": {
+      "responseTotal": 1310
+    },
+    "failures": [],
+    "stepTree": [
+      {
+        "ref": "a123bd3d-399c-4792-8edd-9b3b4055bb51",
+        "type": "http"
+      }
+    ],
+    "error": null
+  },
+  "isTestFlowControl": true,
+  "run": {
+    "stats": {
+      "steps": {
+        "total": 54,
+        "passed": 54,
+        "failed": 0
+      },
+      "iterations": {
+        "total": 5,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "items": {
+        "total": null,
+        "passed": null,
+        "failed": null
+      },
+      "scripts": {
+        "total": 108,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "prerequests": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "requests": {
+        "total": 113,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "socketRequests": {
+        "total": 0,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "tests": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "assertions": {
+        "total": 224,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "testScripts": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      },
+      "prerequestScripts": {
+        "total": 54,
+        "pending": 0,
+        "failed": 0,
+        "passed": null
+      }
+    },
+    "timings": {
+      "responseTime": 72,
+      "responseAverage": 50.24840909090909,
+      "responseMin": 72,
+      "responseMax": 72,
+      "responseSd": 0,
+      "dnsAverage": 0,
+      "dnsMin": 0,
+      "dnsMax": 0,
+      "dnsSd": 0,
+      "firstByteAverage": 0,
+      "firstByteMin": 0,
+      "firstByteMax": 0,
+      "firstByteSd": 0,
+      "started": 1793814422151,
+      "completed": 1793814436549
+    },
+    "transfers": {
+      "responseTotal": 1310
+    },
+    "failures": [],
+    "stepTree": [
+      {
+        "ref": "a123bd3d-399c-4792-8edd-9b3b4055bb51",
+        "type": "http"
+      }
+    ],
+    "error": null
+  },
+  "options": {
+    "reporters": [
+      "cli",
+      "html",
+      "json"
+    ],
+    "outDir": "./apidog-reports",
+    "outFile": "apidog-report-2026-11-05-00-46-59-751-0",
+    "delayRequest": 0,
+    "timeoutRequest": 0,
+    "timeoutScript": 0,
+    "globalVar": [],
+    "envVar": [],
+    "color": "auto",
+    "allowSecuritySensitiveActions": true,
+    "bigint": false,
+    "lang": "en",
+    "disableRejectUnauthorized": false,
+    "bigintLegacy": false,
+    "maxRetries": 3,
+    "testSuite": [
+      7398
+    ],
+    "project": 1405851,
+    "environment": 6954558,
+    "uploadReport": "overview",
+    "enableBigInt": false,
+    "apiBaseUrl": "https://api.apidog.com",
+    "reporterOptions": {
+      "name": "Module Faculty - 54 ca kiểm thử API",
+      "runnerId": "b55f0e81-105a-4e6c-92ab-643bdfa2ad87",
+      "testSuiteId": 7398,
+      "executionCount": 5
+    },
+    "reporter": {
+      "cli": {},
+      "html": {},
+      "json": {}
+    },
+    "originalOutFile": "apidog-report-2026-11-05-00-46-59-751-0",
+    "accessToken": "adgp_fd9dd6IyN9t4mJGulnVXNfuyyTFjtHRTpPUs",
+    "isUploadReportSummary": false,
+    "apidogVersion": "2.2.12",
+    "globals": {},
+    "teamGlobals": {}
+  },
+  "collection": {
+    "apidogCli": "1.2.21",
+    "item": [
+      {
+        "item": [
+          {
+            "id": "ba280a54-3935-4229-bd6c-31710ae6a60c",
+            "name": "Danh sách khoa(FAC-GET_LIST-001)",
+            "request": {
+              "url": {
+                "protocol": "http",
+                "port": "8080",
+                "path": [
+                  "faculty"
+                ],
+                "host": [
+                  "localhost"
+                ],
+                "query": [],
+                "variable": []
+              },
+              "header": [
+                {
+                  "key": "User-Agent",
+                  "value": "app/1.0.0"
+                }
+              ],
+              "method": "GET",
+              "baseUrl": "http://localhost:8080",
+              "body": {},
+              "auth": {
+                "type": "noauth",
+                "noauth": []
+              },
+              "type": "http"
+            },
+            "response": [],
+            "event": [
+              {
+                "listen": "prerequest",
+                "script": {
+                  "id": "preProcessors.0.customScript",
+                  "type": "text/javascript",
+                  "exec": [
+                    "",
+                    "        if (JSON.setEnableBigInt) {",
+                    "          JSON.setEnableBigInt(undefined);",
+                    "        }",
+                    "        const cfg = {\"id\": \"FAC-GET_LIST-001\", \"method\": \"GET_LIST\", \"body\": null, \"code\": 200, \"target\": \"none\", \"field\": null, \"message\": null};",
+                    "const resolved = pm.variables.replaceIn(pm.request.url.toString());",
+                    "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):8080(?:\\/|$)/.test(resolved)) {",
+                    "  throw new Error('BLOCKED: chỉ chạy trên localhost:8080, không dùng dữ liệu thật');",
+                    "}",
+                    "const root = (resolved.match(/^https?:\\/\\/[^\\/]+/) || ['http://localhost:8080'])[0];",
+                    "const name = 'QA_FAC_' + Date.now() + '_' + Math.random().toString(16).slice(2,10);",
+                    "pm.variables.set('qaName', name);",
+                    "pm.variables.set('qaName100', name.padEnd(100, 'A'));",
+                    "pm.variables.set('qaOwnedIds', '[]');",
+                    "pm.variables.set('qaRoot', root);",
+                    "function seed(seedName, next) {",
+                    "  pm.sendRequest({url:root+'/faculty',method:'POST',header:{'Content-Type':'application/json'},",
+                    "    body:{mode:'raw',raw:JSON.stringify({facultyName:seedName,description:'QA fixture'})}}, (err,res)=>{",
+                    "    if(err || res.code!==201) throw new Error('BLOCKED: không tạo được fixture '+cfg.id);",
+                    "    const id=res.json().data._id;",
+                    "    if(!/^[a-f0-9]{24}$/.test(id)) throw new Error('BLOCKED: fixture không có ID');",
+                    "    const ids=JSON.parse(pm.variables.get('qaOwnedIds'));ids.push(id);",
+                    "    pm.variables.set('qaOwnedIds',JSON.stringify(ids));next(id);",
+                    "  });",
+                    "}",
+                    "if(cfg.target==='invalid') pm.variables.set('qaFacultyId','invalid');",
+                    "else if(cfg.target==='missing') pm.variables.set('qaFacultyId','000000000000000000000001');",
+                    "else if(cfg.target==='fixture' || cfg.target==='duplicate') {",
+                    "  seed(name, id=>{",
+                    "    pm.variables.set('qaFacultyId',id);",
+                    "    if(cfg.target==='duplicate') seed(name+'_OTHER', other=>pm.variables.set('qaFacultyId',other));",
+                    "  });",
+                    "}",
+                    "      "
+                  ]
+                }
+              },
+              {
+                "listen": "test",
+                "script": {
+                  "id": "postProcessors.0.customScript",
+                  "type": "text/javascript",
+                  "exec": [
+                    "",
+                    "        if (JSON.setEnableBigInt) {",
+                    "          JSON.setEnableBigInt(undefined);",
+                    "        }",
+                    "        const cfg={\"id\": \"FAC-GET_LIST-001\", \"method\": \"GET_LIST\", \"body\": null, \"code\": 200, \"target\": \"none\", \"field\": null, \"message\": null};",
+                    "const result=pm.response.json();",
+                    "const root=pm.variables.get('qaRoot');",
+                    "const ids=JSON.parse(pm.variables.get('qaOwnedIds')||'[]');",
+                    "// Thu hồi cả bản ghi tạo thành công ngoài dự kiến để ca lỗi không để rác.",
+                    "if(cfg.method==='POST' && pm.response.code===201 && result.data?.facultyName?.startsWith('QA_FAC_')) ids.push(result.data._id);",
+                    "for(const id of [...new Set(ids)]) {",
+                    "  const alreadyDeleted=cfg.method==='DELETE' && pm.response.code===200 && id===pm.variables.get('qaFacultyId');",
+                    "  if(!alreadyDeleted) pm.sendRequest({url:root+'/faculty/'+id,method:'DELETE'},(err,res)=>{",
+                    "    pm.test(cfg.id+' cleanup '+id,()=>{pm.expect(err).to.equal(null);pm.expect(res.code).to.equal(200);});",
+                    "  });",
+                    "}",
+                    "pm.test(cfg.id+' HTTP',()=>pm.expect(pm.response.code).to.equal(cfg.code));",
+                    "pm.test(cfg.id+' wrapper',()=>{",
+                    "  pm.expect(result.status).to.equal(cfg.code<400?'success':'error');",
+                    "  pm.expect(result).to.have.property('data');",
+                    "});",
+                    "if(cfg.message) pm.test(cfg.id+' message',()=>pm.expect(result.message).to.equal(cfg.message));",
+                    "if(cfg.field) pm.test(cfg.id+' lỗi từng trường',()=>{",
+                    "  pm.expect(result.errors).to.be.an('array');",
+                    "  pm.expect(result.errors.some(e=>e.field===cfg.field && typeof e.message==='string')).to.equal(true);",
+                    "});",
+                    "if(cfg.code<400) pm.test(cfg.id+' dữ liệu',()=>{",
+                    "  if(cfg.method==='GET_LIST') {pm.expect(result.data).to.be.an('array');return;}",
+                    "  pm.expect(result.data._id).to.match(/^[a-f0-9]{24}$/);",
+                    "  if(cfg.method!=='POST') pm.expect(result.data._id).to.equal(pm.variables.get('qaFacultyId'));",
+                    "  if(cfg.body && ['POST','PUT'].includes(cfg.method)) {",
+                    "    const expected=JSON.parse(pm.variables.replaceIn(JSON.stringify(cfg.body)));",
+                    "    pm.expect(result.data.facultyName).to.equal(expected.facultyName.trim());",
+                    "    if(expected.description!==undefined) pm.expect(result.data.description).to.equal(expected.description.trim());",
+                    "  }",
+                    "});",
+                    "      "
+                  ]
+                }
+              }
+            ],
+            "type": "http",
+            "metaInfo": {
+              "blockId": "b618ccc4-0650-4fab-9e1c-42687d4a18c1",
+              "id": "b618ccc4-0650-4fab-9e1c-42687d4a18c1",
+              "type": "http",
+              "projectId": 1405851,
+              "relatedId": 46555496,
+              "environmentId": 6954558,
+              "blockNumber": 1,
+              "tags": [],
+              "httpApiId": 46555496,
+              "httpApiCaseId": 62930303,
+              "httpApiName": "Danh sách khoa",
+              "httpApiPath": "/faculty",
+              "httpApiMethod": "get",
+              "httpApiCaseName": "FAC-GET_LIST-001",
+              "moduleId": 1512539,
+              "serverId": "1512539"
+            },
+            "protocolProfileBehavior": {
+              "useWhatWGUrlParser": true,
+              "disableUrlEncoding": false,
+              "disabledSystemHeaders": {},
+              "disableCookies": false
+            },
+            "responseDefinition": {
+              "code": 200,
+              "name": "200",
+              "headers": [],
+              "jsonSchema": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "data"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "success"
+                    ]
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "_id",
+                        "facultyName"
+                      ],
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "facultyName": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "__v": {
+                          "type": "integer"
+                        }
+                      },
+                      "x-apidog-orders": [
+                        "_id",
+                        "facultyName",
+                        "description",
+                        "__v"
+                      ]
+                    }
+                  }
+                },
+                "x-apidog-orders": [
+                  "status",
+                  "data"
+                ]
+              },
+              "itemSchema": {},
+              "contentType": "json",
+              "tempId": "91000001",
+              "description": "Tiêu chí mong đợi; xem README về lỗi backend đang mở.",
+              "ordering": 0,
+              "mediaType": "application/json",
+              "id": "111332855",
+              "schemaDefinitions": {}
+            },
+            "requestDefinition": {
+              "jsonSchema": {},
+              "examples": []
+            },
+            "overrideRequesterOptions": {
+              "strictSSL": false
+            }
+          }
+        ],
+        "name": "Danh sách khoa"
+      }
+    ],
+    "info": {
+      "name": "Danh sách khoa"
+    },
+    "dataSchemas": {},
+    "mockRules": {
+      "rules": [],
+      "enableSystemRule": true
+    },
+    "environment": {
+      "id": 6954558,
+      "name": "http://localhost:8080",
+      "type": "normal",
+      "baseUrls": {
+        "1504230": "http://localhost:8080",
+        "1512292": "http://localhost:8080",
+        "1512539": "http://localhost:8080",
+        "default": "http://localhost:8080"
+      },
+      "websocketBaseUrls": {},
+      "socketioBaseUrls": {},
+      "baseUrl": "http://localhost:8080",
+      "variable": {
+        "id": "b3952eb6-1c9c-47da-86ea-43c9507c5510",
+        "name": "http://localhost:8080",
+        "baseUrl": "http://localhost:8080",
+        "baseUrls": {
+          "1504230": "http://localhost:8080",
+          "1512292": "http://localhost:8080",
+          "1512539": "http://localhost:8080",
+          "default": "http://localhost:8080"
+        },
+        "values": []
+      },
+      "parameter": {
+        "header": [],
+        "query": [],
+        "body": [],
+        "cookie": []
+      },
+      "advancedSettings": {}
+    },
+    "globals": {
+      "baseUrls": {},
+      "websocketBaseUrls": {},
+      "socketioBaseUrls": {},
+      "baseUrl": "",
+      "variable": {
+        "id": "26ca5e3e-b703-4bb8-ba63-8352ffab2ac5",
+        "baseUrl": "",
+        "baseUrls": {},
+        "values": [
+          {
+            "type": "any",
+            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiI2YWU4MzI5ZTkwMzZmMzQ2OTFmZmNhODAiLCJjdHVJZGVudGlmaWVyIjoiQjk5MDAwMDEiLCJyb2xlIjoiUkVBREVSIiwiaWF0IjoxNzkzNzI2MTM0LCJleHAiOjE3OTM3MjYwNzQsImF1ZCI6ImN0dWxpYi13ZWIiLCJpc3MiOiJjdHVsaWItYXBpIn0.FkikAanf_PAuT6Q3mfj0yE5K6gslnRM8KEZpds7ERiQ",
+            "key": "qaExpiredAccessToken",
+            "isBindInitial": true,
+            "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiI2YWU4MzI5ZTkwMzZmMzQ2OTFmZmNhODAiLCJjdHVJZGVudGlmaWVyIjoiQjk5MDAwMDEiLCJyb2xlIjoiUkVBREVSIiwiaWF0IjoxNzkzNzI2MTM0LCJleHAiOjE3OTM3MjYwNzQsImF1ZCI6ImN0dWxpYi13ZWIiLCJpc3MiOiJjdHVsaWItYXBpIn0.FkikAanf_PAuT6Q3mfj0yE5K6gslnRM8KEZpds7ERiQ"
+          }
+        ]
+      },
+      "parameter": {
+        "header": [],
+        "query": [],
+        "body": [],
+        "cookie": []
+      }
+    },
+    "teamGlobals": {
+      "baseUrls": {},
+      "websocketBaseUrls": {},
+      "socketioBaseUrls": {},
+      "baseUrl": "",
+      "variable": {
+        "id": "a5053790-bc53-474c-941d-64aedfb861a6",
+        "baseUrl": "",
+        "baseUrls": {},
+        "values": []
+      },
+      "parameter": {
+        "header": [],
+        "query": [],
+        "body": [],
+        "cookie": []
+      }
+    },
+    "moduleVariablesMap": {
+      "1504230": [],
+      "1512292": [],
+      "1512539": []
+    },
+    "isServerBuild": true,
+    "isTestFlowControl": true,
+    "collectionDefinition": {
+      "apidogCli": "1.2.21",
+      "item": [
+        {
+          "item": [
+            {
+              "id": "ba280a54-3935-4229-bd6c-31710ae6a60c",
+              "name": "Danh sách khoa(FAC-GET_LIST-001)",
+              "request": {
+                "url": {
+                  "protocol": "http",
+                  "port": "8080",
+                  "path": [
+                    "faculty"
+                  ],
+                  "host": [
+                    "localhost"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "User-Agent",
+                    "value": "app/1.0.0"
+                  }
+                ],
+                "method": "GET",
+                "baseUrl": "http://localhost:8080",
+                "body": {},
+                "auth": {
+                  "type": "noauth",
+                  "noauth": []
+                },
+                "type": "http"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "id": "preProcessors.0.customScript",
+                    "type": "text/javascript",
+                    "exec": [
+                      "",
+                      "        if (JSON.setEnableBigInt) {",
+                      "          JSON.setEnableBigInt(undefined);",
+                      "        }",
+                      "        const cfg = {\"id\": \"FAC-GET_LIST-001\", \"method\": \"GET_LIST\", \"body\": null, \"code\": 200, \"target\": \"none\", \"field\": null, \"message\": null};",
+                      "const resolved = pm.variables.replaceIn(pm.request.url.toString());",
+                      "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):8080(?:\\/|$)/.test(resolved)) {",
+                      "  throw new Error('BLOCKED: chỉ chạy trên localhost:8080, không dùng dữ liệu thật');",
+                      "}",
+                      "const root = (resolved.match(/^https?:\\/\\/[^\\/]+/) || ['http://localhost:8080'])[0];",
+                      "const name = 'QA_FAC_' + Date.now() + '_' + Math.random().toString(16).slice(2,10);",
+                      "pm.variables.set('qaName', name);",
+                      "pm.variables.set('qaName100', name.padEnd(100, 'A'));",
+                      "pm.variables.set('qaOwnedIds', '[]');",
+                      "pm.variables.set('qaRoot', root);",
+                      "function seed(seedName, next) {",
+                      "  pm.sendRequest({url:root+'/faculty',method:'POST',header:{'Content-Type':'application/json'},",
+                      "    body:{mode:'raw',raw:JSON.stringify({facultyName:seedName,description:'QA fixture'})}}, (err,res)=>{",
+                      "    if(err || res.code!==201) throw new Error('BLOCKED: không tạo được fixture '+cfg.id);",
+                      "    const id=res.json().data._id;",
+                      "    if(!/^[a-f0-9]{24}$/.test(id)) throw new Error('BLOCKED: fixture không có ID');",
+                      "    const ids=JSON.parse(pm.variables.get('qaOwnedIds'));ids.push(id);",
+                      "    pm.variables.set('qaOwnedIds',JSON.stringify(ids));next(id);",
+                      "  });",
+                      "}",
+                      "if(cfg.target==='invalid') pm.variables.set('qaFacultyId','invalid');",
+                      "else if(cfg.target==='missing') pm.variables.set('qaFacultyId','000000000000000000000001');",
+                      "else if(cfg.target==='fixture' || cfg.target==='duplicate') {",
+                      "  seed(name, id=>{",
+                      "    pm.variables.set('qaFacultyId',id);",
+                      "    if(cfg.target==='duplicate') seed(name+'_OTHER', other=>pm.variables.set('qaFacultyId',other));",
+                      "  });",
+                      "}",
+                      "      "
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "postProcessors.0.customScript",
+                    "type": "text/javascript",
+                    "exec": [
+                      "",
+                      "        if (JSON.setEnableBigInt) {",
+                      "          JSON.setEnableBigInt(undefined);",
+                      "        }",
+                      "        const cfg={\"id\": \"FAC-GET_LIST-001\", \"method\": \"GET_LIST\", \"body\": null, \"code\": 200, \"target\": \"none\", \"field\": null, \"message\": null};",
+                      "const result=pm.response.json();",
+                      "const root=pm.variables.get('qaRoot');",
+                      "const ids=JSON.parse(pm.variables.get('qaOwnedIds')||'[]');",
+                      "// Thu hồi cả bản ghi tạo thành công ngoài dự kiến để ca lỗi không để rác.",
+                      "if(cfg.method==='POST' && pm.response.code===201 && result.data?.facultyName?.startsWith('QA_FAC_')) ids.push(result.data._id);",
+                      "for(const id of [...new Set(ids)]) {",
+                      "  const alreadyDeleted=cfg.method==='DELETE' && pm.response.code===200 && id===pm.variables.get('qaFacultyId');",
+                      "  if(!alreadyDeleted) pm.sendRequest({url:root+'/faculty/'+id,method:'DELETE'},(err,res)=>{",
+                      "    pm.test(cfg.id+' cleanup '+id,()=>{pm.expect(err).to.equal(null);pm.expect(res.code).to.equal(200);});",
+                      "  });",
+                      "}",
+                      "pm.test(cfg.id+' HTTP',()=>pm.expect(pm.response.code).to.equal(cfg.code));",
+                      "pm.test(cfg.id+' wrapper',()=>{",
+                      "  pm.expect(result.status).to.equal(cfg.code<400?'success':'error');",
+                      "  pm.expect(result).to.have.property('data');",
+                      "});",
+                      "if(cfg.message) pm.test(cfg.id+' message',()=>pm.expect(result.message).to.equal(cfg.message));",
+                      "if(cfg.field) pm.test(cfg.id+' lỗi từng trường',()=>{",
+                      "  pm.expect(result.errors).to.be.an('array');",
+                      "  pm.expect(result.errors.some(e=>e.field===cfg.field && typeof e.message==='string')).to.equal(true);",
+                      "});",
+                      "if(cfg.code<400) pm.test(cfg.id+' dữ liệu',()=>{",
+                      "  if(cfg.method==='GET_LIST') {pm.expect(result.data).to.be.an('array');return;}",
+                      "  pm.expect(result.data._id).to.match(/^[a-f0-9]{24}$/);",
+                      "  if(cfg.method!=='POST') pm.expect(result.data._id).to.equal(pm.variables.get('qaFacultyId'));",
+                      "  if(cfg.body && ['POST','PUT'].includes(cfg.method)) {",
+                      "    const expected=JSON.parse(pm.variables.replaceIn(JSON.stringify(cfg.body)));",
+                      "    pm.expect(result.data.facultyName).to.equal(expected.facultyName.trim());",
+                      "    if(expected.description!==undefined) pm.expect(result.data.description).to.equal(expected.description.trim());",
+                      "  }",
+                      "});",
+                      "      "
+                    ]
+                  }
+                }
+              ],
+              "type": "http",
+              "metaInfo": {
+                "blockId": "b618ccc4-0650-4fab-9e1c-42687d4a18c1",
+                "id": "b618ccc4-0650-4fab-9e1c-42687d4a18c1",
+                "type": "http",
+                "projectId": 1405851,
+                "relatedId": 46555496,
+                "environmentId": 6954558,
+                "blockNumber": 1,
+                "tags": [],
+                "httpApiId": 46555496,
+                "httpApiCaseId": 62930303,
+                "httpApiName": "Danh sách khoa",
+                "httpApiPath": "/faculty",
+                "httpApiMethod": "get",
+                "httpApiCaseName": "FAC-GET_LIST-001",
+                "moduleId": 1512539,
+                "serverId": "1512539"
+              },
+              "protocolProfileBehavior": {
+                "useWhatWGUrlParser": true,
+                "disableUrlEncoding": false,
+                "disabledSystemHeaders": {},
+                "disableCookies": false
+              },
+              "responseDefinition": {
+                "code": 200,
+                "name": "200",
+                "headers": [],
+                "jsonSchema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "data"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success"
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "_id",
+                          "facultyName"
+                        ],
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{24}$"
+                          },
+                          "facultyName": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "__v": {
+                            "type": "integer"
+                          }
+                        },
+                        "x-apidog-orders": [
+                          "_id",
+                          "facultyName",
+                          "description",
+                          "__v"
+                        ]
+                      }
+                    }
+                  },
+                  "x-apidog-orders": [
+                    "status",
+                    "data"
+                  ]
+                },
+                "itemSchema": {},
+                "contentType": "json",
+                "tempId": "91000001",
+                "description": "Tiêu chí mong đợi; xem README về lỗi backend đang mở.",
+                "ordering": 0,
+                "mediaType": "application/json",
+                "id": "111332855",
+                "schemaDefinitions": {}
+              },
+              "requestDefinition": {
+                "jsonSchema": {},
+                "examples": []
+              },
+              "overrideRequesterOptions": {
+                "strictSSL": false
+              }
+            }
+          ],
+          "name": "Danh sách khoa"
+        }
+      ],
+      "info": {
+        "name": "Danh sách khoa"
+      },
+      "dataSchemas": {},
+      "mockRules": {
+        "rules": [],
+        "enableSystemRule": true
+      },
+      "environment": {
+        "id": 6954558,
+        "name": "http://localhost:8080",
+        "type": "normal",
+        "baseUrls": {
+          "1504230": "http://localhost:8080",
+          "1512292": "http://localhost:8080",
+          "1512539": "http://localhost:8080",
+          "default": "http://localhost:8080"
+        },
+        "websocketBaseUrls": {},
+        "socketioBaseUrls": {},
+        "baseUrl": "http://localhost:8080",
+        "variable": {
+          "id": "b3952eb6-1c9c-47da-86ea-43c9507c5510",
+          "name": "http://localhost:8080",
+          "baseUrl": "http://localhost:8080",
+          "baseUrls": {
+            "1504230": "http://localhost:8080",
+            "1512292": "http://localhost:8080",
+            "1512539": "http://localhost:8080",
+            "default": "http://localhost:8080"
+          },
+          "values": []
+        },
+        "parameter": {
+          "header": [],
+          "query": [],
+          "body": [],
+          "cookie": []
+        },
+        "advancedSettings": {}
+      },
+      "globals": {
+        "baseUrls": {},
+        "websocketBaseUrls": {},
+        "socketioBaseUrls": {},
+        "baseUrl": "",
+        "variable": {
+          "id": "26ca5e3e-b703-4bb8-ba63-8352ffab2ac5",
+          "baseUrl": "",
+          "baseUrls": {},
+          "values": [
+            {
+              "type": "any",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiI2YWU4MzI5ZTkwMzZmMzQ2OTFmZmNhODAiLCJjdHVJZGVudGlmaWVyIjoiQjk5MDAwMDEiLCJyb2xlIjoiUkVBREVSIiwiaWF0IjoxNzkzNzI2MTM0LCJleHAiOjE3OTM3MjYwNzQsImF1ZCI6ImN0dWxpYi13ZWIiLCJpc3MiOiJjdHVsaWItYXBpIn0.FkikAanf_PAuT6Q3mfj0yE5K6gslnRM8KEZpds7ERiQ",
+              "key": "qaExpiredAccessToken",
+              "isBindInitial": true,
+              "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiI2YWU4MzI5ZTkwMzZmMzQ2OTFmZmNhODAiLCJjdHVJZGVudGlmaWVyIjoiQjk5MDAwMDEiLCJyb2xlIjoiUkVBREVSIiwiaWF0IjoxNzkzNzI2MTM0LCJleHAiOjE3OTM3MjYwNzQsImF1ZCI6ImN0dWxpYi13ZWIiLCJpc3MiOiJjdHVsaWItYXBpIn0.FkikAanf_PAuT6Q3mfj0yE5K6gslnRM8KEZpds7ERiQ"
+            }
+          ]
+        },
+        "parameter": {
+          "header": [],
+          "query": [],
+          "body": [],
+          "cookie": []
+        }
+      },
+      "teamGlobals": {
+        "baseUrls": {},
+        "websocketBaseUrls": {},
+        "socketioBaseUrls": {},
+        "baseUrl": "",
+        "variable": {
+          "id": "a5053790-bc53-474c-941d-64aedfb861a6",
+          "baseUrl": "",
+          "baseUrls": {},
+          "values": []
+        },
+        "parameter": {
+          "header": [],
+          "query": [],
+          "body": [],
+          "cookie": []
+        }
+      },
+      "moduleVariablesMap": {
+        "1504230": [],
+        "1512292": [],
+        "1512539": []
+      },
+      "isServerBuild": true,
+      "isTestFlowControl": true,
+      "projectAssociationMap": {},
+      "requestProxyAgentMap": {},
+      "testDataMap": {},
+      "databaseConnectionMap": {}
+    },
+    "runOptions": {
+      "environmentId": 6954558,
+      "useDataSetId": -1,
+      "threadCount": 1,
+      "iterationCount": 1,
+      "delayItem": 0,
+      "saveVariables": true,
+      "saveReportDetail": "all",
+      "readGlobalCookie": false,
+      "saveGlobalCookie": false,
+      "onError": "ignore",
+      "runnerId": 0
+    },
+    "projectOptions": {
+      "allowAutomationWriteAutomationCreatedSprintBranch": true,
+      "enableJsonc": false,
+      "enableBigint": false,
+      "responseValidate": true,
+      "enableTestScenarioSetting": false,
+      "enableYAPICompatScript": false,
+      "isDefaultUrlEncoding": 3,
+      "publishedDocUrlRules": {
+        "defaultRule": "SLUGIFY_WITH_RESOURCE_KEY",
+        "resourceKeyStandard": "NEW",
+        "enableHierarchicalSlug": false
+      },
+      "allowAutomationWriteMainBranch": true,
+      "allowAutomationWriteSprintBranch": true,
+      "allowAutomationWriteVersionBranch": true,
+      "mockSettings": {},
+      "language": "en-US"
+    },
+    "ciRunningOptions": {
+      "environmentId": 6954558,
+      "useDataSetId": -1,
+      "threadCount": 1,
+      "iterationCount": 1,
+      "delayItem": 0,
+      "saveVariables": true,
+      "saveReportDetail": "all",
+      "readGlobalCookie": false,
+      "saveGlobalCookie": false,
+      "onError": "ignore",
+      "runnerId": 0
+    },
+    "projectId": 1405851,
+    "databaseConnectionMap": {},
+    "testDataMap": {},
+    "reportUrlTemplate": "https://app.apidog.com/link/project/{{projectId}}/api-test/test-report/{{id}}",
+    "reportExtra": {
+      "runOptions": {
+        "environmentId": 6954558,
+        "useDataSetId": -1,
+        "threadCount": 1,
+        "iterationCount": 1,
+        "delayItem": 0,
+        "saveVariables": true,
+        "saveReportDetail": "all",
+        "readGlobalCookie": false,
+        "saveGlobalCookie": false,
+        "onError": "ignore",
+        "runnerId": 0
+      },
+      "endpoint": {
+        "id": 46555496,
+        "name": "Danh sách khoa",
+        "path": "/faculty",
+        "method": "get"
+      }
+    },
+    "runnerId": "8d9be8e9-04a1-4955-8eb3-5fa89773abd3",
+    "name": "Danh sách khoa"
+  }
+}

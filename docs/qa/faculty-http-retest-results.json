@@ -1,0 +1,1093 @@
+{
+  "time": "2026-11-04T17:28:05.630Z",
+  "source": "HTTP trực tiếp; chưa lấy được test case Apidog (connector 429)",
+  "criteria": "Review code: ID sai 400, không tồn tại 404, trùng 409; kiểm tra status, dữ liệu và errors.",
+  "total": 63,
+  "passed": 63,
+  "failed": 0,
+  "results": [
+    {
+      "id": "LIST",
+      "method": "GET",
+      "path": "/faculty",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "count": 15
+        }
+      }
+    },
+    {
+      "id": "GET_BAD_ID",
+      "method": "GET",
+      "path": "/faculty/invalid",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Mã khoa không hợp lệ",
+        "data": null
+      }
+    },
+    {
+      "id": "GET_NOT_FOUND",
+      "method": "GET",
+      "path": "/faculty/000000000000000000000001",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "PUT_BAD_ID",
+      "method": "PUT",
+      "path": "/faculty/invalid",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Mã khoa không hợp lệ",
+        "data": null
+      }
+    },
+    {
+      "id": "PUT_NOT_FOUND",
+      "method": "PUT",
+      "path": "/faculty/000000000000000000000001",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "DELETE_BAD_ID",
+      "method": "DELETE",
+      "path": "/faculty/invalid",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Mã khoa không hợp lệ",
+        "data": null
+      }
+    },
+    {
+      "id": "DELETE_NOT_FOUND",
+      "method": "DELETE",
+      "path": "/faculty/000000000000000000000001",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "CREATE_VALID",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 201,
+      "actualCode": 201,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "facultyName": "QA_FACULTY_RETEST_1793813283121",
+          "description": "original",
+          "_id": "6aeb6b23ecda7ff18e8b8196",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "POST_EMPTY_BODY",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_MISSING_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_NULL_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_NUMBER_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_BOOL_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_ARRAY_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          },
+          {
+            "field": "facultyName",
+            "message": "Tên khoa không được để trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_OBJECT_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_EMPTY_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa không được để trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_SPACE_NAME",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa không được để trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_NAME_101",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa khong được vượt quá 100 ký tự"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_NULL_DESC",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả phải là chuỗi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_NUMBER_DESC",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả phải là chuỗi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_ARRAY_DESC",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả phải là chuỗi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_DESC_1001",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả không được vượt quá 1000 ký tự"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POST_EXTRA_FIELD",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "extra",
+            "message": "Trường này không được phép gửi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_EMPTY_BODY",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_MISSING_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_NULL_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_NUMBER_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_BOOL_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_ARRAY_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          },
+          {
+            "field": "facultyName",
+            "message": "Tên khoa không được để trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_OBJECT_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa phải là chuỗi và không được bỏ trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_EMPTY_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa không được để trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_SPACE_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa không được để trống"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_NAME_101",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "facultyName",
+            "message": "Tên khoa khong được vượt quá 100 ký tự"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_NULL_DESC",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả phải là chuỗi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_NUMBER_DESC",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả phải là chuỗi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_ARRAY_DESC",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả phải là chuỗi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_DESC_1001",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "description",
+            "message": "Mô tả không được vượt quá 1000 ký tự"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUT_EXTRA_FIELD",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 400,
+      "actualCode": 400,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu gửi lên không hợp lệ",
+        "data": null,
+        "errors": [
+          {
+            "field": "extra",
+            "message": "Trường này không được phép gửi"
+          }
+        ]
+      }
+    },
+    {
+      "id": "GET_EXISTING",
+      "method": "GET",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b8196",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121",
+          "description": "original",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "DUPLICATE",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 409,
+      "actualCode": 409,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa đã tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "DUPLICATE_TRIM",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 409,
+      "actualCode": 409,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa đã tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "CREATE_NAME_100",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 201,
+      "actualCode": 201,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "facultyName": "QA_FACULTY_RETEST_1793813283121AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "_id": "6aeb6b23ecda7ff18e8b819c",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "CREATE_DESC_1000",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 201,
+      "actualCode": 201,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_DESC",
+          "description": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "_id": "6aeb6b23ecda7ff18e8b819f",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "CREATE_EMPTY_DESC",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 201,
+      "actualCode": 201,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_EMPTY",
+          "description": "",
+          "_id": "6aeb6b24ecda7ff18e8b81a2",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "CREATE_TRIM",
+      "method": "POST",
+      "path": "/faculty",
+      "expectedCode": 201,
+      "actualCode": 201,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_TRIM",
+          "description": "text",
+          "_id": "6aeb6b24ecda7ff18e8b81a5",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "UPDATE_VALID",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b8196",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_UPDATED",
+          "description": "updated",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "UPDATE_PERSISTED",
+      "method": "GET",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b8196",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_UPDATED",
+          "description": "updated",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "UPDATE_DUPLICATE",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 409,
+      "actualCode": 409,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Dữ liệu đã tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "UPDATE_SAME_NAME",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b8196",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_UPDATED",
+          "description": "updated",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "UPDATE_NAME_100",
+      "method": "PUT",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b8196",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_UPBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "description": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "CONCURRENT_DUPLICATE",
+      "expectedCodes": [
+        201,
+        409
+      ],
+      "actualCodes": [
+        201,
+        409
+      ],
+      "pass": true,
+      "responses": [
+        {
+          "status": "error",
+          "message": "Dữ liệu đã tồn tại",
+          "data": null
+        },
+        {
+          "status": "success",
+          "data": {
+            "facultyName": "QA_FACULTY_RETEST_1793813283121_RACE",
+            "_id": "6aeb6b24ecda7ff18e8b81ae",
+            "__v": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "CLEANUP_6aeb6b23ecda7ff18e8b8196",
+      "method": "DELETE",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b8196",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_UPBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "description": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "VERIFY_DELETED_6aeb6b23ecda7ff18e8b8196",
+      "method": "GET",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b8196",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "CLEANUP_6aeb6b23ecda7ff18e8b819c",
+      "method": "DELETE",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b819c",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b819c",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "VERIFY_DELETED_6aeb6b23ecda7ff18e8b819c",
+      "method": "GET",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b819c",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "CLEANUP_6aeb6b23ecda7ff18e8b819f",
+      "method": "DELETE",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b819f",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b23ecda7ff18e8b819f",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_DESC",
+          "description": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "VERIFY_DELETED_6aeb6b23ecda7ff18e8b819f",
+      "method": "GET",
+      "path": "/faculty/6aeb6b23ecda7ff18e8b819f",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "CLEANUP_6aeb6b24ecda7ff18e8b81a2",
+      "method": "DELETE",
+      "path": "/faculty/6aeb6b24ecda7ff18e8b81a2",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b24ecda7ff18e8b81a2",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_EMPTY",
+          "description": "",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "VERIFY_DELETED_6aeb6b24ecda7ff18e8b81a2",
+      "method": "GET",
+      "path": "/faculty/6aeb6b24ecda7ff18e8b81a2",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "CLEANUP_6aeb6b24ecda7ff18e8b81a5",
+      "method": "DELETE",
+      "path": "/faculty/6aeb6b24ecda7ff18e8b81a5",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b24ecda7ff18e8b81a5",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_TRIM",
+          "description": "text",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "VERIFY_DELETED_6aeb6b24ecda7ff18e8b81a5",
+      "method": "GET",
+      "path": "/faculty/6aeb6b24ecda7ff18e8b81a5",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    },
+    {
+      "id": "CLEANUP_6aeb6b24ecda7ff18e8b81ae",
+      "method": "DELETE",
+      "path": "/faculty/6aeb6b24ecda7ff18e8b81ae",
+      "expectedCode": 200,
+      "actualCode": 200,
+      "pass": true,
+      "response": {
+        "status": "success",
+        "data": {
+          "_id": "6aeb6b24ecda7ff18e8b81ae",
+          "facultyName": "QA_FACULTY_RETEST_1793813283121_RACE",
+          "__v": 0
+        }
+      }
+    },
+    {
+      "id": "VERIFY_DELETED_6aeb6b24ecda7ff18e8b81ae",
+      "method": "GET",
+      "path": "/faculty/6aeb6b24ecda7ff18e8b81ae",
+      "expectedCode": 404,
+      "actualCode": 404,
+      "pass": true,
+      "response": {
+        "status": "error",
+        "message": "Khoa không tồn tại",
+        "data": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+caseId,method,path,body,fixture,expectedCode,expectedMessage,errorField
+FAC-GET-EXISTING,GET,/faculty/{id},,fixture,200,,
+FAC-GET-BAD_ID,GET,/faculty/{id},,invalid,400,Mã khoa không hợp lệ,
+FAC-GET-NOT_FOUND,GET,/faculty/{id},,missing,404,Khoa không tồn tại,

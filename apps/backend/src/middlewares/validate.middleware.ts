@@ -23,7 +23,8 @@ export const validate = (schema: ZodType): RequestHandler => {
         status: "error",
         message: "Dữ liệu gửi lên không hợp lệ",
         data: null,
-      })
+        errors,
+      });
       return;
     }
     
