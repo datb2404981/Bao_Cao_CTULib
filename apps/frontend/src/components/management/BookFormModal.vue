@@ -381,7 +381,7 @@ async function handleSubmit() {
                     v-model="form.coverImageUrl"
                     type="url"
                     name="coverImageUrl"
-                    placeholder="https://example.com/cover.jpg"
+                    placeholder="https://lib.ctu.edu.vn/covers/giaotrinh-web.jpg"
                     :aria-invalid="!!errors.coverImageUrl"
                   />
                   <p v-if="errors.coverImageUrl" class="field-error">{{ errors.coverImageUrl }}</p>
@@ -417,19 +417,91 @@ async function handleSubmit() {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--backdrop-dialog, rgba(23, 32, 51, 0.45));
   display: grid;
   place-items: center;
   z-index: 50;
-  padding: 16px;
+  padding: 20px;
 }
+
 .dialog {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-dialog, 0 12px 44px #17203318);
 }
+
+.dialog-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
 .dialog-body {
   overflow-y: auto;
   flex: 1;
+  padding: 20px 24px;
+}
+
+.form-section {
+  background: var(--color-page);
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  margin-bottom: 16px;
+}
+
+.form-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+select[multiple] {
+  min-height: 104px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+select[multiple]:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+  border-color: var(--color-focus);
+}
+
+select[multiple] option {
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+}
+
+select[multiple] option:checked {
+  background: var(--bg-primary-subtle);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.checkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkline input {
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
 }
 </style>

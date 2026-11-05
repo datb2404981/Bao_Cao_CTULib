@@ -29,12 +29,13 @@ function resolveAuthorNames(authorIds?: string[], authorsMap?: Record<string, st
   <div class="catalog-grid-wrapper">
     <!-- 1. Trạng thái Đang tải (Loading Skeleton) -->
     <div v-if="loading" class="book-grid loading-skeleton" data-loading-grid>
-      <div v-for="n in 8" :key="n" class="book-card skeleton-card">
+      <div v-for="n in 6" :key="n" class="book-card skeleton-card">
         <div class="book-card-top">
           <div class="skeleton-box skeleton-cover"></div>
-          <div style="flex:1">
+          <div style="flex: 1">
             <div class="skeleton-box skeleton-badge"></div>
             <div class="skeleton-box skeleton-title"></div>
+            <div class="skeleton-box skeleton-title-sub"></div>
             <div class="skeleton-box skeleton-author"></div>
           </div>
         </div>
@@ -46,12 +47,12 @@ function resolveAuthorNames(authorIds?: string[], authorsMap?: Record<string, st
     <!-- 2. Trạng thái Báo lỗi (Error Banner) -->
     <div v-else-if="error" class="notice error error-banner" role="alert">
       <svg
-        width="18"
-        height="18"
+        width="20"
+        height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="1.7"
+        stroke-width="1.8"
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
@@ -60,21 +61,27 @@ function resolveAuthorNames(authorIds?: string[], authorsMap?: Record<string, st
         <line x1="12" y1="8" x2="12" y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
-      <div>
+      <div class="error-content">
         <strong>Không thể tải danh sách sách</strong>
         <p>{{ error }}</p>
-        <button class="btn small btn-retry" type="button" style="margin-top:8px" @click="emit('retry')">
-          Thử lại
+        <button class="btn small primary btn-retry" type="button" @click="emit('retry')">
+          <span>Thử lại</span>
         </button>
       </div>
     </div>
 
     <!-- 3. Trạng thái Không có dữ liệu (Empty State) -->
     <div v-else-if="!books || books.length === 0" class="empty-state" data-catalog-empty>
+      <div class="empty-icon-wrapper" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </div>
       <h3>Không tìm thấy sách phù hợp</h3>
       <p>Thử từ khóa khác hoặc xóa bộ lọc.</p>
-      <button class="btn" type="button" data-reset-filter @click="emit('reset-filters')">
-        Xóa bộ lọc
+      <button class="btn primary" type="button" data-reset-filter @click="emit('reset-filters')">
+        <span>Xóa bộ lọc</span>
       </button>
     </div>
 
@@ -95,47 +102,108 @@ function resolveAuthorNames(authorIds?: string[], authorsMap?: Record<string, st
 <style scoped>
 .skeleton-card {
   pointer-events: none;
-  opacity: 0.7;
 }
+
 .skeleton-box {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: skeleton-pulse 1.5s infinite;
+  background: var(--raised);
+  animation: skeleton-fade 1.4s ease-in-out infinite;
   border-radius: 4px;
 }
+
 .skeleton-cover {
-  width: 54px;
-  height: 74px;
+  width: 68px;
+  height: 96px;
 }
+
 .skeleton-badge {
-  width: 70px;
+  width: 72px;
   height: 18px;
   margin-bottom: 8px;
 }
+
 .skeleton-title {
-  width: 90%;
-  height: 16px;
+  width: 92%;
+  height: 15px;
   margin-bottom: 6px;
 }
+
+.skeleton-title-sub {
+  width: 68%;
+  height: 15px;
+  margin-bottom: 8px;
+}
+
 .skeleton-author {
-  width: 60%;
-  height: 14px;
+  width: 48%;
+  height: 13px;
 }
+
 .skeleton-meta {
-  width: 80%;
-  height: 14px;
-}
-.skeleton-button {
   width: 100%;
   height: 36px;
+}
+
+.skeleton-button {
+  width: 100%;
+  height: 32px;
   margin-top: auto;
 }
-@keyframes skeleton-pulse {
-  0% {
-    background-position: 200% 0;
+
+@keyframes skeleton-fade {
+  0%, 100% {
+    opacity: 0.9;
   }
-  100% {
-    background-position: -200% 0;
+  50% {
+    opacity: 0.45;
   }
+}
+
+.error-banner {
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  align-items: flex-start;
+}
+
+.error-content {
+  flex: 1;
+}
+
+.error-content strong {
+  font-size: 14.5px;
+  color: var(--pill-negative-ink);
+}
+
+.error-content p {
+  color: var(--pill-negative-ink);
+  margin: 4px 0 12px;
+  font-size: 13.5px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.empty-icon-wrapper {
+  color: var(--muted);
+  display: inline-flex;
+  margin: 0 auto 12px;
+}
+
+.empty-state h3 {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.empty-state p {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin: 0 0 16px;
 }
 </style>
