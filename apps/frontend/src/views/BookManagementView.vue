@@ -172,7 +172,6 @@ onMounted(() => {
     <template v-else>
       <div class="page-head">
         <div>
-          <p class="eyebrow">QUẢN TRỊ THƯ VIỆN</p>
           <h1>Quản lý danh mục sách & lưu thông</h1>
           <p>Xem toàn bộ ấn phẩm trong kho, theo dõi số bản khả dụng và thêm mới sách vào hệ thống.</p>
         </div>

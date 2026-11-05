@@ -70,38 +70,59 @@ function onLimitChange(e: Event) {
 
 <template>
   <div v-if="totalPages > 0" class="pagination-bar">
+    <!-- Thông tin tóm tắt bên trái -->
     <div class="pagination-info">
-      <span class="num">{{ totalItems }}</span> sách · Trang
-      <span class="num">{{ currentPage }}</span> / <span class="num">{{ totalPages }}</span>
+      <div class="info-badge">
+        <span>
+          <strong class="num highlight-count">{{ totalItems }}</strong> sách
+        </span>
+      </div>
+      <span class="info-divider">·</span>
+      <span class="page-counter">
+        Trang <strong class="num current-num">{{ currentPage }}</strong> / <strong class="num total-num">{{ totalPages }}</strong>
+      </span>
     </div>
 
+    <!-- Cụm điều khiển bên phải -->
     <div class="pagination-controls">
-      <label class="limit-selector">
-        <select :value="limit" :disabled="isDisabled" @change="onLimitChange">
-          <option :value="10">10 / trang</option>
-          <option :value="12">12 / trang</option>
-          <option :value="24">24 / trang</option>
-          <option :value="48">48 / trang</option>
-        </select>
-      </label>
+      <!-- Bộ chọn số lượng / trang -->
+      <div class="limit-selector-wrapper">
+        <label class="limit-selector" aria-label="Số sách mỗi trang">
+          <select :value="limit" :disabled="isDisabled" @change="onLimitChange">
+            <option :value="10">10 / trang</option>
+            <option :value="12">12 / trang</option>
+            <option :value="24">24 / trang</option>
+            <option :value="48">48 / trang</option>
+          </select>
+          <svg class="select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </label>
+      </div>
 
+      <!-- Dãy nút chuyển trang -->
       <nav class="pagination" aria-label="Phân trang">
+        <!-- Nút Trang trước -->
         <button
           class="page-nav-btn btn-prev"
           type="button"
           aria-label="Trang trước"
+          title="Trang trước"
           :disabled="isDisabled || currentPage <= 1"
           @click="prevPage"
         >
-          ‹
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
         </button>
 
+        <!-- Danh sách các số trang -->
         <template v-for="(p, idx) in pages" :key="idx">
-          <span v-if="p === 'ellipsis'" class="page-ellipsis">…</span>
+          <span v-if="p === 'ellipsis'" class="page-ellipsis" aria-hidden="true">…</span>
           <button
             v-else
             type="button"
-            class="page-num-btn"
+            class="page-num-btn num"
             :class="{ active: p === currentPage }"
             :aria-current="p === currentPage ? 'page' : undefined"
             :disabled="isDisabled"
@@ -111,14 +132,18 @@ function onLimitChange(e: Event) {
           </button>
         </template>
 
+        <!-- Nút Trang sau -->
         <button
           class="page-nav-btn btn-next"
           type="button"
           aria-label="Trang sau"
+          title="Trang sau"
           :disabled="isDisabled || currentPage >= totalPages"
           @click="nextPage"
         >
-          ›
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
         </button>
       </nav>
     </div>
@@ -133,54 +158,204 @@ function onLimitChange(e: Event) {
   flex-wrap: wrap;
   gap: 16px;
   margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
+  padding: 12px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
+
 .pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
   color: var(--muted);
+  flex-wrap: wrap;
 }
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.highlight-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.info-divider {
+  color: var(--control);
+}
+
+.page-counter {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.current-num,
+.total-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .pagination-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
+
+.limit-selector-wrapper {
+  position: relative;
+}
+
+.limit-selector {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .limit-selector select {
-  font-size: 13px;
-  padding: 6px 10px;
-  border-radius: 5px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  height: 32px;
+  min-height: 32px;
+  padding: 0 28px 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--control);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
+
+.limit-selector select:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--ground);
+}
+
+.limit-selector select:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.select-chevron {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
 .pagination {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  user-select: none;
 }
+
 .page-nav-btn,
 .page-num-btn {
-  min-width: 34px;
-  min-height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 5px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #64748b;
-  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.page-nav-btn:hover:not(:disabled),
-.page-num-btn:hover:not(:disabled) {
-  background: #f1f5f9;
+
+.page-nav-btn {
+  background: var(--surface);
+  border: 1px solid var(--control);
+  color: var(--text);
 }
+
+.page-nav-btn:hover:not(:disabled) {
+  background: var(--ground);
+  border-color: var(--accent);
+}
+
+.page-nav-btn:disabled {
+  background: var(--ground);
+  border-color: var(--line);
+  color: var(--muted-light);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.page-num-btn {
+  font-variant-numeric: tabular-nums;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.page-num-btn:hover:not(:disabled):not(.active) {
+  background: var(--ground);
+  border-color: var(--control);
+  color: var(--text);
+}
+
 .page-num-btn.active {
-  background: #edf3ff;
-  color: var(--blue);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
   font-weight: 600;
+  cursor: default;
 }
+
+.page-num-btn:disabled:not(.active) {
+  background: var(--ground);
+  border-color: var(--line);
+  color: var(--muted-light);
+  cursor: not-allowed;
+}
+
 .page-ellipsis {
-  padding: 0 4px;
-  color: #94a3b8;
+  width: 22px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .pagination-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .pagination-info {
+    justify-content: space-between;
+  }
+
+  .pagination-controls {
+    justify-content: space-between;
+  }
 }
 </style>

@@ -1,0 +1,1415 @@
+{
+  "time": "2026-11-04T17:46:31.137Z",
+  "runner": "HTTP + vm mô phỏng pm; chưa chạy trong Apidog",
+  "total": 54,
+  "passed": 54,
+  "failed": 0,
+  "results": [
+    {
+      "id": "FAC-GET_LIST-001",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-GET_LIST-001 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET_LIST-001 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET_LIST-001 dữ liệu",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-GET-EXISTING",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-GET-EXISTING HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET-EXISTING wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET-EXISTING dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET-EXISTING cleanup 6aeb6f6becda7ff18e8b81d8",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6becda7ff18e8b81d8",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-GET-BAD_ID",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-GET-BAD_ID HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET-BAD_ID wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET-BAD_ID message",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-GET-NOT_FOUND",
+      "code": 404,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-GET-NOT_FOUND HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET-NOT_FOUND wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-GET-NOT_FOUND message",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-EMPTY_BODY",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-EMPTY_BODY HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_BODY wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_BODY message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_BODY lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-MISSING_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-MISSING_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-MISSING_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-MISSING_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-MISSING_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-NULL_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-NULL_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NULL_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NULL_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NULL_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-NUMBER_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-NUMBER_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NUMBER_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NUMBER_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NUMBER_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-BOOL_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-BOOL_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-BOOL_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-BOOL_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-BOOL_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-ARRAY_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-ARRAY_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-ARRAY_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-ARRAY_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-ARRAY_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-OBJECT_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-OBJECT_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-OBJECT_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-OBJECT_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-OBJECT_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-EMPTY_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-EMPTY_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-SPACE_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-SPACE_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-SPACE_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-SPACE_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-SPACE_NAME lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-NAME_101",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-NAME_101 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NAME_101 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NAME_101 message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NAME_101 lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-DESC_NULL",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-DESC_NULL HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_NULL wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_NULL message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_NULL lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-DESC_NUMBER",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-DESC_NUMBER HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_NUMBER wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_NUMBER message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_NUMBER lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-DESC_ARRAY",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-DESC_ARRAY HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_ARRAY wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_ARRAY message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_ARRAY lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-DESC_1001",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-DESC_1001 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_1001 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_1001 message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_1001 lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-EXTRA_FIELD",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-EXTRA_FIELD HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EXTRA_FIELD wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EXTRA_FIELD message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EXTRA_FIELD lỗi từng trường",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-VALID",
+      "code": 201,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-VALID HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-VALID wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-VALID dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-VALID cleanup 6aeb6f6becda7ff18e8b81e0",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6becda7ff18e8b81e0",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-NO_DESC",
+      "code": 201,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-NO_DESC HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NO_DESC wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NO_DESC dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NO_DESC cleanup 6aeb6f6cecda7ff18e8b81e6",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6cecda7ff18e8b81e6",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-EMPTY_DESC",
+      "code": 201,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-EMPTY_DESC HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_DESC wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_DESC dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-EMPTY_DESC cleanup 6aeb6f6cecda7ff18e8b81ec",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6cecda7ff18e8b81ec",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-DESC_1000",
+      "code": 201,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-DESC_1000 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_1000 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_1000 dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DESC_1000 cleanup 6aeb6f6cecda7ff18e8b81f2",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6cecda7ff18e8b81f2",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-NAME_100",
+      "code": 201,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-NAME_100 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NAME_100 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NAME_100 dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-NAME_100 cleanup 6aeb6f6decda7ff18e8b81f8",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6decda7ff18e8b81f8",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-TRIM",
+      "code": 201,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-TRIM HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-TRIM wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-TRIM dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-TRIM cleanup 6aeb6f6decda7ff18e8b81fe",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6decda7ff18e8b81fe",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-POST-DUPLICATE",
+      "code": 409,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-POST-DUPLICATE HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DUPLICATE wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DUPLICATE message",
+          "pass": true
+        },
+        {
+          "name": "FAC-POST-DUPLICATE cleanup 6aeb6f6decda7ff18e8b8204",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6decda7ff18e8b8204",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-BAD_ID",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-BAD_ID HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-BAD_ID wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-BAD_ID message",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-NOT_FOUND",
+      "code": 404,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-NOT_FOUND HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NOT_FOUND wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NOT_FOUND message",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-EMPTY_BODY",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-EMPTY_BODY HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_BODY wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_BODY message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_BODY lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_BODY cleanup 6aeb6f6eecda7ff18e8b820c",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6eecda7ff18e8b820c",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-MISSING_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-MISSING_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-MISSING_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-MISSING_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-MISSING_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-MISSING_NAME cleanup 6aeb6f6eecda7ff18e8b8212",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6eecda7ff18e8b8212",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-NULL_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-NULL_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NULL_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NULL_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NULL_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NULL_NAME cleanup 6aeb6f6eecda7ff18e8b8218",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6eecda7ff18e8b8218",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-NUMBER_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-NUMBER_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NUMBER_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NUMBER_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NUMBER_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NUMBER_NAME cleanup 6aeb6f6fecda7ff18e8b821e",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6fecda7ff18e8b821e",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-BOOL_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-BOOL_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-BOOL_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-BOOL_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-BOOL_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-BOOL_NAME cleanup 6aeb6f6fecda7ff18e8b8224",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6fecda7ff18e8b8224",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-ARRAY_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-ARRAY_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-ARRAY_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-ARRAY_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-ARRAY_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-ARRAY_NAME cleanup 6aeb6f6fecda7ff18e8b822a",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f6fecda7ff18e8b822a",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-OBJECT_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-OBJECT_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-OBJECT_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-OBJECT_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-OBJECT_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-OBJECT_NAME cleanup 6aeb6f70ecda7ff18e8b8230",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f70ecda7ff18e8b8230",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-EMPTY_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-EMPTY_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_NAME cleanup 6aeb6f70ecda7ff18e8b8236",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f70ecda7ff18e8b8236",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-SPACE_NAME",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-SPACE_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-SPACE_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-SPACE_NAME message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-SPACE_NAME lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-SPACE_NAME cleanup 6aeb6f70ecda7ff18e8b823c",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f70ecda7ff18e8b823c",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-NAME_101",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-NAME_101 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NAME_101 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NAME_101 message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NAME_101 lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NAME_101 cleanup 6aeb6f71ecda7ff18e8b8242",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f71ecda7ff18e8b8242",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-DESC_NULL",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-DESC_NULL HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NULL wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NULL message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NULL lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NULL cleanup 6aeb6f71ecda7ff18e8b8248",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f71ecda7ff18e8b8248",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-DESC_NUMBER",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-DESC_NUMBER HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NUMBER wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NUMBER message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NUMBER lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_NUMBER cleanup 6aeb6f71ecda7ff18e8b824e",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f71ecda7ff18e8b824e",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-DESC_ARRAY",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-DESC_ARRAY HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_ARRAY wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_ARRAY message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_ARRAY lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_ARRAY cleanup 6aeb6f72ecda7ff18e8b8254",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f72ecda7ff18e8b8254",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-DESC_1001",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-DESC_1001 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_1001 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_1001 message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_1001 lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_1001 cleanup 6aeb6f72ecda7ff18e8b825a",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f72ecda7ff18e8b825a",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-EXTRA_FIELD",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-EXTRA_FIELD HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EXTRA_FIELD wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EXTRA_FIELD message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EXTRA_FIELD lỗi từng trường",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EXTRA_FIELD cleanup 6aeb6f72ecda7ff18e8b8260",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f72ecda7ff18e8b8260",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-VALID",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-VALID HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-VALID wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-VALID dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-VALID cleanup 6aeb6f73ecda7ff18e8b8266",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f73ecda7ff18e8b8266",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-NO_DESC",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-NO_DESC HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NO_DESC wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NO_DESC dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NO_DESC cleanup 6aeb6f73ecda7ff18e8b826d",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f73ecda7ff18e8b826d",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-EMPTY_DESC",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-EMPTY_DESC HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_DESC wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_DESC dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-EMPTY_DESC cleanup 6aeb6f73ecda7ff18e8b8274",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f73ecda7ff18e8b8274",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-DESC_1000",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-DESC_1000 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_1000 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_1000 dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DESC_1000 cleanup 6aeb6f74ecda7ff18e8b827b",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f74ecda7ff18e8b827b",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-NAME_100",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-NAME_100 HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NAME_100 wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NAME_100 dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-NAME_100 cleanup 6aeb6f74ecda7ff18e8b8282",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f74ecda7ff18e8b8282",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-TRIM",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-TRIM HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-TRIM wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-TRIM dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-TRIM cleanup 6aeb6f75ecda7ff18e8b8289",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f75ecda7ff18e8b8289",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-DUPLICATE",
+      "code": 409,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-DUPLICATE HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DUPLICATE wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DUPLICATE message",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DUPLICATE cleanup 6aeb6f75ecda7ff18e8b8290",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-DUPLICATE cleanup 6aeb6f75ecda7ff18e8b8293",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f75ecda7ff18e8b8290",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f75ecda7ff18e8b8293",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-PUT-SAME_NAME",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-PUT-SAME_NAME HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-SAME_NAME wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-SAME_NAME dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "FAC-PUT-SAME_NAME cleanup 6aeb6f76ecda7ff18e8b829d",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f76ecda7ff18e8b829d",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-DELETE-BAD_ID",
+      "code": 400,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-DELETE-BAD_ID HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-DELETE-BAD_ID wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-DELETE-BAD_ID message",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-DELETE-NOT_FOUND",
+      "code": 404,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-DELETE-NOT_FOUND HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-DELETE-NOT_FOUND wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-DELETE-NOT_FOUND message",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "FAC-DELETE-EXISTING",
+      "code": 200,
+      "pass": true,
+      "checks": [
+        {
+          "name": "FAC-DELETE-EXISTING HTTP",
+          "pass": true
+        },
+        {
+          "name": "FAC-DELETE-EXISTING wrapper",
+          "pass": true
+        },
+        {
+          "name": "FAC-DELETE-EXISTING dữ liệu",
+          "pass": true
+        },
+        {
+          "name": "verify cleanup 6aeb6f76ecda7ff18e8b82a5",
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

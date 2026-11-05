@@ -1,0 +1,4 @@
+caseId,method,path,body,fixture,expectedCode,expectedMessage,errorField
+FAC-DELETE-BAD_ID,DELETE,/faculty/{id},,invalid,400,Mã khoa không hợp lệ,
+FAC-DELETE-NOT_FOUND,DELETE,/faculty/{id},,missing,404,Khoa không tồn tại,
+FAC-DELETE-EXISTING,DELETE,/faculty/{id},,fixture,200,,

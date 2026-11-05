@@ -31,7 +31,7 @@ const input = {
 
 const app = express();
 app.use(express.json());
-app.use("/books", bookRouter);
+app.use("/book", bookRouter);
 const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
   res.status(error instanceof AppError ? error.statusCode : 500).json({
     status: "error",
@@ -72,7 +72,7 @@ const createToken = (ctuIdentifier = "CB99101", role = "EMPLOYEE") => {
 };
 
 const post = (body: unknown, token?: string) =>
-  fetch(base + "/books", {
+  fetch(base + "/book", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

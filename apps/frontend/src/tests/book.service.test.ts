@@ -53,7 +53,7 @@ describe('services/book.ts - Unit Tests', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1)
       const [url, options] = vi.mocked(fetch).mock.calls[0]!
-      expect(String(url)).toContain('/api/v1/books')
+      expect(String(url)).toBe('/book')
       expect(options?.method).toBe('GET')
       expect(result.items).toHaveLength(1)
       expect(result.items[0]?.bookId).toBe(mockBook.bookId)
