@@ -2,8 +2,8 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import mongoose, { Types } from "mongoose";
 import authorModel from "../models/author.model.js";
-import { BookModel } from "../models/book.model.js";
-import { facultyModel } from "../models/faculty.model.js";
+import BookModel from "../models/book.model.js";
+import facultyModel  from "../models/faculty.model.js";
 import { AccountModel } from "../models/user.model.js";
 
 async function main() {
