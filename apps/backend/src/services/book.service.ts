@@ -1,24 +1,9 @@
+import id from "zod/v4/locales/id.cjs";
 import authorModel from "../models/author.model.js";
-import { BookModel } from "../models/book.model.js";
-import { facultyModel } from "../models/faculty.model.js";
+import BookModel, {Book} from "../models/book.model.js";
+import facultyModel from "../models/faculty.model.js";
 import { AppError } from "../utils/app-error.js";
 
-export interface CreateBookInput {
-  title: string;
-  bookType?: "TEXTBOOK" | "REFERENCE";
-  publisher?: string;
-  publicationYear?: number;
-  coverPrice: number;
-  totalCopies: number;
-  availableCopies?: number;
-  coverImageUrl?: string;
-  coverImageURL?: string;
-  isAvailableForCirculation?: boolean;
-  facultyId: string;
-  authorIds: string[];
-}
-
-export type UpdateBookInput = Partial<CreateBookInput>;
 
 const toBookResponse = (b: any) => {
   const doc = b.toObject ? b.toObject() : b;
@@ -48,8 +33,8 @@ const checkRelations = async (facultyId?: string, authorIds?: string[]) => {
   }
 };
 
-export const createBook = async (input: CreateBookInput) => {
-  await checkRelations(input.facultyId, input.authorIds);
+export const createBook = async (input: Book) => {
+  await checkRelations(input.facultyId.toString(), input.authorIds?.map((id)=> id.toString()));
 
   // availableCopies do server tính từ totalCopies, không nhận từ client
   const book = await BookModel.create({
@@ -137,12 +122,12 @@ export const getBookById = async (id: string) => {
   return toBookResponse(book);
 };
 
-export const updateBook = async (id: string, input: UpdateBookInput) => {
+export const updateBook = async (id: string, input: Book) => {
   if (!/^[a-fA-F0-9]{24}$/.test(id)) {
     throw new AppError("Sách không tồn tại", 404);
   }
 
-  await checkRelations(input.facultyId, input.authorIds);
+  await checkRelations(input.facultyId.toString(), input.authorIds.map(id => id.toString()));
   const book = await BookModel.findByIdAndUpdate(id, input, {
     new: true,
     runValidators: true,

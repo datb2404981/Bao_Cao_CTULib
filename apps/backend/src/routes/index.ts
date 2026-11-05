@@ -12,5 +12,6 @@ router.use(AUTH_PATH, authRouter);
 router.use("/auth", authRouter);
 router.use("/book", bookRouter);
 router.use("/faculty", facultyRouter);
+router.use("/author", authRouter);
 
 export default router;

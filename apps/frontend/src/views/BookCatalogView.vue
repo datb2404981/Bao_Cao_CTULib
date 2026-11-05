@@ -170,19 +170,19 @@ onMounted(() => {
 
 <template>
   <div class="catalog-view container">
-    <!-- Khung cổng CTU: Tiêu đề học thuật hiện đại → Lọc/Thao tác → Nội dung -->
+    <!-- Hero Header: Tối giản, thanh lịch, chuẩn nhận diện Đại học Cần Thơ -->
     <div class="page-head catalog-hero-banner">
-      <div class="hero-banner-content">
-        <div class="hero-eyebrow">
-          <span class="eyebrow-dot"></span>
-          <span>MỤC LỤC TRỰC TUYẾN OPAC · ĐẠI HỌC CẦN THƠ</span>
+      <div class="hero-left">
+        <div class="hero-brand-mark">
+          <img src="/ctu-logo.png" alt="Logo Đại học Cần Thơ" class="ctu-crest-img" />
         </div>
-        <h1>Danh mục sách thư viện</h1>
-        <p>Tra cứu học liệu, giáo trình và sách tham khảo theo khoa/viện tại Thư viện Đại học Cần Thơ.</p>
-      </div>
-      <div v-if="!loading && !error" class="hero-counter-card">
-        <span class="counter-value num">{{ pagination.totalItems }}</span>
-        <span class="counter-label">Ấn phẩm hiện hành</span>
+        <div class="hero-banner-content">
+          <div class="hero-subtitle">Mục lục trực tuyến OPAC · Đại học Cần Thơ</div>
+          <h1>Tra cứu Học liệu & Giáo trình</h1>
+          <p>
+            Cổng kết nối nguồn học liệu số, giáo trình chính quy và tài liệu nghiên cứu chuyên sâu.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -236,72 +236,92 @@ onMounted(() => {
 
 <style scoped>
 .catalog-hero-banner {
-  background: linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
-  border: 1px solid #dbeafe;
-  border-radius: 16px;
-  padding: 24px 28px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  box-shadow: 0 2px 8px -2px rgba(29, 78, 216, 0.05);
-}
-
-.hero-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #1d4ed8;
-  margin-bottom: 8px;
-}
-
-.eyebrow-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #2563eb;
-}
-
-.hero-counter-card {
   background: #ffffff;
-  border: 1px solid #bfdbfe;
-  border-radius: 12px;
-  padding: 12px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin-bottom: 22px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.hero-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.hero-brand-mark {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.06);
+  padding: 6px;
 }
 
-.counter-value {
-  font-size: 26px;
-  line-height: 1.15;
-  font-weight: 800;
-  color: #1d4ed8;
+.ctu-crest-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
-.counter-label {
-  font-size: 12px;
-  color: #64748b;
+.hero-banner-content {
+  min-width: 0;
+}
+
+.hero-subtitle {
+  font-size: 12.5px;
   font-weight: 600;
-  margin-top: 2px;
+  color: #1d4ed8;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
 }
 
-@media (max-width: 767px) {
+.hero-banner-content h1 {
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 750;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.hero-banner-content p {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0;
+  max-width: 680px;
+}
+
+@media (max-width: 640px) {
   .catalog-hero-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 18px 20px;
+    padding: 16px;
   }
 
-  .hero-counter-card {
-    align-items: flex-start;
-    width: 100%;
+  .hero-left {
+    gap: 14px;
+  }
+
+  .hero-brand-mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    padding: 5px;
+  }
+
+  .hero-banner-content h1 {
+    font-size: 19px;
+  }
+
+  .hero-banner-content p {
+    font-size: 12.5px;
   }
 }
 </style>

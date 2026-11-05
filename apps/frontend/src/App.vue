@@ -443,37 +443,230 @@ onUnmounted(() => {
         </section>
 
         <section class="form-panel" aria-label="Xác thực tài khoản">
-          <div v-if="starting" class="loading-state" role="status"><span class="spinner"></span> Đang kiểm tra phiên đăng nhập…</div>
+          <div v-if="starting" class="loading-state" role="status">
+            <span class="spinner"></span> Đang kiểm tra phiên đăng nhập…
+          </div>
+
           <template v-else-if="currentUser">
-            <div class="account-tag">Hồ sơ tài khoản CTULib</div>
-            <div class="success-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12" />
+            <div class="auth-header-crest">
+              <div class="auth-icon-badge">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div class="auth-header-text">
+                <h2>Hồ sơ tài khoản</h2>
+                <p class="form-description">Phiên đăng nhập Thư viện Đại học Cần Thơ</p>
+              </div>
+            </div>
+
+            <div class="account-details-ledger">
+              <div class="ledger-item">
+                <dt>Mã định danh</dt>
+                <dd>{{ currentUser.ctuIdentifier }}</dd>
+              </div>
+              <div v-if="currentUser.email" class="ledger-item">
+                <dt>Địa chỉ email</dt>
+                <dd>{{ currentUser.email }}</dd>
+              </div>
+              <div class="ledger-item">
+                <dt>Vai trò người dùng</dt>
+                <dd><span class="role-badge">{{ role }}</span></dd>
+              </div>
+            </div>
+
+            <p v-if="error" class="alert error" role="alert">{{ error }}</p>
+
+            <button class="submit-btn btn-logout" type="button" :disabled="busy" @click="signOut">
+              <span>{{ busy ? 'Đang đăng xuất…' : 'Đăng xuất khỏi hệ thống' }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-            </div>
-            <h2>Chào mừng bạn trở lại!</h2>
-            <p class="form-description">Bạn đã đăng nhập vào CTULib thành công.</p>
-            <dl class="account-details"><div><dt>Mã định danh</dt><dd>{{ currentUser.ctuIdentifier }}</dd></div><div v-if="currentUser.email"><dt>Email</dt><dd>{{ currentUser.email }}</dd></div><div><dt>Vai trò</dt><dd>{{ role }}</dd></div></dl>
-            <p v-if="error" class="alert error" role="alert">{{ error }}</p>
-            <button class="primary-button" :disabled="busy" @click="signOut">{{ busy ? 'Đang đăng xuất…' : 'Đăng xuất' }} <span aria-hidden="true">→</span></button>
+            </button>
           </template>
+
           <template v-else>
-            <h2>{{ registering ? 'Tạo tài khoản mới' : 'Đăng nhập CTULib' }}</h2>
-            <p class="form-description">{{ registering ? 'Tạo tài khoản thư viện Đại học Cần Thơ.' : 'Sử dụng tài khoản thư viện Đại học Cần Thơ.' }}</p>
-            <div class="mode-switch" aria-label="Chọn hình thức xác thực">
-              <button :class="{ active: !registering }" :aria-pressed="!registering" :disabled="busy" @click="switchMode('login')">Đăng nhập</button>
-              <button :class="{ active: registering }" :aria-pressed="registering" :disabled="busy" @click="switchMode('register')">Đăng ký</button>
+            <div class="auth-header-crest">
+              <div class="auth-icon-badge">
+                <svg v-if="!registering" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+              </div>
+              <div class="auth-header-text">
+                <h2>{{ registering ? 'Tạo tài khoản mới' : 'Đăng nhập CTULib' }}</h2>
+                <p class="form-description">{{ registering ? 'Đăng ký tài khoản bạn đọc thư viện Đại học Cần Thơ.' : 'Truy cập cổng học liệu số bằng tài khoản CTU ID.' }}</p>
+              </div>
             </div>
-            <p v-if="error" class="alert error" role="alert">{{ error }}</p>
+
+            <div v-if="error" class="alert error" role="alert">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{{ error }}</span>
+            </div>
+
             <form novalidate @submit.prevent="submit">
               <fieldset :disabled="busy">
-                <div class="field"><label for="identifier">Mã số sinh viên / cán bộ</label><input id="identifier" v-model="identifier" name="ctuIdentifier" autocomplete="username" placeholder="Mã số sinh viên hoặc cán bộ" required :aria-invalid="!!fields.ctuIdentifier" aria-describedby="identifier-error" /><p v-if="fields.ctuIdentifier" id="identifier-error" class="field-error" aria-live="polite">{{ fields.ctuIdentifier }}</p></div>
-                <div v-if="registering" class="field"><label for="email">Địa chỉ email</label><input id="email" v-model="email" type="email" name="email" autocomplete="email" placeholder="sinhvien@student.ctu.edu.vn" required :aria-invalid="!!fields.email" aria-describedby="email-error" /><p v-if="fields.email" id="email-error" class="field-error" aria-live="polite">{{ fields.email }}</p></div>
-                <div class="field"><label for="password">Mật khẩu</label><div class="password-input"><input id="password" v-model="password" :type="visible ? 'text' : 'password'" name="password" :autocomplete="registering ? 'new-password' : 'current-password'" :placeholder="registering ? 'Tối thiểu 8 ký tự' : 'Nhập mật khẩu'" required :aria-invalid="!!fields.password" aria-describedby="password-error" /><button type="button" :aria-label="visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'" :aria-pressed="visible" @mousedown.prevent @click="togglePassword">{{ visible ? 'Ẩn' : 'Hiện' }}</button></div><p v-if="fields.password" id="password-error" class="field-error" aria-live="polite">{{ fields.password }}</p></div>
-                <div v-if="registering" class="field"><label for="confirmation">Nhập lại mật khẩu</label><input id="confirmation" v-model="confirmation" :type="visible ? 'text' : 'password'" autocomplete="new-password" placeholder="Xác nhận mật khẩu của bạn" required :aria-invalid="!!fields.confirmation" aria-describedby="confirmation-error" /><p v-if="fields.confirmation" id="confirmation-error" class="field-error" aria-live="polite">{{ fields.confirmation }}</p></div>
-                <button class="primary-button" type="submit"><span>{{ busy ? 'Đang xử lý…' : registering ? 'Tạo tài khoản' : 'Đăng nhập' }}</span><span v-if="busy" class="spinner" aria-hidden="true"></span><span v-else aria-hidden="true">→</span></button>
+                <!-- Mã định danh CTU -->
+                <div class="field">
+                  <label for="identifier">Mã số sinh viên / cán bộ</label>
+                  <div class="input-control">
+                    <span class="field-icon-lead">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </span>
+                    <input
+                      id="identifier"
+                      v-model="identifier"
+                      name="ctuIdentifier"
+                      autocomplete="username"
+                      placeholder="VD: B2101234 hoặc CB01234"
+                      required
+                      :aria-invalid="!!fields.ctuIdentifier"
+                      aria-describedby="identifier-error"
+                    />
+                  </div>
+                  <p v-if="fields.ctuIdentifier" id="identifier-error" class="field-error" aria-live="polite">
+                    {{ fields.ctuIdentifier }}
+                  </p>
+                </div>
+
+                <!-- Email (chỉ hiện khi đăng ký) -->
+                <div v-if="registering" class="field">
+                  <label for="email">Địa chỉ email Đại học Cần Thơ</label>
+                  <div class="input-control">
+                    <span class="field-icon-lead">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
+                    </span>
+                    <input
+                      id="email"
+                      v-model="email"
+                      type="email"
+                      name="email"
+                      autocomplete="email"
+                      placeholder="sinhvien@student.ctu.edu.vn"
+                      required
+                      :aria-invalid="!!fields.email"
+                      aria-describedby="email-error"
+                    />
+                  </div>
+                  <p v-if="fields.email" id="email-error" class="field-error" aria-live="polite">
+                    {{ fields.email }}
+                  </p>
+                </div>
+
+                <!-- Mật khẩu -->
+                <div class="field">
+                  <label for="password">Mật khẩu</label>
+                  <div class="input-control password-input">
+                    <span class="field-icon-lead">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                      </svg>
+                    </span>
+                    <input
+                      id="password"
+                      v-model="password"
+                      :type="visible ? 'text' : 'password'"
+                      name="password"
+                      :autocomplete="registering ? 'new-password' : 'current-password'"
+                      :placeholder="registering ? 'Tối thiểu 8 ký tự' : 'Nhập mật khẩu của bạn'"
+                      required
+                      :aria-invalid="!!fields.password"
+                      aria-describedby="password-error"
+                    />
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      :aria-label="visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+                      :aria-pressed="visible"
+                      @mousedown.prevent
+                      @click="togglePassword"
+                    >
+                      <svg v-if="!visible" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    </button>
+                  </div>
+                  <p v-if="fields.password" id="password-error" class="field-error" aria-live="polite">
+                    {{ fields.password }}
+                  </p>
+                </div>
+
+                <!-- Xác nhận mật khẩu khi đăng ký -->
+                <div v-if="registering" class="field">
+                  <label for="confirmation">Xác nhận lại mật khẩu</label>
+                  <div class="input-control password-input">
+                    <span class="field-icon-lead">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      </svg>
+                    </span>
+                    <input
+                      id="confirmation"
+                      v-model="confirmation"
+                      :type="visible ? 'text' : 'password'"
+                      autocomplete="new-password"
+                      placeholder="Nhập lại mật khẩu vừa đặt"
+                      required
+                      :aria-invalid="!!fields.confirmation"
+                      aria-describedby="confirmation-error"
+                    />
+                  </div>
+                  <p v-if="fields.confirmation" id="confirmation-error" class="field-error" aria-live="polite">
+                    {{ fields.confirmation }}
+                  </p>
+                </div>
+
+                <!-- Submit Button -->
+                <button class="submit-btn primary-button" type="submit">
+                  <span>{{ busy ? 'Đang xử lý…' : registering ? 'Tạo tài khoản thư viện' : 'Đăng nhập vào hệ thống' }}</span>
+                  <span v-if="busy" class="spinner" aria-hidden="true"></span>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
               </fieldset>
             </form>
+
+            <div class="auth-switch-footer">
+              <span v-if="!registering" class="auth-switch-text">
+                Chưa có tài khoản?
+                <button type="button" class="auth-switch-link" :disabled="busy" @click="switchMode('register')">
+                   Đăng ký
+                </button>
+              </span>
+              <span v-else class="auth-switch-text">
+                Đã có tài khoản thư viện?
+                <button type="button" class="auth-switch-link" :disabled="busy" @click="switchMode('login')">
+                  Đăng nhập ngay
+                </button>
+              </span>
+            </div>
           </template>
         </section>
       </div>

@@ -6,4 +6,4 @@ const facultySchema = new Schema({
 });
 
 export type Faculty = InferSchemaType<typeof facultySchema>;
-export const facultyModel = model("Faculty", facultySchema);
+export default model("Faculty", facultySchema);

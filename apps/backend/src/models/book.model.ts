@@ -32,5 +32,5 @@ const bookSchema = new Schema(
 );
 
 export type Book = InferSchemaType<typeof bookSchema>;
-export const BookModel = model("Book", bookSchema);
+export default model("Book", bookSchema);
 
