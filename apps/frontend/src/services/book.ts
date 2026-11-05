@@ -94,7 +94,7 @@ export async function getAllBooks(params?: BookQueryParams): Promise<PaginatedBo
   }
 
   const queryString = query.toString();
-  const endpoint = `/api/v1/books${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/book${queryString ? `?${queryString}` : ''}`;
   return request<PaginatedBooksResult>(endpoint, { method: 'GET', requireAuth: false });
 }
 
@@ -103,12 +103,12 @@ export async function getBookById(bookId: string): Promise<Book> {
   if (!cleanId) {
     throw new BookApiError('Mã sách không hợp lệ.', 400);
   }
-  const endpoint = `/api/v1/books/${encodeURIComponent(cleanId)}`;
+  const endpoint = `/book/${encodeURIComponent(cleanId)}`;
   return request<Book>(endpoint, { method: 'GET', requireAuth: true });
 }
 
 export async function createBook(payload: CreateBookPayload): Promise<Book> {
-  return request<Book>('/api/v1/books', {
+  return request<Book>('/book', {
     method: 'POST',
     body: payload,
     requireAuth: true,

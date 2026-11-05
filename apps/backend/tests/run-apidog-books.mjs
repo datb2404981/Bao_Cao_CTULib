@@ -134,9 +134,9 @@ async function runTest(caseId, description, fn) {
   }
 }
 
-// 1. Tests POST /books
-await runTest("AUTH-004", "Thiếu token tại /books -> 401", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+// 1. Tests POST /book
+await runTest("AUTH-004", "Thiếu token tại /book -> 401", async () => {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title: "Sách mới", facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: 1000 }),
@@ -146,8 +146,8 @@ await runTest("AUTH-004", "Thiếu token tại /books -> 401", async () => {
   assert.equal(json.status, "error");
 });
 
-await runTest("AUTH-005", "Token sai chữ ký tại /books -> 401", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+await runTest("AUTH-005", "Token sai chữ ký tại /book -> 401", async () => {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenBadSignature}` },
     body: JSON.stringify({ title: "Sách mới", facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: 1000 }),
@@ -155,8 +155,8 @@ await runTest("AUTH-005", "Token sai chữ ký tại /books -> 401", async () =>
   assert.equal(res.status, 401);
 });
 
-await runTest("AUTH-006", "Token hết hạn tại /books -> 401", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+await runTest("AUTH-006", "Token hết hạn tại /book -> 401", async () => {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenExpired}` },
     body: JSON.stringify({ title: "Sách mới", facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: 1000 }),
@@ -165,7 +165,7 @@ await runTest("AUTH-006", "Token hết hạn tại /books -> 401", async () => {
 });
 
 await runTest("BOOK-CREATE-002", "Không có MANAGE_BOOKS: READER -> 403", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenReader}` },
     body: JSON.stringify({ title: "Sách mới", facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: 1000 }),
@@ -174,7 +174,7 @@ await runTest("BOOK-CREATE-002", "Không có MANAGE_BOOKS: READER -> 403", async
 });
 
 await runTest("BOOK-CREATE-003", "Không có MANAGE_BOOKS: ADMIN_NONE -> 403", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenAdminNone}` },
     body: JSON.stringify({ title: "Sách mới", facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: 1000 }),
@@ -183,7 +183,7 @@ await runTest("BOOK-CREATE-003", "Không có MANAGE_BOOKS: ADMIN_NONE -> 403", a
 });
 
 await runTest("BOOK-CREATE-004", "Không có MANAGE_BOOKS: E_RETURN -> 403", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEReturn}` },
     body: JSON.stringify({ title: "Sách mới", facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: 1000 }),
@@ -192,7 +192,7 @@ await runTest("BOOK-CREATE-004", "Không có MANAGE_BOOKS: E_RETURN -> 403", asy
 });
 
 await runTest("BOOK-CREATE-001", "Thêm sách có quyền -> 201", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({
@@ -213,7 +213,7 @@ await runTest("BOOK-CREATE-001", "Thêm sách có quyền -> 201", async () => {
 });
 
 await runTest("BOOK-CREATE-022", "Client cố gán availableCopies: 999 -> server tự tính = totalCopies", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({
@@ -231,7 +231,7 @@ await runTest("BOOK-CREATE-022", "Client cố gán availableCopies: 999 -> serve
 });
 
 await runTest("BOOK-CREATE-005", "Thiếu trường title -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: 100000 }),
@@ -240,7 +240,7 @@ await runTest("BOOK-CREATE-005", "Thiếu trường title -> 400", async () => {
 });
 
 await runTest("BOOK-CREATE-011", "Tác giả lặp -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách lặp tg", facultyId: faculty1, authorIds: [author1, author1], totalCopies: 5, coverPrice: 100000 }),
@@ -249,7 +249,7 @@ await runTest("BOOK-CREATE-011", "Tác giả lặp -> 400", async () => {
 });
 
 await runTest("BOOK-CREATE-012", "Số bản âm -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách bản âm", facultyId: faculty1, authorIds: [author1], totalCopies: -1, coverPrice: 100000 }),
@@ -258,7 +258,7 @@ await runTest("BOOK-CREATE-012", "Số bản âm -> 400", async () => {
 });
 
 await runTest("BOOK-CREATE-013", "Số bản không nguyên -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách bản lẻ", facultyId: faculty1, authorIds: [author1], totalCopies: 1.5, coverPrice: 100000 }),
@@ -267,7 +267,7 @@ await runTest("BOOK-CREATE-013", "Số bản không nguyên -> 400", async () =>
 });
 
 await runTest("BOOK-CREATE-014", "Giá âm -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách giá âm", facultyId: faculty1, authorIds: [author1], totalCopies: 5, coverPrice: -100 }),
@@ -276,7 +276,7 @@ await runTest("BOOK-CREATE-014", "Giá âm -> 400", async () => {
 });
 
 await runTest("BOOK-CREATE-015", "Loại sách ngoài enum -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách enum", facultyId: faculty1, authorIds: [author1], bookType: "COMIC", totalCopies: 5, coverPrice: 100 }),
@@ -285,7 +285,7 @@ await runTest("BOOK-CREATE-015", "Loại sách ngoài enum -> 400", async () => 
 });
 
 await runTest("BOOK-CREATE-016", "Ảnh sai URI -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách ảnh sai", facultyId: faculty1, authorIds: [author1], coverImageUrl: "not-a-url", totalCopies: 5, coverPrice: 100 }),
@@ -294,7 +294,7 @@ await runTest("BOOK-CREATE-016", "Ảnh sai URI -> 400", async () => {
 });
 
 await runTest("BOOK-CREATE-019", "Khoa không tồn tại -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách khoa sai", facultyId: new Types.ObjectId().toHexString(), authorIds: [author1], totalCopies: 5, coverPrice: 100 }),
@@ -303,7 +303,7 @@ await runTest("BOOK-CREATE-019", "Khoa không tồn tại -> 400", async () => {
 });
 
 await runTest("BOOK-CREATE-020", "Tác giả không tồn tại -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách tg sai", facultyId: faculty1, authorIds: [new Types.ObjectId().toHexString()], totalCopies: 5, coverPrice: 100 }),
@@ -312,7 +312,7 @@ await runTest("BOOK-CREATE-020", "Tác giả không tồn tại -> 400", async (
 });
 
 await runTest("BOOK-CREATE-021", "Tạo sách 0 bản và giá 0 -> 201", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách 0 bản 0 đồng", facultyId: faculty1, authorIds: [author1], totalCopies: 0, coverPrice: 0 }),
@@ -321,7 +321,7 @@ await runTest("BOOK-CREATE-021", "Tạo sách 0 bản và giá 0 -> 201", async 
 });
 
 await runTest("BOOK-CREATE-023", "Bỏ bookType tùy chọn -> 201, default TEXTBOOK", async () => {
-  const res = await fetch(`${baseUrl}/books`, {
+  const res = await fetch(`${baseUrl}/book`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenEBook}` },
     body: JSON.stringify({ title: "Sách no bookType", facultyId: faculty1, authorIds: [author1], totalCopies: 1, coverPrice: 1000 }),
@@ -331,9 +331,9 @@ await runTest("BOOK-CREATE-023", "Bỏ bookType tùy chọn -> 201, default TEXT
   assert.equal(json.data.bookType, "TEXTBOOK");
 });
 
-// 2. Tests GET /books
+// 2. Tests GET /book
 await runTest("BOOK-LIST-001", "Đọc danh sách sách -> 200, phân trang", async () => {
-  const res = await fetch(`${baseUrl}/books?page=1&limit=10`);
+  const res = await fetch(`${baseUrl}/book?page=1&limit=10`);
   assert.equal(res.status, 200);
   const json = await res.json();
   assert.equal(json.status, "success");
@@ -349,59 +349,59 @@ await runTest("BOOK-LIST-001", "Đọc danh sách sách -> 200, phân trang", as
 });
 
 await runTest("BOOK-LIST-007", "Phân trang sai: page=0 -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books?page=0`);
+  const res = await fetch(`${baseUrl}/book?page=0`);
   assert.equal(res.status, 400);
 });
 
 await runTest("BOOK-LIST-009", "Phân trang sai: page=1.5 -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books?page=1.5`);
+  const res = await fetch(`${baseUrl}/book?page=1.5`);
   assert.equal(res.status, 400);
 });
 
 await runTest("BOOK-LIST-010", "Phân trang sai: page=abc -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books?page=abc`);
+  const res = await fetch(`${baseUrl}/book?page=abc`);
   assert.equal(res.status, 400);
 });
 
 await runTest("BOOK-LIST-011", "Phân trang sai: limit=0 -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books?limit=0`);
+  const res = await fetch(`${baseUrl}/book?limit=0`);
   assert.equal(res.status, 400);
 });
 
 await runTest("BOOK-LIST-013", "Phân trang sai: limit=1.5 -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books?limit=1.5`);
+  const res = await fetch(`${baseUrl}/book?limit=1.5`);
   assert.equal(res.status, 400);
 });
 
 await runTest("BOOK-LIST-014", "Phân trang sai: limit=abc -> 400", async () => {
-  const res = await fetch(`${baseUrl}/books?limit=abc`);
+  const res = await fetch(`${baseUrl}/book?limit=abc`);
   assert.equal(res.status, 400);
 });
 
-// 3. Tests GET /books/{bookId}
+// 3. Tests GET /book/{bookId}
 const validBookId = inMemoryBooks[0]._id.toString();
 
-await runTest("AUTH-007", "Thiếu token tại /books/{bookId} -> 401", async () => {
-  const res = await fetch(`${baseUrl}/books/${validBookId}`);
+await runTest("AUTH-007", "Thiếu token tại /book/{bookId} -> 401", async () => {
+  const res = await fetch(`${baseUrl}/book/${validBookId}`);
   assert.equal(res.status, 401);
 });
 
-await runTest("AUTH-008", "Token sai chữ ký tại /books/{bookId} -> 401", async () => {
-  const res = await fetch(`${baseUrl}/books/${validBookId}`, {
+await runTest("AUTH-008", "Token sai chữ ký tại /book/{bookId} -> 401", async () => {
+  const res = await fetch(`${baseUrl}/book/${validBookId}`, {
     headers: { Authorization: `Bearer ${tokenBadSignature}` },
   });
   assert.equal(res.status, 401);
 });
 
-await runTest("AUTH-009", "Token hết hạn tại /books/{bookId} -> 401", async () => {
-  const res = await fetch(`${baseUrl}/books/${validBookId}`, {
+await runTest("AUTH-009", "Token hết hạn tại /book/{bookId} -> 401", async () => {
+  const res = await fetch(`${baseUrl}/book/${validBookId}`, {
     headers: { Authorization: `Bearer ${tokenExpired}` },
   });
   assert.equal(res.status, 401);
 });
 
 await runTest("BOOK-DETAIL-001", "Xem sách hợp lệ -> 200", async () => {
-  const res = await fetch(`${baseUrl}/books/${validBookId}`, {
+  const res = await fetch(`${baseUrl}/book/${validBookId}`, {
     headers: { Authorization: `Bearer ${tokenReader}` },
   });
   assert.equal(res.status, 200);
@@ -413,7 +413,7 @@ await runTest("BOOK-DETAIL-001", "Xem sách hợp lệ -> 200", async () => {
 
 await runTest("BOOK-DETAIL-002", "Sách không tồn tại -> 404", async () => {
   const nonExisting = new Types.ObjectId().toHexString();
-  const res = await fetch(`${baseUrl}/books/${nonExisting}`, {
+  const res = await fetch(`${baseUrl}/book/${nonExisting}`, {
     headers: { Authorization: `Bearer ${tokenReader}` },
   });
   assert.equal(res.status, 404);
