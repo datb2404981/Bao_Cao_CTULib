@@ -11,10 +11,6 @@ router.get("/health", getHealth);
 router.use(AUTH_PATH, authRouter);
 router.use("/auth", authRouter);
 router.use("/book", bookRouter);
-router.use("/books", bookRouter);
-router.use("/api/v1/books", bookRouter);
 router.use("/faculty", facultyRouter);
-router.use("/faculties", facultyRouter);
-router.use("/api/v1/faculties", facultyRouter);
 
 export default router;
