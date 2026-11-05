@@ -1,0 +1,226 @@
+{
+  "target": "https://ctulib-api-staging.onrender.com",
+  "origin": "https://staging.bao-cao-ctulib.pages.dev",
+  "commit": "e69172e",
+  "runner": "Independent HTTP runner mapped to repository Apidog cases; not an Apidog suite run",
+  "at": "2026-11-03T05:30:44.080Z",
+  "fixture": {
+    "identifier": "B3582039",
+    "email": "qa-1793683821114@example.com",
+    "note": "Disposable QA READER registered via staging API; no password/token persisted"
+  },
+  "passed": 42,
+  "failed": 0,
+  "results": [
+    {
+      "id": "TC-REG-001",
+      "status": "PASS",
+      "ms": 2125
+    },
+    {
+      "id": "TC-REG-003A",
+      "status": "PASS",
+      "ms": 750
+    },
+    {
+      "id": "TC-REG-003B",
+      "status": "PASS",
+      "ms": 288
+    },
+    {
+      "id": "TC-REG-003C",
+      "status": "PASS",
+      "ms": 263
+    },
+    {
+      "id": "TC-REG-003D",
+      "status": "PASS",
+      "ms": 354
+    },
+    {
+      "id": "TC-REG-003E",
+      "status": "PASS",
+      "ms": 266
+    },
+    {
+      "id": "TC-REG-004A",
+      "status": "PASS",
+      "ms": 283
+    },
+    {
+      "id": "TC-REG-004B",
+      "status": "PASS",
+      "ms": 281
+    },
+    {
+      "id": "TC-REG-005A",
+      "status": "PASS",
+      "ms": 257
+    },
+    {
+      "id": "TC-REG-006A",
+      "status": "PASS",
+      "ms": 264
+    },
+    {
+      "id": "TC-REG-006B",
+      "status": "PASS",
+      "ms": 257
+    },
+    {
+      "id": "TC-REG-007A",
+      "status": "PASS",
+      "ms": 279
+    },
+    {
+      "id": "TC-REG-008A",
+      "status": "PASS",
+      "ms": 352
+    },
+    {
+      "id": "TC-REG-013",
+      "status": "PASS",
+      "ms": 271
+    },
+    {
+      "id": "TC-REG-011",
+      "status": "PASS",
+      "ms": 260
+    },
+    {
+      "id": "TC-REG-012A",
+      "status": "PASS",
+      "ms": 269
+    },
+    {
+      "id": "TC-REG-009",
+      "status": "PASS",
+      "ms": 489
+    },
+    {
+      "id": "TC-REG-010",
+      "status": "PASS",
+      "ms": 508
+    },
+    {
+      "id": "TC-LOG-001",
+      "status": "PASS",
+      "ms": 1380
+    },
+    {
+      "id": "TC-LOG-001B-v3",
+      "status": "PASS",
+      "ms": 1
+    },
+    {
+      "id": "TC-SES-001-v3-cookie",
+      "status": "PASS",
+      "ms": 1
+    },
+    {
+      "id": "TC-SES-010-CORS",
+      "status": "PASS",
+      "ms": 0
+    },
+    {
+      "id": "TC-LOG-004",
+      "status": "PASS",
+      "ms": 1015
+    },
+    {
+      "id": "TC-LOG-008",
+      "status": "PASS",
+      "ms": 255
+    },
+    {
+      "id": "TC-LOG-007B",
+      "status": "PASS",
+      "ms": 1315
+    },
+    {
+      "id": "origin-login-missing",
+      "status": "PASS",
+      "ms": 291
+    },
+    {
+      "id": "origin-login-foreign",
+      "status": "PASS",
+      "ms": 259
+    },
+    {
+      "id": "origin-login-null",
+      "status": "PASS",
+      "ms": 348
+    },
+    {
+      "id": "origin-refresh-missing",
+      "status": "PASS",
+      "ms": 253
+    },
+    {
+      "id": "origin-refresh-foreign",
+      "status": "PASS",
+      "ms": 264
+    },
+    {
+      "id": "origin-refresh-null",
+      "status": "PASS",
+      "ms": 252
+    },
+    {
+      "id": "origin-logout-missing",
+      "status": "PASS",
+      "ms": 462
+    },
+    {
+      "id": "origin-logout-foreign",
+      "status": "PASS",
+      "ms": 304
+    },
+    {
+      "id": "origin-logout-null",
+      "status": "PASS",
+      "ms": 268
+    },
+    {
+      "id": "TC-REF-003",
+      "status": "PASS",
+      "ms": 263
+    },
+    {
+      "id": "TC-REF-004",
+      "status": "PASS",
+      "ms": 259
+    },
+    {
+      "id": "TC-REF-body-validation",
+      "status": "PASS",
+      "ms": 278
+    },
+    {
+      "id": "TC-OUT-003",
+      "status": "PASS",
+      "ms": 266
+    },
+    {
+      "id": "TC-REF-001",
+      "status": "PASS",
+      "ms": 1477
+    },
+    {
+      "id": "TC-REF-008-replay",
+      "status": "PASS",
+      "ms": 1823
+    },
+    {
+      "id": "TC-OUT-001",
+      "status": "PASS",
+      "ms": 3158
+    },
+    {
+      "id": "TC-OUT-002",
+      "status": "PASS",
+      "ms": 952
+    }
+  ]
+}

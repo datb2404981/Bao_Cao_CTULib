@@ -1,0 +1,5 @@
+fixtureId,ctuIdentifier,email,password,role,isActive,preparationStatus
+reader,B9900001,qa_reader@example.com,QaReader123!,READER,true,PREPARED
+employee,CB99001,qa_employee@example.com,QaEmployee123!,EMPLOYEE,true,PREPARED
+admin,ADMIN99001,qa_admin@example.com,QaAdmin123!,ADMIN,true,PREPARED
+locked,B9900002,qa_locked@example.com,QaLocked123!,READER,false,PREPARED

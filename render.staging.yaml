@@ -1,0 +1,24 @@
+# Blueprint riêng cho staging; không trỏ vào service production đang tồn tại.
+services:
+  - type: web
+    name: ctulib-api-staging
+    runtime: docker
+    repo: https://github.com/datb2404981/Bao_Cao_CTULib
+    branch: staging
+    plan: free
+    region: virginia
+    dockerfilePath: ./apps/backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: ACCESS_TOKEN_SECRET_KEY
+        generateValue: true

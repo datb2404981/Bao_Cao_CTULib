@@ -1,0 +1,54 @@
+{
+  "projectId": 1405851,
+  "endpointId": 46212848,
+  "currentSuiteId": 7295,
+  "pendingSuiteId": 7296,
+  "activeCaseIds": [
+    62499377,
+    62499495,
+    62499371,
+    62491234,
+    62448366,
+    62448367,
+    62499374,
+    62448359,
+    62448364,
+    62448362,
+    62448358,
+    62448357,
+    62448365,
+    62448361,
+    62448360
+  ],
+  "pendingCaseIds": [
+    62499494,
+    62499477,
+    62499476,
+    62499372,
+    62499373,
+    62499376,
+    62526787,
+    62526788
+  ],
+  "contract": {
+    "accessJwtSeconds": 1800,
+    "refreshTokenType": "JWT",
+    "cookie": {
+      "httpOnly": true,
+      "sameSite": "Lax",
+      "path": "/",
+      "maxAgeSeconds": 604800
+    }
+  },
+  "fixtureVariables": [
+    "loginIdentifier",
+    "loginPassword",
+    "employeeIdentifier",
+    "employeePassword",
+    "adminIdentifier",
+    "adminPassword",
+    "lockedIdentifier",
+    "lockedPassword",
+    "clientOrigin"
+  ]
+}

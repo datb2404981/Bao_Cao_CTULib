@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "seed:admin": "tsx src/scripts/seed-admin.ts",
+    "seed:employee": "tsx src/scripts/seed-employee.ts",
+    "seed:books": "tsx src/scripts/seed-books-qa.ts",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -12,6 +15,7 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -25,6 +29,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.9",
