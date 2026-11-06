@@ -1,11 +1,11 @@
-import { Types } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import employeeModel from "../models/employee.model.js";
 import permissionModel from "../models/permission.model.js";
 import { AccountModel } from "../models/user.model.js";
 import type { CreateEmployeeInput, UpdateEmployeeInput } from "../schemas/employee.schema.js";
 import { AppError } from "../utils/app-error.js";
 
-const validateId = (id: string) => { if (!/^[a-fA-F0-9]{24}$/.test(id)) throw new AppError("Mã nhân viên không hợp lệ", 400); };
+const validateId = (id: string) => { if (!isValidObjectId(id)) throw new AppError("Mã nhân viên không hợp lệ", 400); };
 const checkPermissions = async (ids?: string[]) => {
   if (ids && await permissionModel.countDocuments({ _id: { $in: ids } }) !== ids.length) throw new AppError("Quyền không tồn tại", 404);
 };
@@ -14,9 +14,8 @@ export const createEmployee = async (input: CreateEmployeeInput) => {
   if (!account) throw new AppError("Tài khoản không tồn tại", 404);
   if (account.role !== "EMPLOYEE" && account.role !== "ADMIN") throw new AppError("Tài khoản không phải nhân viên", 400);
   await checkPermissions(input.permissionIds);
-  if (await employeeModel.exists({ _id: input.accountId })) throw new AppError("Hồ sơ nhân viên đã tồn tại", 409);
-  const { accountId, permissionIds, ...data } = input;
-  try { return await employeeModel.create({ ...data, _id: new Types.ObjectId(accountId), permissionIds: permissionIds?.map((id) => new Types.ObjectId(id)) }); }
+  const { accountId, ...data } = input;
+  try { return await employeeModel.create({ ...data, _id: accountId }); }
   catch (error) { if (error instanceof Error && "code" in error && error.code === 11000) throw new AppError("Hồ sơ nhân viên đã tồn tại", 409); throw error; }
 };
 export const getAllEmployees = async () => employeeModel.find().lean();

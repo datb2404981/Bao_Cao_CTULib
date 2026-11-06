@@ -1,4 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
+import { requirePermission } from "./permission.middleware.js";
 import { AppError } from "../utils/app-error.js";
 import { TokenPayload, verifyToken } from "../utils/jwt.util.js";
 
@@ -26,20 +27,4 @@ export const authenticate: RequestHandler = (req: AuthenticatedRequest, _res: Re
   }
 };
 
-export const requireManageBooks: RequestHandler = (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
-  if (!req.user) {
-    return next(new AppError("Chưa đăng nhập hoặc token không hợp lệ", 401));
-  }
-
-  // R1 (Reader), ADMIN_NONE, E_RETURN không có quyền MANAGE_BOOKS
-  if (
-    req.user.role === "READER" ||
-    req.user.ctuIdentifier === "ADMIN99101" ||
-    req.user.ctuIdentifier === "CB99103"
-  ) {
-    return next(new AppError("Không đủ quyền truy cập", 403));
-  }
-
-  next();
-};
-
+export const requireManageBooks = requirePermission("MANAGE_BOOKS");

@@ -1,8 +1,9 @@
+import { isValidObjectId } from "mongoose";
 import permissionModel from "../models/permission.model.js";
 import type { PermissionInput, UpdatePermissionInput } from "../schemas/permission.schema.js";
 import { AppError } from "../utils/app-error.js";
 
-const validateId = (id: string) => { if (!/^[a-fA-F0-9]{24}$/.test(id)) throw new AppError("Mã quyền không hợp lệ", 400); };
+const validateId = (id: string) => { if (!isValidObjectId(id)) throw new AppError("Mã quyền không hợp lệ", 400); };
 export const createPermission = async (data: PermissionInput) => permissionModel.create(data);
 export const getAllPermissions = async () => permissionModel.find().lean();
 export const getPermissionById = async (id: string) => {
