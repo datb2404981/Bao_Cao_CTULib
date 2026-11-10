@@ -59,4 +59,20 @@ describe('BookCard.vue', () => {
     expect(wrapper.emitted('select')).toBeTruthy()
     expect(wrapper.emitted('select')![0]).toEqual([sampleBook.bookId])
   })
+
+  it('exposes cover and title as keyboard-focusable buttons that open details', async () => {
+    const wrapper = mount(BookCard, { props: { book: sampleBook } })
+    const cover = wrapper.find('button.cover')
+    const title = wrapper.find('h3.book-title button.book-title-action')
+
+    expect(cover.exists()).toBe(true)
+    expect(title.exists()).toBe(true)
+    expect(cover.attributes('aria-label')).toContain(sampleBook.title)
+    expect(cover.attributes('tabindex')).toBeUndefined()
+    expect(title.attributes('tabindex')).toBeUndefined()
+
+    await cover.trigger('click')
+    await title.trigger('click')
+    expect(wrapper.emitted('select')).toEqual([[sampleBook.bookId], [sampleBook.bookId]])
+  })
 })

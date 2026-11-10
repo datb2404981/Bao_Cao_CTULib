@@ -189,10 +189,10 @@ describe('Challenger Iteration 2: Stress Testing Suite', () => {
     });
 
     it('stress tests bookType filtering with pagination synchronization', async () => {
-      vi.spyOn(bookService, 'getAllBooks').mockResolvedValue({
-        items: sampleBooks,
-        meta: { totalItems: 2, totalPages: 1, currentPage: 1, limit: 12 },
-      });
+      const listSpy = vi.spyOn(bookService, 'getAllBooks').mockImplementation(async (params) => ({
+        items: params?.bookType ? sampleBooks.filter(book => book.bookType === params.bookType) : sampleBooks,
+        meta: { totalItems: params?.bookType ? 1 : 2, totalPages: 1, currentPage: 1, limit: 12 },
+      }));
 
       const wrapper = mount(BookCatalogView);
       await flushPromises();
@@ -205,6 +205,7 @@ describe('Challenger Iteration 2: Stress Testing Suite', () => {
       await wrapper.find('select.kind-select').setValue('TEXTBOOK');
       await wrapper.find('form.filters').trigger('submit.prevent');
       await flushPromises();
+      expect(listSpy).toHaveBeenCalledWith(expect.objectContaining({ bookType: 'TEXTBOOK' }));
 
       // Only 1 book card rendered
       expect(wrapper.findAll('.book-card').length).toBe(1);
@@ -216,10 +217,10 @@ describe('Challenger Iteration 2: Stress Testing Suite', () => {
       // Wait 60ms to exceed search throttle
       await new Promise((r) => setTimeout(r, 60));
 
-      // Filter by REFERENCE (backend returns only textbook item, so client-side filter yields 0)
+      // Không còn sách khớp điều kiện thì API trả đúng danh sách trống và tổng = 0.
       vi.spyOn(bookService, 'getAllBooks').mockResolvedValue({
-        items: [sampleBooks[0]], // only textbook in backend response
-        meta: { totalItems: 1, totalPages: 1, currentPage: 1, limit: 12 },
+        items: [],
+        meta: { totalItems: 0, totalPages: 0, currentPage: 1, limit: 12 },
       });
       await wrapper.find('select.kind-select').setValue('REFERENCE');
       await wrapper.find('form.filters').trigger('submit.prevent');

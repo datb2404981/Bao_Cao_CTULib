@@ -172,6 +172,16 @@ describe('BookDetailModal.vue', () => {
     expect(wrapper.emitted('require-login')).toBeTruthy();
   });
 
+  it('lets guests view the catalog book without calling a protected endpoint', async () => {
+    const getSpy = vi.spyOn(bookService, 'getBookById');
+    const wrapper = mount(BookDetailModal, {
+      props: { isOpen: true, bookId: sampleBook.bookId, initialBook: sampleBook },
+    });
+    await flushPromises();
+    expect(wrapper.text()).toContain(sampleBook.title);
+    expect(getSpy).not.toHaveBeenCalled();
+  });
+
   it('shows button "Đặt mượn" and emits borrow event when authenticated', async () => {
     mockCurrentUser.value = {
       ctuIdentifier: 'B9900001',

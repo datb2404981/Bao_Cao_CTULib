@@ -1,12 +1,7 @@
-import { facultyModel } from "../models/faculty.model.js";
+import facultyModel, { Faculty } from "../models/faculty.model.js";
 import { AppError } from "../utils/app-error.js";
 
-export interface IFaculty {
-  facultyName: string;
-  description?: string;
-}
-
-export const createFaculty = async (input: IFaculty) => {
+export const createFaculty = async (input: Faculty) => {
   const exitingFaculty = await getFacultyByName(input.facultyName);
   if (exitingFaculty) { 
     throw new AppError("Khoa đã tồn tại", 409);
@@ -29,7 +24,7 @@ export const getFacultyById = async (facultyId: string) => {
   return faculty;
 };
 
-export const updateFaculaty = async (facultyId: string, data: IFaculty) => {
+export const updateFaculaty = async (facultyId: string, data: Faculty) => {
   if (!/^[a-fA-F0-9]{24}$/.test(facultyId)) {
     throw new AppError("Mã khoa không hợp lệ", 400);
   }

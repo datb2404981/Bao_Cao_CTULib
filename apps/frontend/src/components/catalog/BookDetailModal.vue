@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import { currentUser } from '../../services/auth';
 import { getBookById } from '../../services/book';
 import type { Book } from '../../types/book';
@@ -10,6 +10,8 @@ const props = defineProps<{
   initialBook?: Book | null;
   facultyName?: string;
   authorNames?: string;
+  reserving?: boolean;
+  reservationError?: string;
 }>();
 
 const emit = defineEmits<{
@@ -22,12 +24,14 @@ const activeBook = ref<Book | null>(props.initialBook || null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const imageError = ref(false);
+let detailRequestId = 0;
 
 function handleImageError() {
   imageError.value = true;
 }
 
 const isLoggedIn = computed(() => !!currentUser.value);
+const isReader = computed(() => currentUser.value?.role === 'READER');
 
 const formattedPrice = computed(() => {
   if (
@@ -46,20 +50,25 @@ const isAvailable = computed(() => {
 });
 
 async function loadDetail(id: string) {
+  const requestId = ++detailRequestId;
   loading.value = true;
   error.value = null;
   try {
     const fetched = await getBookById(id);
+    if (requestId !== detailRequestId) return;
     activeBook.value = fetched;
   } catch (err: unknown) {
-    const errorObj = err as { status?: number; message?: string };
-    if (errorObj?.status === 401 && props.initialBook) {
+    if (requestId !== detailRequestId) return;
+    const errorObj = err !== null && typeof err === 'object' ? err : null;
+    if (errorObj && 'status' in errorObj && errorObj.status === 401 && props.initialBook) {
       activeBook.value = props.initialBook;
     } else {
-      error.value = errorObj?.message || 'Không thể tải chi tiết sách.';
+      error.value = errorObj && 'message' in errorObj && typeof errorObj.message === 'string'
+        ? errorObj.message
+        : 'Không thể tải chi tiết sách.';
     }
   } finally {
-    loading.value = false;
+    if (requestId === detailRequestId) loading.value = false;
   }
 }
 
@@ -70,12 +79,22 @@ watch(
   ([newId, isOpen]) => {
     imageError.value = false;
     if (newId && isOpen) {
-      if (props.initialBook) {
-        activeBook.value = props.initialBook;
-      }
-      void loadDetail(newId);
+      detailRequestId++;
+      activeBook.value = props.initialBook || null;
+      error.value = null;
+      loading.value = false;
+      // Khách xem dữ liệu đã có ở trang danh mục; endpoint chi tiết yêu cầu đăng nhập.
+      if (isLoggedIn.value || !props.initialBook) void loadDetail(newId);
+      void nextTick(() => {
+        if (!props.isOpen || !modalRef.value) return;
+        if (typeof modalRef.value.showModal === 'function' && !modalRef.value.open) {
+          modalRef.value.showModal();
+        }
+        modalRef.value.querySelector<HTMLElement>('#dialog-title')?.focus();
+      });
     } else if (!isOpen) {
-      if (modalRef.value?.open) {
+      detailRequestId++;
+      if (modalRef.value?.open && typeof modalRef.value.close === 'function') {
         modalRef.value.close();
       }
       activeBook.value = null;
@@ -84,11 +103,23 @@ watch(
   { immediate: true }
 );
 
+onBeforeUnmount(() => { detailRequestId++; });
+
 function handleClose() {
   emit('close');
 }
 
+function handleDialogClick(event: MouseEvent) {
+  if (event.target !== event.currentTarget || !modalRef.value) return;
+  const rect = modalRef.value.getBoundingClientRect();
+  if (event.clientX < rect.left || event.clientX > rect.right ||
+      event.clientY < rect.top || event.clientY > rect.bottom) {
+    handleClose();
+  }
+}
+
 function handleBorrow() {
+  if (props.reserving || (isLoggedIn.value && !isReader.value)) return;
   if (!isLoggedIn.value) {
     emit('require-login');
     return;
@@ -103,20 +134,13 @@ function handleBorrow() {
   <div v-if="isOpen" class="modal-backdrop" @click.self="handleClose">
     <dialog
       ref="modalRef"
-      open
       class="dialog"
       aria-labelledby="dialog-title"
-      @keydown.esc="handleClose"
+      @cancel.prevent="handleClose"
+      @click="handleDialogClick"
     >
-      <!-- Header Hộp Thoại -->
       <header class="dialog-header">
-        <div class="header-titles">
-          <span class="header-eyebrow">
-            <span class="eyebrow-spark"></span>
-            Thông tin ấn phẩm
-          </span>
-          <h1 id="dialog-title" tabindex="-1">Chi tiết sách</h1>
-        </div>
+        <h1 id="dialog-title" tabindex="-1">Chi tiết sách</h1>
         <button
           class="icon-btn"
           type="button"
@@ -139,7 +163,6 @@ function handleBorrow() {
         </button>
       </header>
 
-      <!-- Nội Dung Thân Hộp Thoại -->
       <div class="dialog-body">
         <div v-if="loading && !activeBook" class="loading-state">
           <span class="spinner"></span> Đang tải thông tin chi tiết…
@@ -150,14 +173,10 @@ function handleBorrow() {
         </div>
 
         <template v-else-if="activeBook">
-          <!-- KHỐI TIÊU ĐIỂM (HERO SHOWCASE): Bìa sách 3D + Phân loại + Tựa đề + Tác giả -->
           <div class="summary-block record-hero">
             <div
               class="cover large"
-              :class="{
-                'has-image': activeBook.coverImageUrl && !imageError,
-                'is-reference': activeBook.bookType !== 'TEXTBOOK',
-              }"
+              :class="{ 'has-image': activeBook.coverImageUrl && !imageError }"
               :aria-label="activeBook.title"
             >
               <img
@@ -167,97 +186,59 @@ function handleBorrow() {
                 class="cover-image"
                 @error="handleImageError"
               />
-              <div v-else class="cover-fallback-large" role="img" :aria-label="activeBook.title">
-                <div class="spine-accent-large"></div>
-                <div class="fallback-large-inner">
-                  <div class="large-crest">
-                    <svg
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                    </svg>
-                  </div>
-                  <span class="fallback-brand">CTULIB</span>
-                  <span class="fallback-type-pill">{{ activeBook.bookType === 'TEXTBOOK' ? 'GIÁO TRÌNH' : 'THAM KHẢO' }}</span>
-                </div>
-                <div class="large-edge-shadow"></div>
+              <div v-else class="cover-fallback-large" role="img" :aria-label="`Chưa có ảnh bìa của ${activeBook.title}`">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                <span>Chưa có ảnh bìa</span>
               </div>
             </div>
 
             <div class="record-hero-info">
-              <!-- Cặp huy hiệu trạng thái tinh gọn -->
-              <div class="hero-pills">
-                <span class="badge" :class="activeBook.bookType === 'TEXTBOOK' ? 'blue' : 'orange'">
-                  <span class="badge-dot"></span>
-                  {{ activeBook.bookType === 'TEXTBOOK' ? 'Giáo trình' : 'Sách tham khảo' }}
-                </span>
-                <span class="badge" :class="activeBook.isAvailableForCirculation ? 'green' : 'red'">
-                  <span class="badge-dot"></span>
-                  {{ activeBook.isAvailableForCirculation ? 'Đang lưu hành' : 'Ngừng lưu hành' }}
-                </span>
-              </div>
-
-              <!-- Tựa Đề Sách -->
               <h2>{{ activeBook.title }}</h2>
-
-              <!-- Dòng Tác Giả -->
-              <div class="record-author">
-                <span class="author-chip-icon" aria-hidden="true">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                  </svg>
-                </span>
-                <span class="author-label">Tác giả:</span>
+              <p class="record-author">
+                <span class="author-label">Tác giả</span>
                 <strong>{{ authorNames || 'Chưa rõ tác giả' }}</strong>
-              </div>
+              </p>
+              <p class="circulation-status" :class="{ inactive: !activeBook.isAvailableForCirculation }">
+                <span class="status-indicator" :class="{ empty: !activeBook.isAvailableForCirculation }" aria-hidden="true"></span>
+                {{ activeBook.isAvailableForCirculation ? 'Đang lưu hành' : 'Ngừng lưu hành' }}
+              </p>
             </div>
           </div>
 
-          <!-- BẢNG BIÊN MỤC THƯ VIỆN HIỆN ĐẠI (BIBLIOGRAPHIC LEDGER) -->
-          <div class="bibliographic-card">
-            <dl class="detail-pairs">
-              <!-- Dòng 1: Loại Sách & Khoa/Viện -->
+          <section class="bibliographic-card" aria-label="Thông tin xuất bản và số lượng">
+            <div class="detail-pairs">
               <div class="ledger-row">
-                <div class="ledger-cell">
-                  <dt>LOẠI SÁCH</dt>
+                <dl class="ledger-cell">
+                  <dt>Loại sách</dt>
                   <dd>{{ activeBook.bookType === 'TEXTBOOK' ? 'Giáo trình' : 'Sách tham khảo' }}</dd>
-                </div>
-                <div class="ledger-cell">
-                  <dt>KHOA/VIỆN</dt>
+                </dl>
+                <dl class="ledger-cell">
+                  <dt>Khoa/Viện</dt>
                   <dd>{{ facultyName || 'Đại học Cần Thơ' }}</dd>
-                </div>
+                </dl>
               </div>
 
-              <!-- Dòng 2: Nhà Xuất Bản & Năm Xuất Bản -->
               <div class="ledger-row">
-                <div class="ledger-cell">
-                  <dt>NHÀ XUẤT BẢN</dt>
+                <dl class="ledger-cell">
+                  <dt>Nhà xuất bản</dt>
                   <dd>{{ activeBook.publisher || 'NXB Đại học Cần Thơ' }}</dd>
-                </div>
-                <div class="ledger-cell">
-                  <dt>NĂM XUẤT BẢN</dt>
+                </dl>
+                <dl class="ledger-cell">
+                  <dt>Năm xuất bản</dt>
                   <dd>{{ activeBook.publicationYear || 'Chưa cập nhật' }}</dd>
-                </div>
+                </dl>
               </div>
 
-              <!-- Dòng 3: Giá Bìa (dd.num duy nhất cho test) & Khả Dụng -->
-              <div class="ledger-row highlight-row">
-                <div class="ledger-cell">
-                  <dt>GIÁ BÌA</dt>
+              <div class="ledger-row">
+                <dl class="ledger-cell">
+                  <dt>Giá bìa</dt>
                   <dd class="num price-val">{{ formattedPrice }}</dd>
-                </div>
-                <div class="ledger-cell">
-                  <dt>KHẢ DỤNG</dt>
+                </dl>
+                <dl class="ledger-cell">
+                  <dt>Khả dụng</dt>
                   <dd>
                     <span class="availability-status">
                       <span class="status-indicator" :class="{ empty: !isAvailable }"></span>
@@ -266,42 +247,32 @@ function handleBorrow() {
                       </span>
                     </span>
                   </dd>
-                </div>
+                </dl>
               </div>
-            </dl>
-          </div>
+            </div>
+          </section>
 
-          <!-- THẺ YÊU CẦU ĐĂNG NHẬP -->
           <div v-if="!isLoggedIn" class="notice info auth-prompt-box">
-            <div class="auth-icon-badge" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <div class="auth-prompt-text">
-              <strong>Yêu cầu đăng nhập</strong>
-              <p>Bạn cần đăng nhập tài khoản CTULib để thực hiện chức năng mượn sách.</p>
-            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <p>Bạn cần đăng nhập tài khoản CTULib để thực hiện chức năng mượn sách.</p>
           </div>
         </template>
       </div>
 
-      <!-- Chân Hộp Thoại -->
       <footer class="dialog-footer">
+        <p v-if="reservationError" role="alert" class="notice error" style="flex: 1">{{ reservationError }}</p>
         <button class="btn btn-close-modal" type="button" @click="handleClose">Đóng</button>
         <button
           v-if="activeBook"
           class="btn primary btn-borrow-action"
           type="button"
-          :disabled="!isAvailable"
+          :disabled="!isAvailable || reserving || (isLoggedIn && !isReader)"
           @click="handleBorrow"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-          </svg>
-          <span>{{ isLoggedIn ? 'Đặt mượn' : 'Đăng nhập để mượn' }}</span>
+          <span>{{ reserving ? 'Đang đặt…' : !isLoggedIn ? 'Đăng nhập để mượn' : isReader ? 'Đặt mượn' : 'Chỉ dành cho độc giả' }}</span>
         </button>
       </footer>
     </dialog>
@@ -312,313 +283,229 @@ function handleBorrow() {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  z-index: 50;
   display: grid;
   place-items: center;
-  z-index: 50;
-  padding: 20px;
+  padding: 16px;
+  background: transparent;
 }
 
 .dialog {
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  width: min(740px, calc(100% - 32px));
-  box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.28), 0 4px 16px -4px rgba(15, 23, 42, 0.08);
+  width: min(720px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
   overflow: hidden;
-  background: #ffffff;
+  background: #fff;
+  color: #172033;
+  border: 1px solid #dfe5ec;
+  border-radius: 14px;
+  box-shadow: 0 20px 56px -16px rgba(15, 23, 42, 0.22);
 }
 
-/* ==========================================================================
-   HEADER MODAL
-   ========================================================================== */
-.dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 22px 28px 18px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.header-titles {
+.dialog[open] {
   display: flex;
   flex-direction: column;
-  gap: 5px;
 }
 
-.header-eyebrow {
-  display: inline-flex;
+.dialog::backdrop {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.dialog-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  color: #1d4ed8;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.eyebrow-spark {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #2563eb;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 20px 28px;
+  background: #fff;
+  border-bottom: 1px solid #e9edf2;
 }
 
 .dialog-header h1 {
-  font-size: 22px;
-  line-height: 1.25;
-  font-weight: 800;
-  color: #0f172a;
+  margin: 0;
+  color: #172033;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.4;
   letter-spacing: -0.02em;
 }
 
-.dialog-body {
-  padding: 24px 28px;
+.dialog-header .icon-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
 }
 
-/* ==========================================================================
-   KHỐI TIÊU ĐIỂM (RECORD HERO)
-   ========================================================================== */
+.dialog-header .icon-btn:focus-visible,
+.dialog-footer .btn:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px;
+}
+
 .record-hero {
   display: flex;
+  align-items: flex-start;
   gap: 24px;
-  align-items: center;
-  margin-bottom: 22px;
+  margin-bottom: 28px;
 }
 
 .cover.large {
-  width: 108px;
-  height: 152px;
-  border-radius: 10px;
-  border: 1px solid #dbeafe;
-  background: #eff6ff;
+  flex: none;
+  width: 116px;
+  height: 162px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  flex: none;
-  box-shadow:
-    inset -1px 0 2px rgba(255, 255, 255, 0.8),
-    0 8px 22px -4px rgba(15, 23, 42, 0.16),
-    0 2px 6px -2px rgba(15, 23, 42, 0.06);
+  padding: 0;
+  background: #f1f4f8;
+  border: 1px solid #dce3eb;
+  border-radius: 5px;
+  box-shadow: none;
 }
 
 .cover-image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .cover-fallback-large {
   width: 100%;
   height: 100%;
-  background: linear-gradient(145deg, #f0f7ff 0%, #dceaff 100%);
-  display: flex;
-  position: relative;
-  overflow: hidden;
-}
-
-.cover.large.is-reference .cover-fallback-large {
-  background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%);
-}
-
-.spine-accent-large {
-  width: 7px;
-  height: 100%;
-  background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
-  flex-shrink: 0;
-  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.1);
-}
-
-.cover.large.is-reference .spine-accent-large {
-  background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
-}
-
-.fallback-large-inner {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  color: #1d4ed8;
-  z-index: 2;
+  gap: 12px;
+  color: #64748b;
+  text-align: center;
 }
 
-.cover.large.is-reference .fallback-large-inner {
-  color: #b45309;
+.cover-fallback-large svg {
+  width: 28px;
+  height: 28px;
+  color: #8090a5;
 }
 
-.large-crest {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 3px 8px rgba(29, 78, 216, 0.15);
-}
-
-.cover.large.is-reference .large-crest {
-  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.18);
-}
-
-.fallback-brand {
+.cover-fallback-large span {
+  width: 80px;
   font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.14em;
-  color: #1e3a8a;
-}
-
-.cover.large.is-reference .fallback-brand {
-  color: #78350f;
-}
-
-.fallback-type-pill {
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: #3b82f6;
-}
-
-.cover.large.is-reference .fallback-type-pill {
-  color: #b45309;
-}
-
-.large-edge-shadow {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.06));
-  pointer-events: none;
+  line-height: 1.45;
 }
 
 .record-hero-info {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.hero-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  padding-top: 4px;
 }
 
 .record-hero-info h2 {
-  font-size: 22px;
-  line-height: 1.32;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.018em;
+  margin: 0 0 14px;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
 }
 
 .record-author {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 2px;
+  margin: 0;
   font-size: 14px;
-  color: #1e3a8a;
-}
-
-.author-chip-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: #eff6ff;
-  color: #2563eb;
-  display: inline-grid;
-  place-items: center;
-  flex-shrink: 0;
+  line-height: 1.55;
 }
 
 .author-label {
-  font-size: 13.5px;
   color: #64748b;
-  font-weight: 500;
 }
 
 .record-author strong {
-  font-weight: 700;
-  color: #1e3a8a;
+  color: #334155;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
-/* ==========================================================================
-   BẢNG BIÊN MỤC THƯ VIỆN (BIBLIOGRAPHIC LEDGER CARD)
-   Thay thế 6 ô xám thô bằng bảng thông số tinh tế, sang trọng
-   ========================================================================== */
+.circulation-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.circulation-status.inactive {
+  color: #b91c1c;
+}
+
 .bibliographic-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
+  border-top: 1px solid #e2e8f0;
 }
 
 .detail-pairs {
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .ledger-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid #edf2f7;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-bottom: 1px solid #edf0f4;
 }
 
 .ledger-row:last-child {
-  border-bottom: none;
+  border-bottom: 0;
 }
 
 .ledger-cell {
-  padding: 13px 20px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border-right: 1px solid #edf2f7;
+  margin: 0;
+  padding: 14px 20px 14px 0;
 }
 
-.ledger-cell:last-child {
-  border-right: none;
+.ledger-cell:nth-child(2) {
+  padding-left: 24px;
 }
 
 .ledger-cell dt {
-  font-size: 11px;
-  line-height: 16px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
   color: #64748b;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .ledger-cell dd {
   margin: 0;
-  font-size: 14.5px;
-  line-height: 21px;
-  font-weight: 650;
-  color: #0f172a;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-/* Hàng nổi bật: Giá bìa & Khả dụng */
-.highlight-row {
-  background: #ffffff;
-}
-
-.price-val {
-  color: #1d4ed8 !important;
-  font-size: 16px !important;
-  font-weight: 750 !important;
+.ledger-cell .price-val {
+  font-variant-numeric: tabular-nums;
 }
 
 .availability-status {
@@ -628,117 +515,173 @@ function handleBorrow() {
 }
 
 .status-indicator {
-  width: 8px;
-  height: 8px;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #16a34a;
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+  box-shadow: none;
 }
 
 .status-indicator.empty {
   background: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+  box-shadow: none;
 }
 
 .availability {
-  font-weight: 700;
-  color: #15803d;
+  color: #166534;
 }
 
 .availability.empty {
   color: #b91c1c;
 }
 
-/* ==========================================================================
-   THẺ YÊU CẦU ĐĂNG NHẬP (AUTH PROMPT CALLOUT)
-   ========================================================================== */
-.auth-prompt-box {
-  margin-top: 18px;
-  border-radius: 14px;
-  padding: 14px 18px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
+.auth-prompt-box.notice.info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 12px 14px;
+  color: #475569;
+  background: #f8fafc;
+  border: 0;
+  border-radius: 8px;
+}
+
+.auth-prompt-box svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #64748b;
+}
+
+.auth-prompt-box p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.dialog-footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 14px;
-}
-
-.auth-icon-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #1d4ed8;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.1);
-}
-
-.auth-prompt-text strong {
-  display: block;
-  font-size: 14px;
-  color: #1e3a8a;
-  margin-bottom: 2px;
-}
-
-.auth-prompt-text p {
-  margin: 0;
-  font-size: 13.5px;
-  color: #334155;
-}
-
-/* ==========================================================================
-   FOOTER MODAL
-   ========================================================================== */
-.dialog-footer {
-  padding: 18px 28px;
-  background: #ffffff;
-  border-top: 1px solid #f1f5f9;
-  display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  flex-shrink: 0;
+  gap: 10px;
+  padding: 16px 28px;
+  background: #fff;
+  border-top: 1px solid #e9edf2;
 }
 
 .btn-close-modal {
   min-height: 42px;
-  padding: 9px 20px;
-  border-radius: 10px;
+  padding: 9px 16px;
+  background: transparent;
+  border-color: transparent;
+  color: #475569;
+  border-radius: 8px;
+}
+
+.btn-close-modal:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: transparent;
 }
 
 .btn-borrow-action {
   min-height: 42px;
   padding: 9px 22px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14.5px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
-@media (max-width: 640px) {
-  .record-hero {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+.btn-borrow-action.primary:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: none;
+}
+
+.btn-borrow-action.primary:hover:not(:disabled) {
+  background: #1e40af;
+  border-color: #1e40af;
+  box-shadow: none;
+}
+
+@media (max-width: 600px) {
+  .dialog {
+    width: calc(100% - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
   }
 
-  .ledger-row {
-    grid-template-columns: 1fr;
-  }
-
-  .ledger-cell {
-    border-right: none;
-    border-bottom: 1px solid #edf2f7;
-  }
-
-  .dialog-footer {
+  .dialog-header {
     padding: 16px 20px;
   }
 
-  .btn-borrow-action, .btn-close-modal {
+  .dialog-body {
+    padding: 22px 20px;
+  }
+
+  .record-hero {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .cover.large {
+    width: 94px;
+    height: 132px;
+  }
+
+  .record-hero-info h2 {
+    font-size: 20px;
+  }
+
+  .ledger-cell:nth-child(2) {
+    padding-left: 16px;
+  }
+
+  .dialog-footer {
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 440px) {
+  .ledger-row {
+    grid-template-columns: 1fr;
+    border-bottom: 0;
+  }
+
+  .ledger-cell,
+  .ledger-cell:nth-child(2) {
+    padding: 12px 0;
+    border-bottom: 1px solid #edf0f4;
+  }
+
+  .ledger-row:last-child .ledger-cell:last-child {
+    border-bottom: 0;
+  }
+
+  .cover.large {
+    width: 82px;
+    height: 116px;
+  }
+
+  .record-hero-info h2 {
+    font-size: 18px;
+  }
+
+  .record-author {
+    font-size: 13px;
+  }
+
+  .btn-borrow-action {
     flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-footer .btn,
+  .dialog-header .icon-btn {
+    transition: none;
   }
 }
 </style>

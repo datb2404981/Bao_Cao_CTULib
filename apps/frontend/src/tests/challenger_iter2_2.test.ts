@@ -107,6 +107,7 @@ describe('Challenger Iteration 2: Empirical Verification of BookDetailModal & St
   // =========================================================================
   describe('2. State Transitions & Lifecycle', () => {
     it('State Transition: opens with initialBook immediately, then updates with fetched book', async () => {
+      mockCurrentUser.value = { role: 'READER' };
       const fetchedBook: Book = {
         ...sampleBook,
         title: 'Tựa đề mới từ API',
@@ -134,6 +135,7 @@ describe('Challenger Iteration 2: Empirical Verification of BookDetailModal & St
     });
 
     it('State Transition: bookId switch while modal is open fetches new book', async () => {
+      mockCurrentUser.value = { role: 'READER' };
       const bookA: Book = { ...sampleBook, bookId: 'book-A', title: 'Sách A' };
       const bookB: Book = { ...sampleBook, bookId: 'book-B', title: 'Sách B' };
 
@@ -165,6 +167,7 @@ describe('Challenger Iteration 2: Empirical Verification of BookDetailModal & St
     });
 
     it('State Transition: recovers initialBook and fetches book when isOpen transitions false -> true with pre-set bookId', async () => {
+      mockCurrentUser.value = { role: 'READER' };
       vi.spyOn(bookService, 'getBookById').mockResolvedValue(sampleBook);
 
       const wrapper = mount(BookDetailModal, {

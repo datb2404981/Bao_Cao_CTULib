@@ -24,3 +24,5 @@ logs/
 coverage/
 .agents/
 .apidog/
+docs/qa
+apidog-reports/dashboard/

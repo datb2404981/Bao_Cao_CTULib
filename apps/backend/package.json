@@ -11,7 +11,10 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint src/",
-    "test": "echo \"Running test suites...\""
+    "test": "vitest run tests/loan-record.test.ts",
+    "test:integration": "tsx --test --test-concurrency=1 tests/loan-concurrency.integration.ts tests/loan-api.integration.ts",
+    "test:standalone": "tsx --test tests/access-control.test.ts tests/book-create.test.ts tests/error-messages.test.ts tests/loan-http-route.test.ts tests/profile-modules.test.ts",
+    "test:watch": "vitest tests/loan-record.test.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -38,6 +41,7 @@
     "eslint": "^10.13.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.72.1"
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0"
   }
 }

@@ -427,7 +427,7 @@ describe('Empirical Challenger: Book Catalog Stress Suite', () => {
   })
 
   describe('6. BookCatalogView Integration & Behavioral Flaw Exploration', () => {
-    it('CHALLENGE: Client-side bookType filter synchronizes counter and avoids discrepancy', async () => {
+    it('CHALLENGE: Server-side bookType filter preserves API pagination totals', async () => {
       // Giả lập backend trả về 12 sách toàn bộ là TEXTBOOK trên trang 1
       const textbooks: Book[] = Array.from({ length: 12 }, (_, i) => ({
         ...baseBook,
@@ -452,12 +452,12 @@ describe('Empirical Challenger: Book Catalog Stress Suite', () => {
       expect(wrapper.text()).toContain('Tìm thấy 24 ấn phẩm phù hợp.')
 
       // Bây giờ người dùng chọn Loại sách: Sách tham khảo (REFERENCE)
-      // Backend trả về cùng danh sách trang 1 (12 TEXTBOOK) vì API không hỗ trợ bookType
+      // API trả danh sách và tổng đã lọc tại server.
       vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({
         status: 'success',
         data: {
-          items: textbooks,
-          meta: { totalItems: 24, totalPages: 2, currentPage: 1, limit: 12 },
+          items: [{ ...baseBook, bookType: 'REFERENCE', title: 'Sách tham khảo lọc từ server' }],
+          meta: { totalItems: 6, totalPages: 1, currentPage: 1, limit: 12 },
         },
       }), { status: 200 }))
 
@@ -469,23 +469,32 @@ describe('Empirical Challenger: Book Catalog Stress Suite', () => {
       const resultText = wrapper.find('.results-line')?.text()
       const emptyStateExists = wrapper.find('.empty-state').exists()
 
-      expect(wrapper.findAll('.book-card').length).toBe(0)
-      expect(emptyStateExists).toBe(true)
+      expect(wrapper.findAll('.book-card').length).toBe(1)
+      expect(emptyStateExists).toBe(false)
       if (resultText) {
         expect(resultText).not.toContain('24')
-        expect(resultText).toContain('0')
+        expect(resultText).toContain('6')
       }
+      expect(new URL(String(vi.mocked(fetch).mock.calls.at(-1)?.[0]), 'http://localhost').searchParams.get('bookType')).toBe('REFERENCE')
     })
 
     it('automatically triggers search after debounce without requiring explicit submit', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({
-        status: 'success',
-        data: { items: [baseBook], meta: { totalItems: 1, totalPages: 1, currentPage: 1, limit: 12 } },
-      }), { status: 200 }))
+      vi.mocked(fetch).mockImplementation(async (input) => {
+        const path = new URL(String(input), 'http://localhost').pathname
+        return new Response(JSON.stringify({
+          status: 'success',
+          data: path === '/book'
+            ? { items: [baseBook], meta: { totalItems: 1, totalPages: 1, currentPage: 1, limit: 12 } }
+            : [],
+        }), { status: 200 })
+      })
+      const bookRequests = () => vi.mocked(fetch).mock.calls.filter(([input]) =>
+        new URL(String(input), 'http://localhost').pathname === '/book'
+      )
 
       const wrapper = mount(BookCatalogView)
       await flushPromises()
-      expect(fetch).toHaveBeenCalledTimes(1)
+      expect(bookRequests()).toHaveLength(1)
 
       // Người dùng gõ vào ô tìm kiếm
       const searchInput = wrapper.find('input[type="search"]')
@@ -495,7 +504,8 @@ describe('Empirical Challenger: Book Catalog Stress Suite', () => {
       await new Promise((resolve) => setTimeout(resolve, 500))
       await flushPromises()
 
-      expect(vi.mocked(fetch).mock.calls.length).toBe(2)
+      expect(bookRequests()).toHaveLength(2)
+      wrapper.unmount()
     })
   })
 })

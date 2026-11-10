@@ -5,6 +5,7 @@ export interface AuthUser {
   ctuIdentifier: string
   email?: string
   role: string
+  permissions?: readonly string[]
 }
 interface SessionData { token: string; expiresIn: number; user?: AuthUser }
 export class AuthError extends Error {
@@ -20,6 +21,8 @@ const user = ref<AuthUser | null>(null)
 let accessToken = ''
 let expiresAt = 0
 let timer: ReturnType<typeof setTimeout> | undefined
+let sessionVersion = 0
+let authorizationVersion = 0
 let pendingRefresh: Promise<void> | undefined
 const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -45,20 +48,47 @@ async function request(endpoint: string, body: object = {}): Promise<SessionData
   return result.data
 }
 function clearSession() {
+  sessionVersion++
+  authorizationVersion++
   clearTimeout(timer)
   accessToken = ''
   expiresAt = 0
   user.value = null
 }
-function acceptSession(data: SessionData) {
+export async function refreshAuthorization(): Promise<void> {
+  if (!accessToken || Date.now() >= expiresAt) { await refreshSession(); return }
+  const version = sessionVersion
+  const check = ++authorizationVersion
+  const token = accessToken
+  let response: Response
+  try {
+    response = await fetch(`${base}/api/v1/auth/me`, {
+      credentials: 'include', headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(15000),
+    })
+  } catch { throw new AuthError('Không thể kiểm tra quyền truy cập. Vui lòng thử lại.', 0) }
+  const result = await response.json().catch(() => null)
+  if (version !== sessionVersion || check !== authorizationVersion) return
+  if (!response.ok || result?.status !== 'success') {
+    user.value = null
+    if ([401, 403].includes(response.status)) clearSession()
+    throw new AuthError(result?.message || 'Không thể kiểm tra quyền truy cập.', response.status)
+  }
+  const data = result.data
+  if (!data || typeof data.accountId !== 'string' || typeof data.ctuIdentifier !== 'string'
+    || !['READER', 'EMPLOYEE', 'ADMIN'].includes(data.role)
+    || !Array.isArray(data.permissions) || !data.permissions.every((value: unknown) => typeof value === 'string')) {
+    user.value = null
+    throw new AuthError('Thông tin quyền truy cập không hợp lệ.', 502)
+  }
+  user.value = data as AuthUser
+}
+async function acceptSession(data: SessionData) {
+  sessionVersion++
   accessToken = data.token
   expiresAt = Date.now() + data.expiresIn * 1000
-  if (data.user) user.value = data.user
-  else {
-    // Refresh không trả user: chỉ lấy thông tin hiển thị từ JWT, không dùng để cấp quyền.
-    const payload = JSON.parse(atob(data.token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/')))
-    user.value = { accountId: payload.accountId, ctuIdentifier: payload.ctuIdentifier, role: payload.role }
-  }
+  try { await refreshAuthorization() }
+  catch (cause) { user.value = null; throw cause }
   clearTimeout(timer)
   timer = setTimeout(() => { void refreshSession().catch(() => {}) }, Math.max(1000, data.expiresIn * 1000 - 60000))
 }
@@ -74,7 +104,7 @@ export function refreshSession(): Promise<void> {
 }
 export async function authenticate(mode: 'login' | 'register', input: { ctuIdentifier: string; password: string; email?: string }) {
   if (pendingRefresh) await pendingRefresh.catch(() => {})
-  acceptSession(await request(mode, input))
+  await acceptSession(await request(mode, input))
 }
 export async function logout() {
   if (pendingRefresh) await pendingRefresh.catch(() => {})

@@ -2,9 +2,9 @@ name: CTULib CI/CD Pipeline
 
 on:
   push:
-    branches: [main, staging]
+    branches: [main, staging, develop]
   pull_request:
-    branches: [main, staging]
+    branches: [main, staging, develop]
 
 jobs:
   quality-check:
@@ -35,9 +35,92 @@ jobs:
       - name: Build Packages
         run: pnpm build
 
+      # MongoDB transaction tests require a replica set. This instance runs on
+      # the GitHub-hosted Linux runner and is never connected to production.
+      - name: Start isolated MongoDB QA replica set
+        run: |
+          set -euo pipefail
+          docker run -d --rm --name ctulib-ci-mongo --network host mongo:7 \
+            mongod --replSet ctulibqa --port 27055 --bind_ip 127.0.0.1
+          for attempt in $(seq 1 30); do
+            if docker exec ctulib-ci-mongo mongosh --quiet --port 27055 \
+                --eval 'db.adminCommand({ ping: 1 }).ok' 2>/dev/null | grep -q 1; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec ctulib-ci-mongo mongosh --quiet --port 27055 \
+            --eval 'rs.initiate({_id: "ctulibqa", members: [{_id: 0, host: "127.0.0.1:27055"}]})'
+          for attempt in $(seq 1 30); do
+            if docker exec ctulib-ci-mongo mongosh --quiet --port 27055 \
+                --eval 'db.hello().isWritablePrimary' 2>/dev/null | grep -q true; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Run backend loan and concurrency tests on QA database
+        env:
+          CTULIB_TEST_MONGODB_URI: mongodb://127.0.0.1:27055/ctulib_qa_ci?replicaSet=ctulibqa
+        run: |
+          pnpm --filter @ctulib/backend test
+          pnpm --filter @ctulib/backend test:integration
+          pnpm --filter @ctulib/backend test:standalone
+
+      - name: Run frontend tests
+        run: pnpm --filter @ctulib/frontend test
+
+      - name: Install Apidog CLI for Dashboard and optional loan QA
+        run: npm install -g apidog-cli
+
+      - name: Verify Dashboard API against isolated seeded QA dataset
+        env:
+          APIDOG_TOKEN: ${{ secrets.APIDOG_TOKEN }}
+          APIDOG_DASHBOARD_SUITE_ID: "7423"
+          CTULIB_TEST_MONGODB_URI: mongodb://127.0.0.1:27055/ctulib_qa_dashboard_ci?replicaSet=ctulibqa
+        run: |
+          test -n "$APIDOG_TOKEN"
+          pnpm --filter @ctulib/backend exec tsc --noEmit --strict --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext --esModuleInterop scripts/dashboard-apidog-qa.ts
+          pnpm --filter @ctulib/backend exec tsx scripts/dashboard-apidog-qa.ts
+
+      - name: Upload Dashboard Apidog JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apidog-dashboard
+          path: apidog-reports/dashboard/*.xml
+          if-no-files-found: ignore
+
+      # Chỉ chạy khi QA Apidog đã được seed/reset theo từng case, truy cập được
+      # từ runner. Chặn build/push production image nếu case có lỗi.
+      - name: Verify Loan & Penalty APIs on isolated QA environment
+        if: vars.APIDOG_LOAN_QA_READY == 'true'
+        env:
+          APIDOG_TOKEN: ${{ secrets.APIDOG_TOKEN }}
+          APIDOG_LOAN_QA_ENV_ID: ${{ vars.APIDOG_LOAN_QA_ENV_ID }}
+        run: |
+          test -n "$APIDOG_TOKEN"
+          test -n "$APIDOG_LOAN_QA_ENV_ID"
+          apidog run --access-token "$APIDOG_TOKEN" --test-suite 7413 \
+            -e "$APIDOG_LOAN_QA_ENV_ID" -r cli,junit \
+            --out-dir apidog-reports/loan-penalty --on-error end
+
+      - name: Upload Loan & Penalty Apidog report
+        if: always() && vars.APIDOG_LOAN_QA_READY == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: apidog-loan-penalty
+          path: apidog-reports/loan-penalty/
+          if-no-files-found: ignore
+
+      - name: Stop isolated MongoDB QA
+        if: always()
+        run: docker rm -f ctulib-ci-mongo 2>/dev/null || true
+
   deploy-backend:
     needs: quality-check
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -84,15 +167,18 @@ jobs:
         continue-on-error: true
         run: |
           apidog run --access-token ${{ secrets.APIDOG_TOKEN }} --test-suite 7398 -e 6934714 -r html,cli
-      # 4. Chỉ gọi webhook của đúng môi trường sau khi push.
+
+      - name: Running Test Scenario Module Author
+        continue-on-error: true
+        run: |
+          apidog run --access-token ${{ secrets.APIDOG_TOKEN }} --test-suite 7404 -e 6934714 -r html,cli
+
+      - name: Running Test Scenario Module Profiles & Access Control
+        continue-on-error: true
+        run: |
+          apidog run --access-token ${{ secrets.APIDOG_TOKEN }} --test-suite 7408 -e 6934714 -r html,cli
+
       - name: Trigger production Render deploy
-        if: github.ref == 'refs/heads/main'
         env:
           RENDER_WEBHOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: if [ -n "$RENDER_WEBHOOK" ]; then curl -fsS -X POST "$RENDER_WEBHOOK"; fi
-
-      - name: Trigger staging Render deploy
-        if: github.ref == 'refs/heads/staging'
-        env:
-          RENDER_STAGING_WEBHOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
-        run: if [ -n "$RENDER_STAGING_WEBHOOK" ]; then curl -fsS -X POST "$RENDER_STAGING_WEBHOOK"; fi

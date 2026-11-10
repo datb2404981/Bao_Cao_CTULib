@@ -16,7 +16,7 @@ const refreshTokenSchema = new Schema<IRefreshToken>(
   {
     accountId: {
       type: Schema.Types.ObjectId,
-      ref: "Acount", // Khớp tên model hiện tại trong dự án.
+      ref: "Account",
       required: true,
       index: true,
     },
@@ -71,4 +71,4 @@ const accountSchema = new Schema(
 );
 
 export type Account = InferSchemaType<typeof accountSchema>;
-export const AccountModel = mongoose.model("Acount", accountSchema);
+export const AccountModel = mongoose.model("Account", accountSchema, "acounts");

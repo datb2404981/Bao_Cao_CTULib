@@ -28,6 +28,7 @@ export interface BookQueryParams {
   limit?: number;
   search?: string;
   facultyId?: string;
+  bookType?: BookType;
 }
 
 export interface PaginationMeta {

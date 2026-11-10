@@ -4,8 +4,11 @@ import type { AddressInfo } from "node:net";
 import express, { type ErrorRequestHandler } from "express";
 import { Types } from "mongoose";
 import jwt from "jsonwebtoken";
-import { BookModel } from "../src/models/book.model.js";
-import { facultyModel } from "../src/models/faculty.model.js";
+import { AccountModel } from "../src/models/user.model.js";
+import employeeModel from "../src/models/employee.model.js";
+import permissionModel from "../src/models/permission.model.js";
+import BookModel from "../src/models/book.model.js";
+import facultyModel from "../src/models/faculty.model.js";
 import authorModel from "../src/models/author.model.js";
 import { createBook } from "../src/services/book.service.js";
 import { bookSchema } from "../src/schemas/book.schema.js";
@@ -58,6 +61,9 @@ afterEach(() => mock.restoreAll());
 
 const createToken = (ctuIdentifier = "CB99101", role = "EMPLOYEE") => {
   const accountId = new Types.ObjectId().toHexString();
+  mock.method(AccountModel, "findById", () => ({ select: () => ({ lean: async () => ({ _id: new Types.ObjectId(accountId), role, isActive: true, ctuIdentifier, email: "test@example.com" }) }) }));
+  mock.method(employeeModel, "findById", () => ({ lean: async () => ({ permissionIds: [new Types.ObjectId()] }) }));
+  mock.method(permissionModel, "find", () => ({ select: () => ({ lean: async () => [{ permissionName: "MANAGE_BOOKS" }] }) }));
   return jwt.sign(
     { accountId, ctuIdentifier, role },
     process.env.ACCESS_TOKEN_SECRET_KEY!,

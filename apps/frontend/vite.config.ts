@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
+        '/account': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
+        '^/(?:reader|employee|permission|faculty|author)(?:/|\\?|$)': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
         '^/book(?:/|\\?|$)': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
       },
     },

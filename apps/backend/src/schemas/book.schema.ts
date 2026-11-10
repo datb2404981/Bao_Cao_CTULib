@@ -46,3 +46,8 @@ export const createBookSchema = z.object({
 });
 
 export const bookSchema = createBookSchema;
+export const inventoryAdjustmentSchema = z.object({
+  delta: z.number().int().refine((value) => value !== 0, 'Số điều chỉnh không được bằng 0'),
+  reason: z.string().trim().min(5).max(500),
+}).strict();
+export type InventoryAdjustmentInput = z.infer<typeof inventoryAdjustmentSchema>;

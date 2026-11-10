@@ -1,0 +1,198 @@
+{
+  "source": "Apidog project 1405851, suite 7413, assertion nguyên bản, fixture QA từng case",
+  "generatedAt": "2026-11-09T19:05:56.280Z",
+  "total": 46,
+  "passed": 43,
+  "failed": 0,
+  "blocked": 3,
+  "cases": [
+    {
+      "id": "PENALTY-LIST-001",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-002",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-003",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-004",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-005",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-006",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-007",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "PENALTY-LIST-008",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-009",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-010",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-011",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-012",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-LIST-013",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-DETAIL-001",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-DETAIL-002",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-DETAIL-003",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-DETAIL-004",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-DETAIL-005",
+      "state": "PASS"
+    },
+    {
+      "id": "PENALTY-DETAIL-006",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-001",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-002",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-003",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-004",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-005",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-006",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-007",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-008",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-009",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-010",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-011",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-012",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-013",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-014",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-015",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-016",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-017",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-018",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-019",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-020",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-021",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-022",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-023",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-024",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-025",
+      "state": "PASS"
+    },
+    {
+      "id": "COLLECT-026",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "COLLECT-027",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    }
+  ],
+  "note": "Chỉ xác minh HTTP assertions; DB/race cần integration tests độc lập."
+}
