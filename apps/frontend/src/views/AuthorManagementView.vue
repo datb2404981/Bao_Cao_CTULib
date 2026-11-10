@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { currentUser } from '../services/auth';
+import { canAccess } from '../middlewares/access';
 import {
   getAllAuthors,
   createAuthor,
@@ -13,7 +14,7 @@ import AuthorTable from '../components/author/AuthorTable.vue';
 import AuthorFormModal from '../components/author/AuthorFormModal.vue';
 
 const isAuthorized = computed(() => {
-  return currentUser.value && currentUser.value.role !== 'READER';
+  return canAccess(currentUser.value, 'author');
 });
 
 const authors = ref<Author[]>([]);
@@ -47,6 +48,7 @@ const filteredAuthors = computed(() => {
 });
 
 async function loadAuthors() {
+  if (!isAuthorized.value) return;
   loading.value = true;
   error.value = null;
   try {

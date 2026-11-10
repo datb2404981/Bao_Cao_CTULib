@@ -1,10 +1,12 @@
 import { RequestHandler } from "express";
+import type { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 import {
   createBook,
   deleteBook,
   getAllBooks,
   getBookById,
   updateBook,
+  adjustBookInventory,
 } from "../services/book.service.js";
 
 export const createBookController: RequestHandler = async (req, res, next) => {
@@ -73,4 +75,10 @@ export const deleteBookController: RequestHandler = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+export const adjustBookInventoryController: RequestHandler = async (req, res, next) => {
+  try {
+    const data = await adjustBookInventory(req.params.bookId, req.body, (req as AuthenticatedRequest).user!.accountId);
+    res.status(200).json({ status: "success", data });
+  } catch (error) { next(error); }
 };

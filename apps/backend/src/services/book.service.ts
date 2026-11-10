@@ -3,6 +3,7 @@ import authorModel from "../models/author.model.js";
 import BookModel, {Book} from "../models/book.model.js";
 import facultyModel from "../models/faculty.model.js";
 import { AppError } from "../utils/app-error.js";
+import type { InventoryAdjustmentInput } from "../schemas/book.schema.js";
 
 
 const toBookResponse = (b: any) => {
@@ -50,10 +51,11 @@ export interface GetBooksQuery {
   limit?: unknown;
   search?: unknown;
   facultyId?: unknown;
+  bookType?: unknown;
 }
 
 export const getAllBooks = async (query: GetBooksQuery = {}) => {
-  const { page, limit, search, facultyId } = query;
+  const { page, limit, search, facultyId, bookType } = query;
 
   if (page !== undefined) {
     const pageNum = Number(page);
@@ -67,6 +69,10 @@ export const getAllBooks = async (query: GetBooksQuery = {}) => {
     if (!Number.isInteger(limitNum) || limitNum <= 0) {
       throw new AppError("Tham số giới hạn không hợp lệ", 400);
     }
+  }
+
+  if (bookType !== undefined && bookType !== "TEXTBOOK" && bookType !== "REFERENCE") {
+    throw new AppError("Loại sách không hợp lệ", 400);
   }
 
   const p = Number(page) || 1;
@@ -91,6 +97,11 @@ export const getAllBooks = async (query: GetBooksQuery = {}) => {
 
   if (facultyId && typeof facultyId === "string" && facultyId.trim() !== "") {
     conditions.push({ facultyId: facultyId.trim() });
+  }
+
+
+  if (bookType) {
+    conditions.push({ bookType });
   }
 
   const filter = conditions.length > 0 ? { $and: conditions } : {};
@@ -143,5 +154,23 @@ export const deleteBook = async (id: string) => {
 
   const book = await BookModel.findByIdAndDelete(id);
   if (!book) throw new AppError("Sách không tồn tại", 404);
+  return toBookResponse(book);
+};
+
+export const adjustBookInventory = async (id: string, input: InventoryAdjustmentInput, accountId: string) => {
+  if (!/^[a-fA-F0-9]{24}$/.test(id)) throw new AppError("Sách không tồn tại", 404);
+  const minimum = Math.max(0, -input.delta);
+  const book = await BookModel.findOneAndUpdate({
+    _id: id,
+    totalCopies: { $gte: minimum },
+    availableCopies: { $gte: minimum },
+  }, {
+    $inc: { totalCopies: input.delta, availableCopies: input.delta },
+    $push: { inventoryAdjustments: { delta: input.delta, reason: input.reason, accountId, createdAt: new Date() } },
+  }, { new: true, runValidators: true });
+  if (!book) {
+    if (!(await BookModel.exists({ _id: id }))) throw new AppError("Sách không tồn tại", 404);
+    throw new AppError("Số sách khả dụng không đủ để giảm kho", 409);
+  }
   return toBookResponse(book);
 };

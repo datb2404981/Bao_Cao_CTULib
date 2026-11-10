@@ -15,8 +15,9 @@ export const request = async <T>(path: string, method: 'GET' | 'POST' | 'PATCH' 
   const result = await response.json().catch(() => null)
   if (!response.ok || result?.status !== 'success') {
     const fields: Record<string, string> = {}
-    if (Array.isArray(result?.data)) {
-      for (const item of result.data) {
+    const issues: unknown = result?.errors ?? result?.data
+    if (Array.isArray(issues)) {
+      for (const item of issues) {
         if (typeof item?.field === 'string' && typeof item?.message === 'string') fields[item.field] = item.message
       }
     }

@@ -74,6 +74,25 @@ describe('BookFormModal.vue', () => {
     expect(wrapper.text()).toContain('Tên sách này đã tồn tại')
   })
 
+  it('hiển thị đúng số bản khả dụng khi sửa sách, không nhầm với tổng số bản', async () => {
+    const wrapper = mount(BookFormModal, {
+      props: {
+        isOpen: true,
+        faculties,
+        authors,
+        editMode: true,
+        initialData: {
+          title: 'Sách đã cho mượn',
+          totalCopies: 20,
+          availableCopies: 15,
+        },
+      },
+    })
+    expect((wrapper.get('input[name="totalCopies"]').element as HTMLInputElement).value).toBe('20')
+    expect((wrapper.get('input[name="availableCopies"]').element as HTMLInputElement).value).toBe('15')
+    await wrapper.setProps({ isOpen: false })
+  })
+
   it('validates publicationYear <= 0 and rejects submit with error message', async () => {
     const wrapper = mount(BookFormModal, {
       props: { isOpen: true, faculties, authors, isSubmitting: false, serverError: null, serverFieldErrors: {} },
@@ -89,6 +108,35 @@ describe('BookFormModal.vue', () => {
 
     expect(wrapper.emitted('submit')).toBeFalsy()
     expect(wrapper.text()).toContain('Năm xuất bản phải là số dương')
+  })
+
+  it('từ chối lưu nếu khoa hoặc tác giả đã bị xóa khỏi danh mục khi form đang mở', async () => {
+    const wrapper = mount(BookFormModal, {
+      props: { isOpen: true, faculties, authors, isSubmitting: false, serverError: null, serverFieldErrors: {} },
+    })
+    await wrapper.get('input[name="title"]').setValue('Tài liệu an toàn')
+    await wrapper.get('select[name="facultyId"]').setValue(faculties[0]!._id)
+    await wrapper.get('select[name="authorIds"]').setValue([authors[0]!._id])
+    await wrapper.setProps({ faculties: [], authors: [] })
+    await wrapper.get('form').trigger('submit.prevent')
+
+    expect(wrapper.emitted('submit')).toBeFalsy()
+    expect(wrapper.text()).toContain('Khoa/Viện đã chọn không còn trong danh mục')
+    expect(wrapper.text()).toContain('Một hoặc nhiều tác giả đã chọn không còn trong danh mục')
+  })
+
+  it('chặn đóng form và gửi thêm request khi đang lưu', async () => {
+    const wrapper = mount(BookFormModal, {
+      props: { isOpen: true, faculties, authors, isSubmitting: true, serverError: null, serverFieldErrors: {} },
+    })
+    await wrapper.get('.modal-backdrop').trigger('click')
+    await wrapper.get('dialog').trigger('keydown', { key: 'Escape' })
+    await wrapper.get('form').trigger('submit.prevent')
+
+    expect(wrapper.emitted('close')).toBeFalsy()
+    expect(wrapper.emitted('submit')).toBeFalsy()
+    expect(wrapper.get('dialog').attributes('aria-busy')).toBe('true')
+    expect(wrapper.get('button[aria-label="Đóng hộp thoại"]').attributes('disabled')).toBeDefined()
   })
 })
 

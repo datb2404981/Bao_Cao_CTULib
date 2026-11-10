@@ -145,7 +145,6 @@ watch(
             name="search"
             aria-label="Tìm tên sách hoặc tác giả"
             placeholder="Tìm tên sách, tác giả hoặc từ khóa tài liệu…"
-            :disabled="isLoading"
             @input="onSearchInput"
           />
           <button
@@ -165,7 +164,6 @@ watch(
       <button
         class="btn primary btn-search"
         type="submit"
-        :disabled="isLoading"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="8" />
@@ -209,7 +207,6 @@ watch(
                 v-model="localFacultyId"
                 class="faculty-select custom-select"
                 name="faculty"
-                :disabled="isLoading"
                 @change="onFacultyChange"
               >
                 <option value="">Tất cả khoa</option>
@@ -242,7 +239,6 @@ watch(
                 v-model="localBookType"
                 class="kind-select custom-select"
                 name="kind"
-                :disabled="isLoading"
                 @change="onBookTypeChange"
               >
                 <option value="">Tất cả loại</option>

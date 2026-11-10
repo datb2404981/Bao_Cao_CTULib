@@ -5,18 +5,23 @@ defineProps<{
   books: Book[];
   loading: boolean;
   facultiesMap?: Record<string, string>;
+  currentPage?: number;
+  pageSize?: number;
+  error?: string | null;
 }>();
 
 const emit = defineEmits<{
   (e: 'view', book: Book): void;
   (e: 'edit', book: Book): void;
+  (e: 'inventory', book: Book): void;
 }>();
 </script>
 
 <template>
   <section class="panel table-panel">
-    <div class="table-wrap">
+    <div class="table-wrap" role="region" aria-label="Bảng quản lý sách, có thể cuộn ngang" tabindex="0" :aria-busy="loading">
       <table class="responsive-table">
+        <caption class="sr-only">Danh sách sách và số bản trong kho</caption>
         <thead>
           <tr>
             <th class="col-stt">STT</th>
@@ -24,26 +29,28 @@ const emit = defineEmits<{
             <th>Khoa/Viện</th>
             <th>Tổng</th>
             <th>Khả dụng</th>
-            <th>Giữ chỗ</th>
-            <th>Đang mượn</th>
+            <th>Chưa khả dụng</th>
             <th>Lưu hành</th>
-            <th></th>
+            <th>Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="9" style="text-align:center;padding:32px">
+            <td colspan="8" style="text-align:center;padding:32px">
               <span class="spinner"></span> Đang tải dữ liệu quản lý…
             </td>
           </tr>
+          <tr v-else-if="error">
+            <td colspan="8" style="text-align:center;padding:32px;color:var(--color-danger, #b91c1c)" role="alert">{{ error }}</td>
+          </tr>
           <tr v-else-if="!books || books.length === 0">
-            <td colspan="9" style="text-align:center;padding:32px;color:var(--color-text-secondary, #475569)">
+            <td colspan="8" style="text-align:center;padding:32px;color:var(--color-text-secondary, #475569)">
               Không có dữ liệu sách trong hệ thống.
             </td>
           </tr>
           <tr v-else v-for="(book, index) in books" :key="book.bookId" :data-book-id="book.bookId">
             <td data-label="STT" class="col-stt num">
-              {{ index + 1 }}
+              {{ ((currentPage ?? 1) - 1) * (pageSize ?? 10) + index + 1 }}
             </td>
             <td data-label="Tên sách">
               <span class="title">{{ book.title }}</span>
@@ -64,10 +71,7 @@ const emit = defineEmits<{
             <td data-label="Khả dụng" class="num">
               <strong>{{ book.availableCopies }}</strong>
             </td>
-            <td data-label="Giữ chỗ" class="num">
-              0
-            </td>
-            <td data-label="Đang mượn" class="num">
+            <td data-label="Chưa khả dụng" class="num">
               {{ Math.max(0, book.totalCopies - book.availableCopies) }}
             </td>
             <td data-label="Lưu hành">
@@ -84,6 +88,8 @@ const emit = defineEmits<{
               >
                 Xem sách
               </button>
+              <button class="row-link btn quiet small" type="button" :aria-label="`Sửa sách ${book.title}`" @click="emit('edit', book)">Sửa</button>
+              <button class="row-link btn quiet small" type="button" :aria-label="`Điều chỉnh tồn kho ${book.title}`" @click="emit('inventory', book)">Điều chỉnh kho</button>
             </td>
           </tr>
         </tbody>

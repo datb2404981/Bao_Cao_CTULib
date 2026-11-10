@@ -5,13 +5,14 @@ import {
   getAllBooksController,
   getBookByIdController,
   updateBookController,
+  adjustBookInventoryController,
 } from "../controllers/book.controller.js";
 import {
   authenticate,
   requireManageBooks,
 } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
-import { bookSchema } from "../schemas/book.schema.js";
+import { bookSchema, inventoryAdjustmentSchema } from "../schemas/book.schema.js";
 
 const bookRouter = Router();
 
@@ -24,6 +25,7 @@ bookRouter.post(
   createBookController,
 );
 bookRouter.get("/:bookId", authenticate, getBookByIdController);
+bookRouter.patch("/:bookId/inventory", authenticate, requireManageBooks, validate(inventoryAdjustmentSchema), adjustBookInventoryController);
 bookRouter.put("/:bookId", authenticate, requireManageBooks, updateBookController);
 bookRouter.delete("/:bookId", authenticate, requireManageBooks, deleteBookController);
 

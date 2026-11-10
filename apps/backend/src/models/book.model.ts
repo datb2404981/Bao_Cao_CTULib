@@ -21,6 +21,11 @@ const bookSchema = new Schema(
     },
     coverImageURL: { type: String, default: "" },
     isAvailableForCirculation: { type: Boolean, default: true },
+    inventoryAdjustments: {
+      type: [{ delta: Number, reason: String, accountId: { type: Schema.Types.ObjectId, ref: "Account" }, createdAt: { type: Date, default: Date.now } }],
+      select: false,
+      default: [],
+    },
     facultyId: { type: Schema.Types.ObjectId, ref: "Faculty", required: true },
     authorIds: [{
       type: Schema.Types.ObjectId, ref: "Author", required: true

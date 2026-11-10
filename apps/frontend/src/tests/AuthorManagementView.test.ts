@@ -24,6 +24,7 @@ vi.mock('@/services/auth', () => ({
     value: {
       ctuIdentifier: 'CB00001',
       role: 'EMPLOYEE',
+      permissions: ['MANAGE_AUTHORS'],
     },
   },
 }));
@@ -72,6 +73,27 @@ describe('views/AuthorManagementView.vue - Unit Tests', () => {
 
     expect(wrapper.find('dialog').exists()).toBe(true);
     expect(wrapper.find('dialog h1').text()).toBe('Thêm tác giả');
+  });
+
+  it('VIEW-AUT-003a: Hiện lỗi tên trống bằng xác thực Vue và liên kết với trường nhập', async () => {
+    vi.spyOn(authorService, 'getAllAuthors').mockResolvedValueOnce(mockAuthorsList);
+    const createSpy = vi.spyOn(authorService, 'createAuthor').mockResolvedValueOnce(mockAuthorsList[0]!);
+
+    const wrapper = mount(AuthorManagementView);
+    await flushPromises();
+    await wrapper.get('.add-btn').trigger('click');
+
+    const form = wrapper.get('form#author-form');
+    expect(form.attributes('novalidate')).toBeDefined();
+    await form.trigger('submit');
+    await flushPromises();
+
+    const name = wrapper.get('input[name="fullName"]');
+    expect(name.attributes('aria-invalid')).toBe('true');
+    expect(name.attributes('aria-describedby')).toBe('author-fullName-error');
+    expect(wrapper.get('#author-fullName-error').text()).toContain('không được để trống');
+    expect(createSpy).not.toHaveBeenCalled();
+    wrapper.unmount();
   });
 
   it('VIEW-AUT-004: Mở modal chỉnh sửa khi click nút Chỉnh sửa trên dòng bảng', async () => {

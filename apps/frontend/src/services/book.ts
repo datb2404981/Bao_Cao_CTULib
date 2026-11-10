@@ -14,7 +14,7 @@ export { BookApiError };
 const base = (import.meta.env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   requireAuth?: boolean;
 }
@@ -45,6 +45,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     response = await fetch(`${base}${endpoint}`, {
       method,
       headers,
+      credentials: 'include',
       body: body !== undefined && method !== 'GET' ? JSON.stringify(body) : undefined,
       signal: typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(15000) : undefined,
     });
@@ -92,6 +93,9 @@ export async function getAllBooks(params?: BookQueryParams): Promise<PaginatedBo
   if (params?.facultyId !== undefined && params.facultyId.trim()) {
     query.set('facultyId', params.facultyId.trim());
   }
+  if (params?.bookType) {
+    query.set('bookType', params.bookType);
+  }
 
   const queryString = query.toString();
   const endpoint = `/book${queryString ? `?${queryString}` : ''}`;
@@ -112,5 +116,19 @@ export async function createBook(payload: CreateBookPayload): Promise<Book> {
     method: 'POST',
     body: payload,
     requireAuth: true,
+  });
+}
+
+export async function updateBook(bookId: string, payload: Omit<CreateBookPayload, 'totalCopies'>): Promise<Book> {
+  return request<Book>(`/book/${encodeURIComponent(bookId)}`, {
+    method: 'PUT',
+    body: payload,
+    requireAuth: true,
+  });
+}
+
+export async function adjustBookInventory(bookId: string, delta: number, reason: string): Promise<Book> {
+  return request<Book>(`/book/${encodeURIComponent(bookId)}/inventory`, {
+    method: 'PATCH', body: { delta, reason }, requireAuth: true,
   });
 }

@@ -4,6 +4,7 @@ import {
   getAllReaders,
   getReaderById,
   updateReader,
+  setReaderBorrowingBlock,
 } from "../services/reader.service.js";
 
 export const createReaderController: RequestHandler = async (req, res, next) => {
@@ -37,4 +38,10 @@ export const updateReaderController: RequestHandler = async (req, res, next) => 
   } catch (error) {
     next(error);
   }
+};
+export const borrowingBlockController: RequestHandler = async (req, res, next) => {
+  try {
+    const data = await setReaderBorrowingBlock(req.params.id, req.body);
+    res.status(200).json({ status: "success", data });
+  } catch (error) { next(error); }
 };

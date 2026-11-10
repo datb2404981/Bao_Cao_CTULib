@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { currentUser } from '../services/auth';
+import { canAccess } from '../middlewares/access';
 import {
   getAllFaculties,
   createFaculty,
@@ -13,7 +14,7 @@ import FacultyTable from '../components/faculty/FacultyTable.vue';
 import FacultyFormModal from '../components/faculty/FacultyFormModal.vue';
 
 const isAuthorized = computed(() => {
-  return currentUser.value && currentUser.value.role !== 'READER';
+  return canAccess(currentUser.value, 'faculty');
 });
 
 const faculties = ref<Faculty[]>([]);
@@ -46,6 +47,7 @@ const filteredFaculties = computed(() => {
 });
 
 async function loadFaculties() {
+  if (!isAuthorized.value) return;
   loading.value = true;
   error.value = null;
   try {

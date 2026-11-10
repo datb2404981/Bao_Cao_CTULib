@@ -11,6 +11,7 @@
   - **Auth & RBAC**: JWT Bearer token qua header `Authorization` hoặc cookie; dùng auth/role middlewares.
 - **Lệnh thực thi**:
   - Dev: `pnpm --filter @ctulib/backend dev` (chạy qua `tsx watch src/server.ts`)
+  - Test: `pnpm --filter @ctulib/backend test` (`vitest run tests/loan-record.test.ts`)
   - Build: `pnpm --filter @ctulib/backend build` (`tsc`)
   - Typecheck file: `pnpm --filter @ctulib/backend exec tsc --noEmit`
 

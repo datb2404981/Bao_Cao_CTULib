@@ -48,13 +48,14 @@ const formattedPrice = computed(() => {
   >
     <div class="book-card-top book-card-body">
       <!-- Khối Bìa Sách: Hiệu ứng gáy sách học thuật có chiều sâu 3D -->
-      <div
+      <button
+        type="button"
         class="cover"
         :class="{
           'has-image': book.coverImageUrl && !imageError,
           'is-reference': book.bookType !== 'TEXTBOOK',
         }"
-        :aria-label="book.title"
+        :aria-label="`Xem chi tiết sách ${book.title}`"
         @click="emit('select', book.bookId)"
       >
         <img
@@ -92,7 +93,7 @@ const formattedPrice = computed(() => {
           </div>
           <div class="book-edge-shadow"></div>
         </div>
-      </div>
+      </button>
 
       <!-- Khối Thông Tin Sách -->
       <div class="book-info">
@@ -106,12 +107,13 @@ const formattedPrice = computed(() => {
         </div>
 
         <!-- Tựa Đề Sách -->
-        <h3
-          class="book-title"
-          :title="book.title"
-          @click="emit('select', book.bookId)"
-        >
-          {{ book.title }}
+        <h3 class="book-title">
+          <button
+            type="button"
+            class="book-title-action"
+            :title="book.title"
+            @click="emit('select', book.bookId)"
+          >{{ book.title }}</button>
         </h3>
 
         <!-- Tác Giả (giữ nguyên <p class="author"> để khớp 100% test) -->
@@ -217,6 +219,7 @@ const formattedPrice = computed(() => {
    BÌA SÁCH THỰC TẾ CÓ ĐỘ SÂU (REALISTIC ACADEMIC BOOK COVER)
    ========================================================================== */
 .cover {
+  padding: 0;
   width: 92px;
   height: 130px;
   flex: none;
@@ -418,19 +421,34 @@ const formattedPrice = computed(() => {
   font-weight: 750;
   letter-spacing: -0.015em;
   color: #0f172a;
-  cursor: pointer;
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: break-word;
   transition: color 0.15s ease;
 }
 
 .book-title:hover {
   color: #1d4ed8;
 }
+
+.book-title-action {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.book-title-action:hover { color: #1d4ed8; }
+.book-title-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: 2px; }
 
 .author-row {
   display: flex;
@@ -583,5 +601,21 @@ const formattedPrice = computed(() => {
 .btn-view:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .book-card,
+  .book-card-body {
+    min-width: 0;
+  }
+
+  .card-meta-header,
+  .bottom {
+    flex-wrap: wrap;
+  }
+
+  .card-meta-header {
+    justify-content: flex-start;
+  }
 }
 </style>

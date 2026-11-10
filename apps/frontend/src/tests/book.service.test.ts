@@ -88,6 +88,17 @@ describe('services/book.ts - Unit Tests', () => {
       expect(parsedUrl.searchParams.get('facultyId')).toBe('ee584419975de7543b8c2fd2')
     })
 
+    it('SVC-LIST-004B: Gửi loại sách đến API trước khi phân trang', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({
+        status: 'success',
+        data: { items: [], meta: { totalItems: 0, totalPages: 0, currentPage: 1, limit: 12 } },
+      }), { status: 200 }))
+      await getAllBooks({ page: 1, limit: 12, bookType: 'REFERENCE' })
+      const [url] = vi.mocked(fetch).mock.calls[0]!
+      const parsedUrl = new URL(String(url), 'http://localhost')
+      expect(parsedUrl.searchParams.get('bookType')).toBe('REFERENCE')
+    })
+
     it('SVC-LIST-005: Kết quả rỗng', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({
         status: 'success',

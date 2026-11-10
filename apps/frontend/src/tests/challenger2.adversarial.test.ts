@@ -1,13 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref } from 'vue'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, enableAutoUnmount } from '@vue/test-utils'
 import App from '../App.vue'
 import BookCatalogView from '../views/BookCatalogView.vue'
 import BookManagementView from '../views/BookManagementView.vue'
 import BookFormModal from '../components/management/BookFormModal.vue'
 import BookDetailModal from '../components/catalog/BookDetailModal.vue'
+import * as facultyService from '../services/faculty'
+import * as authorService from '../services/author'
 import * as bookService from '../services/book'
 import type { Book, CreateBookPayload } from '../types/book'
+
+enableAutoUnmount(afterEach)
 
 const { mockCurrentUser } = vi.hoisted(() => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -18,8 +22,7 @@ const { mockCurrentUser } = vi.hoisted(() => {
 })
 
 vi.mock('../services/auth', () => {
-  return {
-    AuthError: class AuthError extends Error {
+  class MockAuthError extends Error {
       status: number
       fields: Record<string, string>
       constructor(message: string, status: number, fields: Record<string, string> = {}) {
@@ -27,11 +30,18 @@ vi.mock('../services/auth', () => {
         this.status = status
         this.fields = fields
       }
-    },
+    }
+  return {
+    AuthError: MockAuthError,
     currentUser: mockCurrentUser,
     getAccessToken: vi.fn(async () => {
       if (!mockCurrentUser.value) return null
       return 'mock-token-' + (mockCurrentUser.value.role || 'user')
+    }),
+    refreshAuthorization: vi.fn(async () => {
+      if (!mockCurrentUser.value) {
+        return Promise.reject(new MockAuthError('Chưa đăng nhập', 401))
+      }
     }),
     refreshSession: vi.fn(async () => undefined),
     authenticate: vi.fn(async () => undefined),
@@ -61,6 +71,8 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
     vi.restoreAllMocks()
     window.location.hash = ''
     mockCurrentUser.value = null
+    vi.spyOn(facultyService, 'getAllFaculties').mockResolvedValue(dummyFaculties)
+    vi.spyOn(authorService, 'getAllAuthors').mockResolvedValue(dummyAuthors)
     vi.spyOn(bookService, 'getAllBooks').mockResolvedValue({
       items: [],
       meta: { totalItems: 0, totalPages: 0, currentPage: 1, limit: 12 },
@@ -82,13 +94,13 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       const manageLinks = wrapper.findAll('a').filter(a => a.text().includes('Quản lý'))
       expect(manageLinks.length).toBe(0)
 
-      // Hash sync must redirect unauthenticated access from #/manage back to #/catalog
-      expect(window.location.hash).toBe('#/catalog')
+      // Hash sync must redirect unauthenticated access from #/manage to #/auth
+      expect(window.location.hash).toBe('#/auth')
       expect(wrapper.findComponent(BookManagementView).exists()).toBe(false)
-      expect(wrapper.findComponent(BookCatalogView).exists()).toBe(true)
+      expect(wrapper.findComponent(BookCatalogView).exists()).toBe(false)
     })
 
-    it('blocks READER role from accessing management view and forces redirect to catalog', async () => {
+    it('blocks READER role from accessing management view and shows forbidden screen', async () => {
       mockCurrentUser.value = {
         ctuIdentifier: 'B9900001',
         email: 'b9900001@example.com',
@@ -107,10 +119,10 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       const manageLinks = wrapper.findAll('a').filter(a => a.text().includes('Quản lý'))
       expect(manageLinks.length).toBe(0)
 
-      // Must be redirected to catalog
-      expect(window.location.hash).toBe('#/catalog')
+      // Thiếu quyền phải hiển thị từ chối truy cập
+      expect(window.location.hash).toBe('#/forbidden')
       expect(wrapper.findComponent(BookManagementView).exists()).toBe(false)
-      expect(wrapper.findComponent(BookCatalogView).exists()).toBe(true)
+      expect(wrapper.findComponent(BookCatalogView).exists()).toBe(false)
     })
 
     it('displays 403 warning and suppresses API call if BookManagementView is mounted by unauthorized user', async () => {
@@ -138,11 +150,12 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       expect(getAllSpy).not.toHaveBeenCalled()
     })
 
-    it('allows EMPLOYEE role to view management navigation and load management books', async () => {
+    it('allows EMPLOYEE with MANAGE_BOOKS to view management navigation and load books', async () => {
       mockCurrentUser.value = {
         ctuIdentifier: 'CB99101',
         email: 'cb99101@example.com',
         role: 'EMPLOYEE',
+        permissions: ['MANAGE_BOOKS'],
         isActive: true,
       }
       window.location.hash = '#/manage'
@@ -161,11 +174,12 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       expect(wrapper.findComponent(BookManagementView).exists()).toBe(true)
     })
 
-    it('allows ADMIN role to access management view', async () => {
+    it('allows ADMIN with MANAGE_BOOKS to access management view', async () => {
       mockCurrentUser.value = {
         ctuIdentifier: 'ADMIN01',
         email: 'admin01@example.com',
         role: 'ADMIN',
+        permissions: ['MANAGE_BOOKS'],
         isActive: true,
       }
       window.location.hash = '#/manage'
@@ -238,7 +252,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       // State 1: Loading
       expect(wrapper.find('.loading-skeleton').exists()).toBe(true)
       expect(wrapper.find('.results-line').exists()).toBe(false)
-      expect(wrapper.find('input[type="search"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.find('input[type="search"]').attributes('disabled')).toBeUndefined()
 
       // Transition to State 2: Success
       resolvePromise({

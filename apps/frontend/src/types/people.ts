@@ -7,6 +7,8 @@ export interface Reader {
   readerType?: 'STUDENT' | 'POSTGRADUATE' | 'STAFF'
   facultyId: string
   isBorrowingBlocked: boolean
+  isBorrowingManuallyBlocked?: boolean
+  borrowingBlockReason?: string
 }
 export interface Employee {
   _id: string

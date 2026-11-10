@@ -34,6 +34,7 @@ const form = reactive({
 
 const errors = reactive<Record<string, string>>({});
 const showDeleteConfirm = ref(false);
+const dialogRef = ref<HTMLDialogElement | null>(null);
 
 function resetForm() {
   if (props.facultyToEdit) {
@@ -56,6 +57,22 @@ watch(
   },
   { immediate: true }
 );
+
+watch(() => props.isOpen, async (open) => {
+  if (!open) {
+    dialogRef.value?.close?.();
+    return;
+  }
+  await nextTick();
+  const dialog = dialogRef.value;
+  if (!props.isOpen || !dialog) return;
+  if (typeof dialog.showModal === 'function') {
+    if (!dialog.open) dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+  dialog.querySelector<HTMLElement>('#faculty-dialog-title')?.focus();
+}, { immediate: true });
 
 function validate(): boolean {
   Object.keys(errors).forEach((key) => delete errors[key]);
@@ -108,8 +125,11 @@ function handleBackdropClick(e: MouseEvent) {
   }
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && !props.isSubmitting) {
+function handleDialogClick(event: MouseEvent) {
+  if (event.target !== event.currentTarget || !dialogRef.value) return;
+  const bounds = dialogRef.value.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom) {
     handleClose();
   }
 }
@@ -121,17 +141,17 @@ function handleKeydown(e: KeyboardEvent) {
     class="modal-backdrop"
     role="presentation"
     @click="handleBackdropClick"
-    @keydown="handleKeydown"
   >
     <dialog
+      ref="dialogRef"
       class="dialog narrow"
-      open
       aria-modal="true"
       :aria-labelledby="'faculty-dialog-title'"
-      tabindex="-1"
+      @cancel.prevent="handleClose"
+      @click="handleDialogClick"
     >
       <header class="dialog-header">
-        <h1 id="faculty-dialog-title">{{ titleText }}</h1>
+        <h1 id="faculty-dialog-title" tabindex="-1">{{ titleText }}</h1>
         <button
           class="icon-btn"
           type="button"
@@ -324,6 +344,10 @@ function handleKeydown(e: KeyboardEvent) {
 
 .dialog.narrow {
   max-width: 520px;
+}
+
+.dialog::backdrop {
+  background: var(--backdrop-dialog, rgba(23, 32, 51, 0.45));
 }
 
 .dialog-header {

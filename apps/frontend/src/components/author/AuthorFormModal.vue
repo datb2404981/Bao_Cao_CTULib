@@ -35,6 +35,7 @@ const form = reactive({
 
 const errors = reactive<Record<string, string>>({});
 const showDeleteConfirm = ref(false);
+const dialogRef = ref<HTMLDialogElement | null>(null);
 
 const displayAuthorCode = computed(() => {
   if (props.authorToEdit?._id) {
@@ -66,6 +67,22 @@ watch(
   },
   { immediate: true }
 );
+
+watch(() => props.isOpen, async (open) => {
+  if (!open) {
+    dialogRef.value?.close?.();
+    return;
+  }
+  await nextTick();
+  const dialog = dialogRef.value;
+  if (!props.isOpen || !dialog) return;
+  if (typeof dialog.showModal === 'function') {
+    if (!dialog.open) dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+  dialog.querySelector<HTMLElement>('#author-dialog-title')?.focus();
+}, { immediate: true });
 
 function validate(): boolean {
   Object.keys(errors).forEach((key) => delete errors[key]);
@@ -119,8 +136,11 @@ function handleBackdropClick(e: MouseEvent) {
   }
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && !props.isSubmitting) {
+function handleDialogClick(event: MouseEvent) {
+  if (event.target !== event.currentTarget || !dialogRef.value) return;
+  const bounds = dialogRef.value.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom) {
     handleClose();
   }
 }
@@ -132,17 +152,17 @@ function handleKeydown(e: KeyboardEvent) {
     class="modal-backdrop"
     role="presentation"
     @click="handleBackdropClick"
-    @keydown="handleKeydown"
   >
     <dialog
+      ref="dialogRef"
       class="dialog narrow"
-      open
       aria-modal="true"
       :aria-labelledby="'author-dialog-title'"
-      tabindex="-1"
+      @cancel.prevent="handleClose"
+      @click="handleDialogClick"
     >
       <header class="dialog-header">
-        <h1 id="author-dialog-title">{{ titleText }}</h1>
+        <h1 id="author-dialog-title" tabindex="-1">{{ titleText }}</h1>
         <button
           class="icon-btn"
           type="button"
@@ -188,7 +208,7 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
         </div>
 
-        <form id="author-form" class="stack" @submit.prevent="handleSubmit">
+        <form id="author-form" class="stack" novalidate @submit.prevent="handleSubmit">
           <!-- Mã tác giả (Readonly) -->
           <label class="field">
             <span>Mã tác giả</span>
@@ -212,10 +232,11 @@ function handleKeydown(e: KeyboardEvent) {
               required
               maxlength="50"
               :aria-invalid="!!(errors.fullName || serverFieldErrors?.fullName)"
+              :aria-describedby="errors.fullName || serverFieldErrors?.fullName ? 'author-fullName-error' : undefined"
               :disabled="isSubmitting"
               autofocus
             />
-            <p v-if="errors.fullName || serverFieldErrors?.fullName" class="field-error">
+            <p v-if="errors.fullName || serverFieldErrors?.fullName" id="author-fullName-error" class="field-error">
               {{ errors.fullName || serverFieldErrors?.fullName }}
             </p>
           </label>
@@ -230,9 +251,10 @@ function handleKeydown(e: KeyboardEvent) {
               placeholder="VD: Trường CNTT&TT - ĐH Cần Thơ"
               maxlength="255"
               :aria-invalid="!!(errors.affiliation || serverFieldErrors?.affiliation)"
+              :aria-describedby="errors.affiliation || serverFieldErrors?.affiliation ? 'author-affiliation-error' : undefined"
               :disabled="isSubmitting"
             />
-            <p v-if="errors.affiliation || serverFieldErrors?.affiliation" class="field-error">
+            <p v-if="errors.affiliation || serverFieldErrors?.affiliation" id="author-affiliation-error" class="field-error">
               {{ errors.affiliation || serverFieldErrors?.affiliation }}
             </p>
           </label>
@@ -337,6 +359,10 @@ function handleKeydown(e: KeyboardEvent) {
   padding: 0;
   overflow: hidden;
   margin: auto;
+}
+
+.dialog::backdrop {
+  background: var(--backdrop-dialog, rgba(23, 32, 51, 0.45));
 }
 
 .dialog-header {

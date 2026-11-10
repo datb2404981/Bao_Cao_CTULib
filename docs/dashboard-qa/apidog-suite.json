@@ -1,0 +1,20 @@
+{
+  "name": "CTULib Dashboard - Regression API (isolated seeded QA)",
+  "description": "DASH-001..005: KPI/tồn kho/phạt và kiểm soát quyền; yêu cầu dataset QA riêng được seed bằng scripts/dashboard-apidog-qa.ts.",
+  "priority": 1,
+  "tags": ["dashboard", "api", "regression", "ci"],
+  "items": [
+    {
+      "id": "dashboard-qa-five-cases",
+      "type": "STATIC_TEST_CASE",
+      "name": "Dashboard thống kê và phân quyền",
+      "testCases": [
+        { "id": 63338075 },
+        { "id": 63338077 },
+        { "id": 63338078 },
+        { "id": 63338079 },
+        { "id": 63338080 }
+      ]
+    }
+  ]
+}

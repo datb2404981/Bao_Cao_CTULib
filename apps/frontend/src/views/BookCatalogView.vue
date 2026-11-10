@@ -1,20 +1,31 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getAllBooks } from '@/services/book';
 import type { Book, PaginationMeta } from '../types/book';
 import { FACULTIES, AUTHORS } from '../types/book';
+import { getAllFaculties } from '../services/faculty';
+import { getAllAuthors } from '../services/author';
+import type { Faculty } from '../types/faculty';
+import type { Author } from '../types/author';
 import BookFilters from '../components/catalog/BookFilters.vue';
 import BookGrid from '../components/catalog/BookGrid.vue';
 import BookPagination from '../components/catalog/BookPagination.vue';
 import BookDetailModal from '../components/catalog/BookDetailModal.vue';
+import { reserveBook } from '../services/loan';
+import type { LoanRecord } from '../types/loan';
+import ReservationDialog from '../components/catalog/ReservationDialog.vue';
 
 const emit = defineEmits<{
-  (e: 'navigate', view: 'catalog' | 'management' | 'auth'): void;
+  (e: 'navigate', view: 'catalog' | 'management' | 'auth' | 'my-loans'): void;
 }>();
 
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const dynamicFaculties = ref<Faculty[]>([]);
+const dynamicAuthors = ref<Author[]>([]);
+const catalogError = ref('');
+let catalogRequestId = 0;
 
 const pagination = reactive<PaginationMeta>({
   currentPage: 1,
@@ -29,15 +40,20 @@ const filters = reactive({
   bookType: '',
 });
 
-let lastSearchTimestamp = 0;
+let activeRequestId = 0;
+let pendingRequestKey: string | null = null;
 
 // Modal state
 const selectedBook = ref<Book | null>(null);
 const isDetailModalOpen = ref(false);
+const reservationBusy = ref(false);
+const reservationError = ref('');
+const reservationStep = ref<'idle' | 'confirm' | 'success'>('idle');
+const reservationLoan = ref<LoanRecord | null>(null);
 
 const facultyOptions = computed(() => {
-  return FACULTIES.map((f) => ({
-    _id: f.facultyId,
+  return dynamicFaculties.value.map((f) => ({
+    _id: f._id,
     facultyName: f.facultyName,
   }));
 });
@@ -47,6 +63,7 @@ const facultiesMap = computed(() => {
   for (const f of FACULTIES) {
     map[f.facultyId] = f.facultyName;
   }
+  for (const f of dynamicFaculties.value) map[f._id] = f.facultyName;
   return map;
 });
 
@@ -55,15 +72,28 @@ const authorsMap = computed(() => {
   for (const a of AUTHORS) {
     map[a.authorId] = a.fullName;
   }
+  for (const a of dynamicAuthors.value) map[a._id] = a.fullName;
   return map;
 });
+
+async function loadCatalogs() {
+  const requestId = ++catalogRequestId;
+  catalogError.value = '';
+  const [faculties, authors] = await Promise.allSettled([getAllFaculties(), getAllAuthors()]);
+  if (requestId !== catalogRequestId) return;
+  const facultiesValid = faculties.status === 'fulfilled' && Array.isArray(faculties.value);
+  const authorsValid = authors.status === 'fulfilled' && Array.isArray(authors.value);
+  dynamicFaculties.value = facultiesValid ? faculties.value : [];
+  dynamicAuthors.value = authorsValid ? authors.value : [];
+  if (!facultiesValid || !authorsValid) {
+    catalogError.value = 'Không tải được toàn bộ danh mục khoa/viện và tác giả.';
+  }
+}
 
 watch(
   () => filters.search,
   (newVal, oldVal) => {
     if (newVal !== oldVal) {
-      if (Date.now() - lastSearchTimestamp < 50) return;
-      lastSearchTimestamp = Date.now();
       pagination.currentPage = 1;
       void loadBooks();
     }
@@ -71,47 +101,45 @@ watch(
 );
 
 async function loadBooks() {
+  const params = {
+    page: pagination.currentPage,
+    limit: pagination.limit,
+    search: filters.search.trim() || undefined,
+    facultyId: filters.facultyId || undefined,
+    bookType: filters.bookType === 'TEXTBOOK' || filters.bookType === 'REFERENCE' ? filters.bookType : undefined,
+  } as const;
+  const key = JSON.stringify(params);
+  if (pendingRequestKey === key) return;
+  const requestId = ++activeRequestId;
+  pendingRequestKey = key;
   loading.value = true;
   error.value = null;
   try {
-    const res = await getAllBooks({
-      page: pagination.currentPage,
-      limit: pagination.limit,
-      search: filters.search.trim() || undefined,
-      facultyId: filters.facultyId || undefined,
-    });
-
-    let items: Book[] = res.items || [];
-    if (filters.bookType) {
-      items = items.filter((b: Book) => b.bookType === filters.bookType);
-      books.value = items;
-      pagination.totalItems = items.length;
-      pagination.totalPages = items.length > 0 ? 1 : 0;
-      pagination.currentPage = 1;
-    } else {
-      books.value = items;
-      pagination.totalItems = res.meta?.totalItems ?? items.length;
-      pagination.totalPages = res.meta?.totalPages ?? (items.length ? 1 : 0);
-      pagination.currentPage = res.meta?.currentPage ?? 1;
-    }
+    const res = await getAllBooks(params);
+    if (requestId !== activeRequestId) return;
+    const items = res.items || [];
+    books.value = items;
+    pagination.totalItems = res.meta?.totalItems ?? items.length;
+    pagination.totalPages = res.meta?.totalPages ?? (items.length ? 1 : 0);
+    pagination.currentPage = res.meta?.currentPage ?? 1;
   } catch (err: unknown) {
-    const errObj = err as { message?: string };
-    error.value = errObj?.message || 'Không thể tải danh sách sách.';
+    if (requestId !== activeRequestId) return;
+    error.value = err instanceof Error ? err.message : 'Không thể tải danh sách sách.';
     books.value = [];
   } finally {
-    loading.value = false;
+    if (requestId === activeRequestId) {
+      pendingRequestKey = null;
+      loading.value = false;
+    }
   }
 }
 
 function onSearch() {
-  if (Date.now() - lastSearchTimestamp < 50) return;
-  lastSearchTimestamp = Date.now();
   pagination.currentPage = 1;
   void loadBooks();
 }
 
 function onResetFilters() {
-  lastSearchTimestamp = Date.now();
   filters.search = '';
   filters.facultyId = '';
   filters.bookType = '';
@@ -149,6 +177,9 @@ function onLimitChange(newLimit: number) {
 }
 
 function openDetailModal(book: Book) {
+  reservationError.value = '';
+  reservationStep.value = 'idle';
+  reservationLoan.value = null;
   selectedBook.value = book;
   isDetailModalOpen.value = true;
 }
@@ -163,8 +194,53 @@ function onRequireLogin() {
   emit('navigate', 'auth');
 }
 
+function beginReservation(book: Book) {
+  if (reservationBusy.value || reservationStep.value !== 'idle') return;
+  selectedBook.value = book;
+  isDetailModalOpen.value = false;
+  reservationError.value = '';
+  reservationStep.value = 'confirm';
+}
+
+function closeReservation() {
+  if (reservationBusy.value) return;
+  reservationStep.value = 'idle';
+  selectedBook.value = null;
+  reservationLoan.value = null;
+  reservationError.value = '';
+}
+
+function backToDetail() {
+  if (reservationBusy.value || !selectedBook.value) return;
+  reservationStep.value = 'idle';
+  isDetailModalOpen.value = true;
+  reservationError.value = '';
+}
+
+async function confirmReservation() {
+  const book = selectedBook.value;
+  if (!book || reservationBusy.value || reservationStep.value !== 'confirm') return;
+  reservationBusy.value = true;
+  reservationError.value = '';
+  try {
+    const loan = await reserveBook(book.bookId);
+    reservationLoan.value = loan;
+    reservationStep.value = 'success';
+    void loadBooks();
+  } catch (cause) {
+    reservationError.value = cause instanceof Error ? cause.message : 'Không thể đặt giữ chỗ.';
+  } finally { reservationBusy.value = false; }
+}
+
 onMounted(() => {
   void loadBooks();
+  void loadCatalogs();
+});
+
+onBeforeUnmount(() => {
+  activeRequestId++;
+  catalogRequestId++;
+  pendingRequestKey = null;
 });
 </script>
 
@@ -184,6 +260,10 @@ onMounted(() => {
           </p>
         </div>
       </div>
+    </div>
+
+    <div v-if="catalogError" class="notice warning" role="alert">
+      {{ catalogError }} <button class="btn small" type="button" @click="loadCatalogs">Thử lại</button>
     </div>
 
     <BookFilters
@@ -228,8 +308,22 @@ onMounted(() => {
       :initial-book="selectedBook"
       :faculty-name="selectedBook ? facultiesMap[selectedBook.facultyId] : undefined"
       :author-names="selectedBook?.authorIds ? selectedBook.authorIds.map(id => authorsMap[id] || id).join(', ') : undefined"
+      :reserving="reservationBusy"
+      :reservation-error="reservationError"
       @close="closeDetailModal"
       @require-login="onRequireLogin"
+      @borrow="beginReservation"
+    />
+    <ReservationDialog
+      :step="reservationStep"
+      :book="selectedBook"
+      :loan="reservationLoan"
+      :busy="reservationBusy"
+      :error="reservationError"
+      @close="closeReservation"
+      @back="backToDetail"
+      @confirm="confirmReservation"
+      @my-loans="emit('navigate', 'my-loans')"
     />
   </div>
 </template>

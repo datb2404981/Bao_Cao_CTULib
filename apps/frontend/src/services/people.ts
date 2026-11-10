@@ -4,6 +4,7 @@ import type { Reader, ReaderInput, Employee, EmployeeInput, Permission, Permissi
 export const getReaders = async () => request<Reader[]>('/reader')
 export const createReader = async (input: ReaderInput & { accountId: string }) => request<Reader>('/reader', 'POST', input)
 export const updateReader = async (id: string, input: ReaderInput) => request<Reader>(`/reader/${encodeURIComponent(id)}`, 'PATCH', input)
+export const setBorrowingBlock = async (id: string, input: { blocked: boolean; reason: string }) => request<Reader>(`/reader/${encodeURIComponent(id)}/borrowing-block`, 'PATCH', input)
 export const getEmployees = async () => request<Employee[]>('/employee')
 export const createEmployee = async (input: EmployeeInput & { accountId: string }) => request<Employee>('/employee', 'POST', input)
 export const updateEmployee = async (id: string, input: EmployeeInput) => request<Employee>(`/employee/${encodeURIComponent(id)}`, 'PATCH', input)

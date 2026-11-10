@@ -23,6 +23,7 @@ vi.mock('@/services/auth', () => ({
     value: {
       ctuIdentifier: 'CB00001',
       role: 'EMPLOYEE',
+      permissions: ['MANAGE_FACULTIES'],
     },
   },
 }));

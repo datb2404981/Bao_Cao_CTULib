@@ -1,0 +1,39 @@
+{
+  "source": "Apidog project 1405851, suite 7413, assertion nguyên bản, fixture QA từng case",
+  "generatedAt": "2026-11-09T19:10:59.541Z",
+  "total": 7,
+  "passed": 7,
+  "failed": 0,
+  "blocked": 0,
+  "cases": [
+    {
+      "id": "LOAN-DETAIL-002",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-010",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-011",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-001",
+      "state": "PASS"
+    },
+    {
+      "id": "HANDOVER-001",
+      "state": "PASS"
+    },
+    {
+      "id": "HANDOVER-005",
+      "state": "PASS"
+    },
+    {
+      "id": "RETURN-030",
+      "state": "PASS"
+    }
+  ],
+  "note": "Chỉ xác minh HTTP assertions; DB/race cần integration tests độc lập."
+}

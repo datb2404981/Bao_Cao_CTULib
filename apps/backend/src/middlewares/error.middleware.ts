@@ -8,6 +8,10 @@ export const notFound: RequestHandler = (req, res, next) => {
 }
 
 export const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
+  if (res.headersSent) {
+    return next(error);
+  }
+
   if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
     res.status(409).json({
       status: "error",

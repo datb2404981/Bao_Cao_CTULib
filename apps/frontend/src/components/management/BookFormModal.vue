@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, nextTick, computed } from 'vue';
+import { reactive, watch, nextTick, computed, ref } from 'vue';
 import type { CreateBookPayload } from '../../types/book';
 
 interface FacultyItem {
@@ -20,7 +20,8 @@ const props = withDefaults(
     isOpen: boolean;
     faculties: FacultyItem[];
     authors: AuthorItem[];
-    initialData?: Partial<CreateBookPayload>;
+    initialData?: Partial<CreateBookPayload> & { availableCopies?: number };
+    editMode?: boolean;
     isSubmitting?: boolean;
     submitting?: boolean;
     serverError?: string | null;
@@ -28,6 +29,7 @@ const props = withDefaults(
   }>(),
   {
     isSubmitting: false,
+    editMode: false,
     submitting: false,
     serverError: null,
     serverFieldErrors: () => ({}),
@@ -40,6 +42,7 @@ const emit = defineEmits<{
 }>();
 
 const isPending = computed(() => props.isSubmitting || props.submitting);
+const dialogRef = ref<HTMLDialogElement | null>(null);
 
 const form = reactive({
   title: '',
@@ -84,8 +87,21 @@ function resetForm() {
 
 watch(
   () => props.isOpen,
-  (open) => {
-    if (open) resetForm();
+  async (open) => {
+    if (!open) {
+      dialogRef.value?.close?.();
+      return;
+    }
+    resetForm();
+    await nextTick();
+    const dialog = dialogRef.value;
+    if (!props.isOpen || !dialog) return;
+    if (typeof dialog.showModal === 'function') {
+      if (!dialog.open) dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+    dialog.querySelector<HTMLElement>('#form-dialog-title')?.focus();
   },
   { immediate: true }
 );
@@ -99,12 +115,16 @@ function validate(): boolean {
 
   if (!form.facultyId) {
     errors.facultyId = 'Vui lòng chọn Khoa/Viện';
+  } else if (!props.faculties.some((faculty) => getFacultyId(faculty) === form.facultyId)) {
+    errors.facultyId = 'Khoa/Viện đã chọn không còn trong danh mục';
   }
 
   if (!form.authorIds || form.authorIds.length === 0) {
     errors.authorIds = 'Sách phải có ít nhất một tác giả';
   } else if (new Set(form.authorIds).size !== form.authorIds.length) {
     errors.authorIds = 'Danh sách tác giả không được trùng lặp';
+  } else if (form.authorIds.some((id) => !props.authors.some((author) => getAuthorId(author) === id))) {
+    errors.authorIds = 'Một hoặc nhiều tác giả đã chọn không còn trong danh mục';
   }
 
   const copies = Number(form.totalCopies);
@@ -152,6 +172,7 @@ function validate(): boolean {
 }
 
 async function handleSubmit() {
+  if (isPending.value) return;
   if (!validate()) {
     await nextTick();
     const firstInvalid = document.querySelector<HTMLElement>('[aria-invalid="true"]');
@@ -179,25 +200,42 @@ async function handleSubmit() {
 
   emit('submit', payload);
 }
+
+function requestClose() {
+  if (!isPending.value) emit('close');
+}
+
+function handleDialogClick(event: MouseEvent) {
+  if (event.target !== event.currentTarget || !dialogRef.value) return;
+  const bounds = dialogRef.value.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom) {
+    requestClose();
+  }
+}
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-backdrop" @click.self="emit('close')">
+  <div v-if="isOpen" class="modal-backdrop" @click.self="requestClose">
     <dialog
-      open
+      ref="dialogRef"
       class="dialog wide"
       aria-labelledby="form-dialog-title"
-      @keydown.esc="emit('close')"
+      aria-modal="true"
+      :aria-busy="isPending"
+      @cancel.prevent="requestClose"
+      @click="handleDialogClick"
     >
       <header class="dialog-header">
         <div>
-          <h1 id="form-dialog-title" tabindex="-1">Thêm sách mới</h1>
+          <h1 id="form-dialog-title" tabindex="-1">{{ editMode ? 'Chỉnh sửa thông tin sách' : 'Thêm sách mới' }}</h1>
         </div>
         <button
           class="icon-btn"
           type="button"
           aria-label="Đóng hộp thoại"
-          @click="emit('close')"
+          :disabled="isPending"
+          @click="requestClose"
         >
           <svg
             width="19"
@@ -223,7 +261,7 @@ async function handleSubmit() {
         <form id="book-form" novalidate @submit.prevent="handleSubmit">
           <label class="field" style="margin-bottom: 16px">
             <span>Mã sách</span>
-            <input type="text" name="code" value="Tự cấp khi lưu" readonly />
+            <input type="text" name="code" :value="editMode ? 'Đã cấp khi tạo sách' : 'Tự cấp khi lưu'" readonly />
           </label>
 
           <div class="form-section">
@@ -347,7 +385,7 @@ async function handleSubmit() {
               </label>
 
               <label class="field">
-                <span>Tổng số bản ban đầu <b class="required">*</b></span>
+                <span>{{ editMode ? 'Tổng số bản hiện tại' : 'Tổng số bản ban đầu' }} <b class="required">*</b></span>
                 <input
                   v-model="form.totalCopies"
                   type="number"
@@ -355,6 +393,7 @@ async function handleSubmit() {
                   min="0"
                   step="1"
                   required
+                  :readonly="editMode"
                   :aria-invalid="!!(errors.totalCopies || serverFieldErrors?.totalCopies)"
                 />
                 <p v-if="errors.totalCopies || serverFieldErrors?.totalCopies" class="field-error">
@@ -363,15 +402,15 @@ async function handleSubmit() {
               </label>
 
               <label class="field">
-                <span>Khả dụng ban đầu</span>
+                <span>{{ editMode ? 'Số bản khả dụng do hệ thống quản lý' : 'Khả dụng ban đầu' }}</span>
                 <input
                   type="text"
                   name="availableCopies"
-                  :value="form.totalCopies"
+                  :value="editMode ? (props.initialData?.availableCopies ?? 'Chưa có dữ liệu') : form.totalCopies"
                   readonly
                   disabled
                 />
-                <span class="hint">Tự động bằng tổng số bản (server quản lý).</span>
+                <span class="hint">{{ editMode ? 'Điều chỉnh kho theo nghiệp vụ riêng để giữ đúng số bản đang mượn.' : 'Tự động bằng tổng số bản (server quản lý).' }}</span>
               </label>
 
               <div class="full">
@@ -400,7 +439,7 @@ async function handleSubmit() {
           </div>
 
           <div class="form-actions" style="margin-top: 24px">
-            <button class="btn" type="button" :disabled="isPending" @click="emit('close')">
+            <button class="btn" type="button" :disabled="isPending" @click="requestClose">
               Hủy bỏ
             </button>
             <button class="btn primary" type="submit" :disabled="isPending">
@@ -431,6 +470,10 @@ async function handleSubmit() {
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-dialog, 0 12px 44px #17203318);
+}
+
+.dialog::backdrop {
+  background: var(--backdrop-dialog, rgba(23, 32, 51, 0.45));
 }
 
 .dialog-header h1 {

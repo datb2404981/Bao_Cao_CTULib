@@ -57,7 +57,7 @@ describe('BookFilters.vue', () => {
     expect(wrapper.emitted('update:search')?.[0]).toEqual([''])
   })
 
-  it('disables controls while isLoading is true', () => {
+  it('keeps filters editable while an older request is loading', async () => {
     const wrapper = mount(BookFilters, {
       props: {
         search: '',
@@ -67,9 +67,11 @@ describe('BookFilters.vue', () => {
         isLoading: true,
       },
     })
-    expect(wrapper.find('button.btn-search').attributes('disabled')).toBeDefined()
-    expect(wrapper.find('button.btn-reset').attributes('disabled')).toBeDefined()
-    expect(wrapper.find('input[type="search"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('button.btn-search').attributes('disabled')).toBeUndefined()
+    expect(wrapper.find('input[type="search"]').attributes('disabled')).toBeUndefined()
+    await wrapper.find('input[type="search"]').setValue('Một truy vấn mới')
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(wrapper.emitted('update:search')?.at(-1)).toEqual(['Một truy vấn mới'])
   })
 
   it('emits update:facultyId on faculty change', async () => {

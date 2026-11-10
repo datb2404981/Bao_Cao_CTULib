@@ -5,7 +5,7 @@ export interface AuthUser {
   ctuIdentifier: string
   email?: string
   role: string
-  permissions?: string[]
+  permissions?: readonly string[]
 }
 interface SessionData { token: string; expiresIn: number; user?: AuthUser }
 export class AuthError extends Error {
@@ -21,6 +21,8 @@ const user = ref<AuthUser | null>(null)
 let accessToken = ''
 let expiresAt = 0
 let timer: ReturnType<typeof setTimeout> | undefined
+let sessionVersion = 0
+let authorizationVersion = 0
 let pendingRefresh: Promise<void> | undefined
 const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -46,6 +48,8 @@ async function request(endpoint: string, body: object = {}): Promise<SessionData
   return result.data
 }
 function clearSession() {
+  sessionVersion++
+  authorizationVersion++
   clearTimeout(timer)
   accessToken = ''
   expiresAt = 0
@@ -53,14 +57,18 @@ function clearSession() {
 }
 export async function refreshAuthorization(): Promise<void> {
   if (!accessToken || Date.now() >= expiresAt) { await refreshSession(); return }
+  const version = sessionVersion
+  const check = ++authorizationVersion
+  const token = accessToken
   let response: Response
   try {
     response = await fetch(`${base}/api/v1/auth/me`, {
-      credentials: 'include', headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: 'include', headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(15000),
     })
   } catch { throw new AuthError('Không thể kiểm tra quyền truy cập. Vui lòng thử lại.', 0) }
   const result = await response.json().catch(() => null)
+  if (version !== sessionVersion || check !== authorizationVersion) return
   if (!response.ok || result?.status !== 'success') {
     user.value = null
     if ([401, 403].includes(response.status)) clearSession()
@@ -76,10 +84,11 @@ export async function refreshAuthorization(): Promise<void> {
   user.value = data as AuthUser
 }
 async function acceptSession(data: SessionData) {
+  sessionVersion++
   accessToken = data.token
   expiresAt = Date.now() + data.expiresIn * 1000
-  user.value = null
-  await refreshAuthorization()
+  try { await refreshAuthorization() }
+  catch (cause) { user.value = null; throw cause }
   clearTimeout(timer)
   timer = setTimeout(() => { void refreshSession().catch(() => {}) }, Math.max(1000, data.expiresIn * 1000 - 60000))
 }

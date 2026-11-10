@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import readerModel from "../models/reader.model.js";
 import facultyModel from "../models/faculty.model.js";
 import { AccountModel } from "../models/user.model.js";
-import type { CreateReaderInput, UpdateReaderInput } from "../schemas/reader.schema.js";
+import type { CreateReaderInput, UpdateReaderInput, BorrowingBlockInput } from "../schemas/reader.schema.js";
 import { AppError } from "../utils/app-error.js";
 
 const validateId = (id: string) => {
@@ -42,6 +42,14 @@ export const updateReader = async (id: string, data: UpdateReaderInput) => {
   const reader = await readerModel
     .findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true })
     .lean();
+  if (!reader) throw new AppError("Độc giả không tồn tại", 404);
+  return reader;
+};
+export const setReaderBorrowingBlock = async (id: string, input: BorrowingBlockInput) => {
+  validateId(id);
+  const reader = await readerModel.findByIdAndUpdate(id, {
+    $set: { isBorrowingManuallyBlocked: input.blocked, borrowingBlockReason: input.blocked ? input.reason : "" },
+  }, { new: true, runValidators: true }).lean();
   if (!reader) throw new AppError("Độc giả không tồn tại", 404);
   return reader;
 };

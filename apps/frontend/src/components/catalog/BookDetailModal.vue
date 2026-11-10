@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import { currentUser } from '../../services/auth';
 import { getBookById } from '../../services/book';
 import type { Book } from '../../types/book';
@@ -10,6 +10,8 @@ const props = defineProps<{
   initialBook?: Book | null;
   facultyName?: string;
   authorNames?: string;
+  reserving?: boolean;
+  reservationError?: string;
 }>();
 
 const emit = defineEmits<{
@@ -22,12 +24,14 @@ const activeBook = ref<Book | null>(props.initialBook || null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const imageError = ref(false);
+let detailRequestId = 0;
 
 function handleImageError() {
   imageError.value = true;
 }
 
 const isLoggedIn = computed(() => !!currentUser.value);
+const isReader = computed(() => currentUser.value?.role === 'READER');
 
 const formattedPrice = computed(() => {
   if (
@@ -46,20 +50,25 @@ const isAvailable = computed(() => {
 });
 
 async function loadDetail(id: string) {
+  const requestId = ++detailRequestId;
   loading.value = true;
   error.value = null;
   try {
     const fetched = await getBookById(id);
+    if (requestId !== detailRequestId) return;
     activeBook.value = fetched;
   } catch (err: unknown) {
-    const errorObj = err as { status?: number; message?: string };
-    if (errorObj?.status === 401 && props.initialBook) {
+    if (requestId !== detailRequestId) return;
+    const errorObj = err !== null && typeof err === 'object' ? err : null;
+    if (errorObj && 'status' in errorObj && errorObj.status === 401 && props.initialBook) {
       activeBook.value = props.initialBook;
     } else {
-      error.value = errorObj?.message || 'Không thể tải chi tiết sách.';
+      error.value = errorObj && 'message' in errorObj && typeof errorObj.message === 'string'
+        ? errorObj.message
+        : 'Không thể tải chi tiết sách.';
     }
   } finally {
-    loading.value = false;
+    if (requestId === detailRequestId) loading.value = false;
   }
 }
 
@@ -70,12 +79,22 @@ watch(
   ([newId, isOpen]) => {
     imageError.value = false;
     if (newId && isOpen) {
-      if (props.initialBook) {
-        activeBook.value = props.initialBook;
-      }
-      void loadDetail(newId);
+      detailRequestId++;
+      activeBook.value = props.initialBook || null;
+      error.value = null;
+      loading.value = false;
+      // Khách xem dữ liệu đã có ở trang danh mục; endpoint chi tiết yêu cầu đăng nhập.
+      if (isLoggedIn.value || !props.initialBook) void loadDetail(newId);
+      void nextTick(() => {
+        if (!props.isOpen || !modalRef.value) return;
+        if (typeof modalRef.value.showModal === 'function' && !modalRef.value.open) {
+          modalRef.value.showModal();
+        }
+        modalRef.value.querySelector<HTMLElement>('#dialog-title')?.focus();
+      });
     } else if (!isOpen) {
-      if (modalRef.value?.open) {
+      detailRequestId++;
+      if (modalRef.value?.open && typeof modalRef.value.close === 'function') {
         modalRef.value.close();
       }
       activeBook.value = null;
@@ -84,11 +103,23 @@ watch(
   { immediate: true }
 );
 
+onBeforeUnmount(() => { detailRequestId++; });
+
 function handleClose() {
   emit('close');
 }
 
+function handleDialogClick(event: MouseEvent) {
+  if (event.target !== event.currentTarget || !modalRef.value) return;
+  const rect = modalRef.value.getBoundingClientRect();
+  if (event.clientX < rect.left || event.clientX > rect.right ||
+      event.clientY < rect.top || event.clientY > rect.bottom) {
+    handleClose();
+  }
+}
+
 function handleBorrow() {
+  if (props.reserving || (isLoggedIn.value && !isReader.value)) return;
   if (!isLoggedIn.value) {
     emit('require-login');
     return;
@@ -103,20 +134,13 @@ function handleBorrow() {
   <div v-if="isOpen" class="modal-backdrop" @click.self="handleClose">
     <dialog
       ref="modalRef"
-      open
       class="dialog"
       aria-labelledby="dialog-title"
-      @keydown.esc="handleClose"
+      @cancel.prevent="handleClose"
+      @click="handleDialogClick"
     >
-      <!-- Header Hộp Thoại -->
       <header class="dialog-header">
-        <div class="header-titles">
-          <span class="header-eyebrow">
-            <span class="eyebrow-spark"></span>
-            Thông tin ấn phẩm
-          </span>
-          <h1 id="dialog-title" tabindex="-1">Chi tiết sách</h1>
-        </div>
+        <h1 id="dialog-title" tabindex="-1">Chi tiết sách</h1>
         <button
           class="icon-btn"
           type="button"
@@ -139,7 +163,6 @@ function handleBorrow() {
         </button>
       </header>
 
-      <!-- Nội Dung Thân Hộp Thoại -->
       <div class="dialog-body">
         <div v-if="loading && !activeBook" class="loading-state">
           <span class="spinner"></span> Đang tải thông tin chi tiết…
@@ -150,14 +173,10 @@ function handleBorrow() {
         </div>
 
         <template v-else-if="activeBook">
-          <!-- KHỐI TIÊU ĐIỂM (HERO SHOWCASE): Bìa sách 3D + Phân loại + Tựa đề + Tác giả -->
           <div class="summary-block record-hero">
             <div
               class="cover large"
-              :class="{
-                'has-image': activeBook.coverImageUrl && !imageError,
-                'is-reference': activeBook.bookType !== 'TEXTBOOK',
-              }"
+              :class="{ 'has-image': activeBook.coverImageUrl && !imageError }"
               :aria-label="activeBook.title"
             >
               <img
@@ -167,97 +186,59 @@ function handleBorrow() {
                 class="cover-image"
                 @error="handleImageError"
               />
-              <div v-else class="cover-fallback-large" role="img" :aria-label="activeBook.title">
-                <div class="spine-accent-large"></div>
-                <div class="fallback-large-inner">
-                  <div class="large-crest">
-                    <svg
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                    </svg>
-                  </div>
-                  <span class="fallback-brand">CTULIB</span>
-                  <span class="fallback-type-pill">{{ activeBook.bookType === 'TEXTBOOK' ? 'GIÁO TRÌNH' : 'THAM KHẢO' }}</span>
-                </div>
-                <div class="large-edge-shadow"></div>
+              <div v-else class="cover-fallback-large" role="img" :aria-label="`Chưa có ảnh bìa của ${activeBook.title}`">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                <span>Chưa có ảnh bìa</span>
               </div>
             </div>
 
             <div class="record-hero-info">
-              <!-- Cặp huy hiệu trạng thái tinh gọn -->
-              <div class="hero-pills">
-                <span class="badge" :class="activeBook.bookType === 'TEXTBOOK' ? 'blue' : 'orange'">
-                  <span class="badge-dot"></span>
-                  {{ activeBook.bookType === 'TEXTBOOK' ? 'Giáo trình' : 'Sách tham khảo' }}
-                </span>
-                <span class="badge" :class="activeBook.isAvailableForCirculation ? 'green' : 'red'">
-                  <span class="badge-dot"></span>
-                  {{ activeBook.isAvailableForCirculation ? 'Đang lưu hành' : 'Ngừng lưu hành' }}
-                </span>
-              </div>
-
-              <!-- Tựa Đề Sách -->
               <h2>{{ activeBook.title }}</h2>
-
-              <!-- Dòng Tác Giả -->
-              <div class="record-author">
-                <span class="author-chip-icon" aria-hidden="true">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                  </svg>
-                </span>
-                <span class="author-label">Tác giả:</span>
+              <p class="record-author">
+                <span class="author-label">Tác giả</span>
                 <strong>{{ authorNames || 'Chưa rõ tác giả' }}</strong>
-              </div>
+              </p>
+              <p class="circulation-status" :class="{ inactive: !activeBook.isAvailableForCirculation }">
+                <span class="status-indicator" :class="{ empty: !activeBook.isAvailableForCirculation }" aria-hidden="true"></span>
+                {{ activeBook.isAvailableForCirculation ? 'Đang lưu hành' : 'Ngừng lưu hành' }}
+              </p>
             </div>
           </div>
 
-          <!-- BẢNG BIÊN MỤC THƯ VIỆN HIỆN ĐẠI (BIBLIOGRAPHIC LEDGER) -->
-          <div class="bibliographic-card">
-            <dl class="detail-pairs">
-              <!-- Dòng 1: Loại Sách & Khoa/Viện -->
+          <section class="bibliographic-card" aria-label="Thông tin xuất bản và số lượng">
+            <div class="detail-pairs">
               <div class="ledger-row">
-                <div class="ledger-cell">
-                  <dt>LOẠI SÁCH</dt>
+                <dl class="ledger-cell">
+                  <dt>Loại sách</dt>
                   <dd>{{ activeBook.bookType === 'TEXTBOOK' ? 'Giáo trình' : 'Sách tham khảo' }}</dd>
-                </div>
-                <div class="ledger-cell">
-                  <dt>KHOA/VIỆN</dt>
+                </dl>
+                <dl class="ledger-cell">
+                  <dt>Khoa/Viện</dt>
                   <dd>{{ facultyName || 'Đại học Cần Thơ' }}</dd>
-                </div>
+                </dl>
               </div>
 
-              <!-- Dòng 2: Nhà Xuất Bản & Năm Xuất Bản -->
               <div class="ledger-row">
-                <div class="ledger-cell">
-                  <dt>NHÀ XUẤT BẢN</dt>
+                <dl class="ledger-cell">
+                  <dt>Nhà xuất bản</dt>
                   <dd>{{ activeBook.publisher || 'NXB Đại học Cần Thơ' }}</dd>
-                </div>
-                <div class="ledger-cell">
-                  <dt>NĂM XUẤT BẢN</dt>
+                </dl>
+                <dl class="ledger-cell">
+                  <dt>Năm xuất bản</dt>
                   <dd>{{ activeBook.publicationYear || 'Chưa cập nhật' }}</dd>
-                </div>
+                </dl>
               </div>
 
-              <!-- Dòng 3: Giá Bìa (dd.num duy nhất cho test) & Khả Dụng -->
-              <div class="ledger-row highlight-row">
-                <div class="ledger-cell">
-                  <dt>GIÁ BÌA</dt>
+              <div class="ledger-row">
+                <dl class="ledger-cell">
+                  <dt>Giá bìa</dt>
                   <dd class="num price-val">{{ formattedPrice }}</dd>
-                </div>
-                <div class="ledger-cell">
-                  <dt>KHẢ DỤNG</dt>
+                </dl>
+                <dl class="ledger-cell">
+                  <dt>Khả dụng</dt>
                   <dd>
                     <span class="availability-status">
                       <span class="status-indicator" :class="{ empty: !isAvailable }"></span>
@@ -266,42 +247,32 @@ function handleBorrow() {
                       </span>
                     </span>
                   </dd>
-                </div>
+                </dl>
               </div>
-            </dl>
-          </div>
+            </div>
+          </section>
 
-          <!-- THẺ YÊU CẦU ĐĂNG NHẬP -->
           <div v-if="!isLoggedIn" class="notice info auth-prompt-box">
-            <div class="auth-icon-badge" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <div class="auth-prompt-text">
-              <strong>Yêu cầu đăng nhập</strong>
-              <p>Bạn cần đăng nhập tài khoản CTULib để thực hiện chức năng mượn sách.</p>
-            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <p>Bạn cần đăng nhập tài khoản CTULib để thực hiện chức năng mượn sách.</p>
           </div>
         </template>
       </div>
 
-      <!-- Chân Hộp Thoại -->
       <footer class="dialog-footer">
+        <p v-if="reservationError" role="alert" class="notice error" style="flex: 1">{{ reservationError }}</p>
         <button class="btn btn-close-modal" type="button" @click="handleClose">Đóng</button>
         <button
           v-if="activeBook"
           class="btn primary btn-borrow-action"
           type="button"
-          :disabled="!isAvailable"
+          :disabled="!isAvailable || reserving || (isLoggedIn && !isReader)"
           @click="handleBorrow"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-          </svg>
-          <span>{{ isLoggedIn ? 'Đặt mượn' : 'Đăng nhập để mượn' }}</span>
+          <span>{{ reserving ? 'Đang đặt…' : !isLoggedIn ? 'Đăng nhập để mượn' : isReader ? 'Đặt mượn' : 'Chỉ dành cho độc giả' }}</span>
         </button>
       </footer>
     </dialog>
@@ -312,13 +283,16 @@ function handleBorrow() {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: transparent;
   display: grid;
   place-items: center;
   z-index: 50;
   padding: 20px;
+}
+
+.dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
 }
 
 .dialog {
@@ -583,6 +557,7 @@ function handleBorrow() {
 }
 
 .ledger-cell {
+  margin: 0;
   padding: 13px 20px;
   display: flex;
   flex-direction: column;

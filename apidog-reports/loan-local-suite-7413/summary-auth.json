@@ -1,0 +1,119 @@
+{
+  "source": "Apidog project 1405851, suite 7413, assertion nguyên bản, fixture QA từng case",
+  "generatedAt": "2026-11-09T19:04:46.124Z",
+  "total": 27,
+  "passed": 27,
+  "failed": 0,
+  "blocked": 0,
+  "cases": [
+    {
+      "id": "AUTH-010",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-011",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-012",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-013",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-014",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-015",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-016",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-017",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-018",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-019",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-020",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-021",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-022",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-023",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-024",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-025",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-026",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-027",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-028",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-029",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-030",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-031",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-032",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-033",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-034",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-035",
+      "state": "PASS"
+    },
+    {
+      "id": "AUTH-036",
+      "state": "PASS"
+    }
+  ],
+  "note": "Chỉ xác minh HTTP assertions; DB/race cần integration tests độc lập."
+}

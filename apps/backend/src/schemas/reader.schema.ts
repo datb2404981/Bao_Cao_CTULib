@@ -22,3 +22,10 @@ export const updateReaderSchema = z
   .refine((data) => Object.keys(data).length > 0, "Không có dữ liệu cập nhật");
 export type CreateReaderInput = z.infer<typeof createReaderSchema>;
 export type UpdateReaderInput = z.infer<typeof updateReaderSchema>;
+export const borrowingBlockSchema = z.object({
+  blocked: z.boolean(),
+  reason: z.string().trim().max(500).default("")
+}).strict().superRefine((data, ctx) => {
+  if (data.blocked && data.reason.length < 5) ctx.addIssue({ code: 'custom', path: ['reason'], message: 'Lý do khóa phải có ít nhất 5 ký tự' });
+});
+export type BorrowingBlockInput = z.infer<typeof borrowingBlockSchema>;

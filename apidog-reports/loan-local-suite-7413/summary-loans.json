@@ -1,0 +1,205 @@
+{
+  "source": "Apidog project 1405851, suite 7413, assertion nguyên bản, fixture QA từng case",
+  "generatedAt": "2026-11-09T19:04:52.549Z",
+  "total": 45,
+  "passed": 31,
+  "failed": 4,
+  "blocked": 10,
+  "cases": [
+    {
+      "id": "LOAN-LIST-001",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-002",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-003",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-004",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-005",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-006",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-007",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-008",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-009",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-010",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-LIST-011",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "LOAN-LIST-012",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-DETAIL-001",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-DETAIL-002",
+      "state": "FAIL",
+      "detail": "CLI=1, steps={\"total\":1,\"passed\":0,\"failed\":1}, expected 404 to equal 403"
+    },
+    {
+      "id": "LOAN-DETAIL-003",
+      "state": "PASS"
+    },
+    {
+      "id": "LOAN-DETAIL-004",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-001",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-002",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-003",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-004",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "RESERVE-005",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "RESERVE-006",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "RESERVE-007",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-008",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-009",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-010",
+      "state": "FAIL",
+      "detail": "CLI=1, steps={\"total\":1,\"passed\":0,\"failed\":1}, expected 403 to equal 400"
+    },
+    {
+      "id": "RESERVE-011",
+      "state": "FAIL",
+      "detail": "CLI=1, steps={\"total\":1,\"passed\":0,\"failed\":1}, expected 403 to equal 400"
+    },
+    {
+      "id": "RESERVE-012",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-013",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-014",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-015",
+      "state": "PASS"
+    },
+    {
+      "id": "RESERVE-016",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "RESERVE-017",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "RESERVE-018",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "RESERVE-019",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "RESERVE-020",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    },
+    {
+      "id": "CANCEL-001",
+      "state": "FAIL",
+      "detail": "CLI=1, steps={\"total\":1,\"passed\":0,\"failed\":1}, expected undefined to be a string"
+    },
+    {
+      "id": "CANCEL-002",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-003",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-004",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-005",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-006",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-007",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-008",
+      "state": "PASS"
+    },
+    {
+      "id": "CANCEL-009",
+      "state": "BLOCKED",
+      "detail": "Apidog đánh dấu blocked"
+    }
+  ],
+  "note": "Chỉ xác minh HTTP assertions; DB/race cần integration tests độc lập."
+}
