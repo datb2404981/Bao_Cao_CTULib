@@ -63,6 +63,27 @@ describe('chặn màn hình trước khi mount', () => {
     expect(window.location.pathname).toBe('/auth')
     wrapper.unmount()
   })
+  it('mất phiên ở /forbidden thì về đăng nhập và có thể đăng nhập lại', async () => {
+    user.value = null
+    window.history.replaceState(null, '', '/forbidden')
+    vi.mocked(refreshSession).mockRejectedValue(new AuthError('Phiên đăng nhập đã hết hạn', 401))
+    const wrapper = mount(App, { global })
+    await flushPromises()
+    expect(window.location.pathname).toBe('/auth')
+    expect(wrapper.find('#access-denied-title').exists()).toBe(false)
+    expect(wrapper.find('#identifier').exists()).toBe(true)
+    vi.mocked(authenticate).mockImplementationOnce(async () => {
+      user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
+    })
+    await wrapper.get('#identifier').setValue('B2101234')
+    await wrapper.get('#password').setValue('test-password')
+    await wrapper.get('.auth-form-header + form').trigger('submit')
+    await flushPromises()
+    expect(window.location.pathname).toBe('/my-loans')
+    expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('không hiện quyền sách chỉ dựa vào role ADMIN', async () => {
     window.history.replaceState(null, '', '/manage')
     const wrapper = mount(App, { global })

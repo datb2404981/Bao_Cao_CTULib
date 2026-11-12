@@ -10,6 +10,7 @@ const permissions: Partial<Record<AppView, string>> = {
   dashboard: 'MANAGE_LOANS', management: 'MANAGE_BOOKS', faculty: 'MANAGE_FACULTIES', author: 'MANAGE_AUTHORS', loans: 'MANAGE_LOANS', penalties: 'COLLECT_PENALTY',
 }
 export const canAccess = (user: AuthUser | null, view: AppView): boolean => {
+  if (view === 'forbidden') return user !== null
   if (!protectedViews.includes(view)) return true
   if (!user) return false
   if (view === 'my-loans') return user.role === 'READER'
