@@ -2483,7 +2483,7 @@ select[aria-invalid="true"] {
   }
 }
 
-@media(max-width:1350px) {
+@media(max-width:768px) {
   .topbar-left { min-width: 0; }
   .menu-button { display: block; flex: none; }
   .topnav { display: none; }

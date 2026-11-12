@@ -966,7 +966,7 @@ onUnmounted(() => {
 }
 
 .topnav a { white-space: nowrap; }
-@media (max-width: 1599px) {
+@media (max-width: 768px) {
   .topbar { position: sticky; }
   .menu-button { display: block; }
   .topnav { display: none; }

@@ -1,4 +1,5 @@
 import { AuthError, getAccessToken } from './auth'
+import { fetchWithRateLimitRetry } from './fetchWithRateLimitRetry'
 
 const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -6,7 +7,7 @@ export const request = async <T>(path: string, method: 'GET' | 'POST' | 'PATCH' 
   const token = await getAccessToken()
   let response: Response
   try {
-    response = await fetch(`${base}${path}`, {
+    response = await fetchWithRateLimitRetry(`${base}${path}`, {
       method, credentials: 'include', signal: AbortSignal.timeout(15000),
       headers: { Authorization: `Bearer ${token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -21,7 +22,10 @@ export const request = async <T>(path: string, method: 'GET' | 'POST' | 'PATCH' 
         if (typeof item?.field === 'string' && typeof item?.message === 'string') fields[item.field] = item.message
       }
     }
-    throw new AuthError(result?.message || 'Yêu cầu không thành công.', response.status, fields)
+    const message = response.status === 429
+      ? 'Máy chủ đang giới hạn truy cập. Vui lòng thử lại sau ít phút.'
+      : 'Yêu cầu không thành công.'
+    throw new AuthError(result?.message || message, response.status, fields)
   }
   return result.data as T
 }

@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth';
+import { fetchWithRateLimitRetry } from './fetchWithRateLimitRetry';
 import type {
   Book,
   CreateBookPayload,
@@ -42,7 +43,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   let response: Response;
   try {
-    response = await fetch(`${base}${endpoint}`, {
+    response = await fetchWithRateLimitRetry(`${base}${endpoint}`, {
       method,
       headers,
       credentials: 'include',
@@ -68,6 +69,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
     let defaultMsg = 'Yêu cầu không thành công.';
     if (response.status === 401) defaultMsg = 'Chưa đăng nhập hoặc phiên làm việc đã hết hạn.';
+    else if (response.status === 429) defaultMsg = 'Máy chủ đang giới hạn truy cập. Vui lòng thử lại sau ít phút.';
     else if (response.status === 403) defaultMsg = 'Bạn không có đủ quyền thực hiện thao tác này.';
     else if (response.status === 404) defaultMsg = 'Không tìm thấy ấn phẩm yêu cầu.';
     else if (response.status === 400) defaultMsg = 'Dữ liệu gửi lên không hợp lệ.';
