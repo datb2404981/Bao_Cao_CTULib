@@ -121,5 +121,26 @@ describe('views/AuthorManagementView.vue - Unit Tests', () => {
     expect(wrapper.find('.notice.error').exists()).toBe(true);
     expect(wrapper.text()).toContain('Máy chủ không phản hồi');
   });
+
+  it('VIEW-AUT-006: Chặn xóa tác giả còn sách, hiện lỗi và giữ modal mở', async () => {
+    vi.spyOn(authorService, 'getAllAuthors').mockResolvedValueOnce(mockAuthorsList);
+    const deleteSpy = vi.spyOn(authorService, 'deleteAuthor').mockRejectedValueOnce(
+      new authorService.AuthorApiError('Không thể xóa tác giả đang có sách liên kết.', 409)
+    );
+
+    const wrapper = mount(AuthorManagementView);
+    await flushPromises();
+    await wrapper.get('.edit-btn').trigger('click');
+    await wrapper.get('.delete-section summary').trigger('click');
+    await wrapper.get('.delete-section .btn.danger').trigger('click');
+    await flushPromises();
+
+    expect(deleteSpy).toHaveBeenCalledWith(mockAuthorsList[0]!._id);
+    expect(wrapper.get('dialog').exists()).toBe(true);
+    expect(wrapper.get('.dialog-body .notice.error').text()).toContain('Không thể xóa tác giả đang có sách liên kết.');
+    expect(wrapper.text()).toContain('Nguyễn Văn An');
+    expect(authorService.getAllAuthors).toHaveBeenCalledTimes(1);
+    wrapper.unmount();
+  });
 });
 

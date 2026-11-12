@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import FacultyManagementView from '../views/FacultyManagementView.vue';
 import * as facultyService from '../services/faculty';
 import type { Faculty } from '../types/faculty';
+import { FacultyApiError } from '../types/faculty';
 
 const mockFacultiesList: Faculty[] = [
   {
@@ -110,6 +111,25 @@ describe('FacultyManagementView.vue', () => {
       description: undefined,
     });
     expect(wrapper.text()).toContain('Đã thêm khoa "Khoa Mới" mới thành công.');
+  });
+
+  it('hiển thị lỗi 409 và giữ nguyên khoa khi sách hoặc độc giả còn liên kết', async () => {
+    vi.spyOn(facultyService, 'getAllFaculties').mockResolvedValueOnce(mockFacultiesList);
+    const deleteSpy = vi.spyOn(facultyService, 'deleteFaculty').mockRejectedValueOnce(
+      new FacultyApiError('Không thể xóa khoa/viện đang có sách hoặc độc giả liên kết.', 409)
+    );
+    const wrapper = mount(FacultyManagementView);
+    await flushPromises();
+    await wrapper.findAll('button.edit-btn')[0]!.trigger('click');
+    await wrapper.get('.delete-section .btn.danger').trigger('click');
+    await wrapper.get('.delete-actions .btn.danger').trigger('click');
+    await flushPromises();
+
+    expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(mockFacultiesList[0]!._id);
+    expect(wrapper.get('dialog [role="alert"]').text()).toContain('đang có sách hoặc độc giả liên kết');
+    expect(wrapper.find('dialog').exists()).toBe(true);
+    expect(wrapper.text()).toContain(mockFacultiesList[0]!.facultyName);
+    wrapper.unmount();
   });
 });
 

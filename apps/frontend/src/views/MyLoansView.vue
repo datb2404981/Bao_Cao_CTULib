@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import LoanSummary from '../components/loans/LoanSummary.vue'
 import { cancelLoan, getLoanPenalty, getMyLoans } from '../services/loan'
 import { LOAN_STATUSES, formatLoanDate, isLoanOverdue, loanStatusTone } from '../types/loan'
@@ -13,6 +13,7 @@ const processing = ref(false)
 const error = ref('')
 const message = ref('')
 const selected = ref<LoanRecord | null>(null)
+const workspace = ref<HTMLElement | null>(null)
 const penalty = ref<PenaltyRecord | null>(null)
 const penaltyLoading = ref(false)
 const cancelConfirm = ref(false)
@@ -30,7 +31,7 @@ const load = async (afterMutation = false): Promise<void> => {
   loading.value = true
   error.value = ''
   try {
-    const data = await getMyLoans({ page: page.value, limit: 10, ...(status.value ? { status: status.value } : {}) })
+    const data = await getMyLoans({ page: page.value, limit: 5, ...(status.value ? { status: status.value } : {}) })
     if (version !== requestVersion) return
     result.value = data
     if (selected.value) selected.value = data.records.find(row => row._id === selected.value?._id) ?? null
@@ -45,6 +46,7 @@ const load = async (afterMutation = false): Promise<void> => {
 const openDetail = async (loan: LoanRecord): Promise<void> => {
   if (processing.value || loading.value) return
   selected.value = loan
+  void nextTick(() => workspace.value?.querySelector<HTMLElement>('.loan-detail')?.focus())
   cancelConfirm.value = false
   penalty.value = null
   const version = ++penaltyVersion
@@ -102,7 +104,7 @@ onMounted(() => { void load() })
 </script>
 
 <template>
-  <div class="container loan-workspace">
+  <div ref="workspace" class="container loan-workspace">
     <div class="page-head loan-heading">
       <div><span class="loan-eyebrow">CTULib / Dành cho độc giả</span><h1>Phiếu mượn của tôi</h1><p>Theo dõi giữ chỗ, hạn trả và tình trạng từng phiếu mượn.</p></div>
       <button type="button" class="btn" :disabled="loading || processing" @click="load()">Làm mới</button>
@@ -125,27 +127,29 @@ onMounted(() => { void load() })
       <p v-else-if="!result" class="loan-placeholder" role="status">Không thể hiển thị danh sách phiếu mượn. Hãy thử tải lại.</p>
       <p v-else-if="!records.length" class="loan-placeholder">Chưa có phiếu mượn phù hợp với bộ lọc.</p>
       <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu mượn</th><th>Ấn phẩm</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-        <tbody><tr v-for="loan in records" :key="loan._id">
+        <tbody><template v-for="loan in records" :key="loan._id"><tr>
           <td data-label="Phiếu mượn"><strong>#{{ loan._id.slice(-8).toUpperCase() }}</strong></td>
           <td data-label="Mã sách" class="loan-code">{{ loan.bookId }}</td>
           <td data-label="Ngày đặt">{{ formatLoanDate(loan.reservationDate) }}</td>
           <td data-label="Hạn giữ / trả">{{ formatLoanDate(loan.dueDate || loan.reservationExpiryDate) }}</td>
           <td data-label="Trạng thái"><span class="badge" :class="isLoanOverdue(loan) ? 'red' : loanStatusTone(loan.status)">{{ isLoanOverdue(loan) ? 'Quá hạn' : loan.status }}</span></td>
-          <td data-label="Thao tác"><button type="button" class="btn small" :aria-label="`Xem chi tiết phiếu mượn #${loan._id.slice(-8).toUpperCase()}`" :disabled="loading || processing" @click="openDetail(loan)">Chi tiết</button></td>
-        </tr></tbody></table></div>
+          <td data-label="Thao tác"><button type="button" class="btn small" :aria-label="`Xem chi tiết phiếu mượn #${loan._id.slice(-8).toUpperCase()}`" :aria-expanded="selected?._id === loan._id" :aria-controls="selected?._id === loan._id ? `loan-detail-${loan._id}` : undefined" :disabled="loading || processing" @click="openDetail(loan)">Chi tiết</button></td>
+        </tr>
+        <tr v-if="selected?._id === loan._id" class="loan-expanded-row"><td colspan="6">
+          <section v-if="selected" :id="`loan-detail-${loan._id}`" tabindex="-1" class="panel loan-panel loan-detail" aria-label="Chi tiết phiếu đã chọn">
+            <LoanSummary :loan="selected" :penalty="penalty" :penalty-loading="penaltyLoading" />
+            <div class="loan-actions">
+              <button v-if="selected.status === 'Đặt lịch mượn' && !cancelConfirm" type="button" class="btn danger" :disabled="processing" @click="cancelConfirm = true">Hủy đặt giữ chỗ</button>
+              <button type="button" class="btn" :disabled="processing" @click="closeDetail()">Đóng chi tiết</button>
+            </div>
+            <div v-if="cancelConfirm" class="loan-confirm-box">
+              <p>Bạn chắc chắn muốn hủy phiếu này? Thao tác sẽ trả một bản sách về kho khả dụng.</p>
+              <div class="loan-actions"><button type="button" class="btn danger" :disabled="processing" @click="confirmCancel">{{ processing ? 'Đang hủy…' : 'Xác nhận hủy phiếu' }}</button><button type="button" class="btn" :disabled="processing" @click="cancelConfirm = false">Giữ phiếu</button></div>
+            </div>
+          </section>
+        </td></tr></template></tbody></table></div>
       <div v-if="result && totalPages > 1" class="loan-pagination"><span>Trang {{ page }}/{{ totalPages }} · {{ result.pagination.total }} phiếu</span><div><button type="button" class="btn small" :disabled="loading || processing || page <= 1" @click="changePage(-1)">Trước</button><button type="button" class="btn small" :disabled="loading || processing || page >= totalPages" @click="changePage(1)">Sau</button></div></div>
     </section>
 
-    <section v-if="selected" class="panel loan-panel loan-detail" aria-label="Chi tiết phiếu đã chọn">
-      <LoanSummary :loan="selected" :penalty="penalty" :penalty-loading="penaltyLoading" />
-      <div class="loan-actions">
-        <button v-if="selected.status === 'Đặt lịch mượn' && !cancelConfirm" type="button" class="btn danger" :disabled="processing" @click="cancelConfirm = true">Hủy đặt giữ chỗ</button>
-        <button type="button" class="btn" :disabled="processing" @click="closeDetail()">Đóng chi tiết</button>
-      </div>
-      <div v-if="cancelConfirm" class="loan-confirm-box">
-        <p>Bạn chắc chắn muốn hủy phiếu này? Thao tác sẽ trả một bản sách về kho khả dụng.</p>
-        <div class="loan-actions"><button type="button" class="btn danger" :disabled="processing" @click="confirmCancel">{{ processing ? 'Đang hủy…' : 'Xác nhận hủy phiếu' }}</button><button type="button" class="btn" :disabled="processing" @click="cancelConfirm = false">Giữ phiếu</button></div>
-      </div>
-    </section>
   </div>
 </template>

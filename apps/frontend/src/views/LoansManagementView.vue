@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import LoanSummary from '../components/loans/LoanSummary.vue'
 import { cancelLoan, collectLoanPenalty, getAllLoans, getLoanPenalty, handoverLoan, returnLoan } from '../services/loan'
 import { LOAN_STATUSES, formatLoanDate, isLoanOverdue, loanStatusTone } from '../types/loan'
@@ -15,6 +15,7 @@ const filters = reactive({ status: '' as LoanStatus | '', readerId: '', bookId: 
 const page = ref(1)
 const result = ref<LoanPage | null>(null)
 const selected = ref<LoanRecord | null>(null)
+const workspace = ref<HTMLElement | null>(null)
 const penalty = ref<PenaltyRecord | null>(null)
 const penaltyLoading = ref(false)
 const loading = ref(false)
@@ -38,7 +39,7 @@ const load = async (): Promise<void> => {
   error.value = ''
   try {
     const data = await getAllLoans({
-      page: page.value, limit: 10,
+      page: page.value, limit: 5,
       ...(filters.status ? { status: filters.status } : {}),
       ...(filters.readerId ? { readerId: filters.readerId } : {}),
       ...(filters.bookId ? { bookId: filters.bookId } : {}),
@@ -98,6 +99,7 @@ const loadPenalty = async (loanId: string): Promise<void> => {
 const selectLoan = (loan: LoanRecord): void => {
   if (processing.value) return
   selected.value = loan
+  void nextTick(() => workspace.value?.querySelector<HTMLElement>('.loan-detail')?.focus())
   action.value = null
   acknowledged.value = false
   damagePercentage.value = 0
@@ -164,7 +166,7 @@ onMounted(() => { void load() })
 </script>
 
 <template>
-  <div class="container loan-workspace">
+  <div ref="workspace" class="container loan-workspace">
     <div class="page-head loan-heading">
       <div><span class="loan-eyebrow">CTULib / Nghiệp vụ thủ thư</span><h1>Quản lý mượn – trả</h1><p>Duyệt bàn giao, tiếp nhận sách và xác nhận thu phí trên từng phiếu.</p></div>
       <button type="button" class="btn" :disabled="loading || processing" @click="load">Làm mới</button>
@@ -191,44 +193,46 @@ onMounted(() => { void load() })
       <p v-else-if="!result" class="loan-placeholder" role="status">Không thể hiển thị danh sách phiếu mượn. Hãy thử tải lại.</p>
       <p v-else-if="!records.length" class="loan-placeholder">Không tìm thấy phiếu mượn nào với điều kiện lọc.</p>
       <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu</th><th>Độc giả</th><th>Mã sách</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-        <tbody><tr v-for="loan in records" :key="loan._id">
+        <tbody><template v-for="loan in records" :key="loan._id"><tr>
           <td data-label="Phiếu"><strong>#{{ loan._id.slice(-8).toUpperCase() }}</strong></td>
           <td data-label="Độc giả" class="loan-code">{{ loan.readerId }}</td>
           <td data-label="Mã sách" class="loan-code">{{ loan.bookId }}</td>
           <td data-label="Ngày đặt">{{ formatLoanDate(loan.reservationDate) }}</td>
           <td data-label="Hạn giữ / trả">{{ formatLoanDate(loan.dueDate || loan.reservationExpiryDate) }}</td>
           <td data-label="Trạng thái"><span class="badge" :class="isLoanOverdue(loan) ? 'red' : loanStatusTone(loan.status)">{{ isLoanOverdue(loan) ? 'Quá hạn' : loan.status }}</span></td>
-          <td data-label="Thao tác"><button type="button" class="btn small" :aria-label="`Xử lý phiếu mượn #${loan._id.slice(-8).toUpperCase()}`" :disabled="processing" @click="selectLoan(loan)">Xử lý</button></td>
-        </tr></tbody></table></div>
+          <td data-label="Thao tác"><button type="button" class="btn small" :aria-label="`Xử lý phiếu mượn #${loan._id.slice(-8).toUpperCase()}`" :aria-expanded="selected?._id === loan._id" :aria-controls="selected?._id === loan._id ? `loan-detail-${loan._id}` : undefined" :disabled="processing || loading" @click="selectLoan(loan)">Xử lý</button></td>
+        </tr>
+        <tr v-if="selected?._id === loan._id" class="loan-expanded-row"><td colspan="7">
+          <section v-if="selected" :id="`loan-detail-${loan._id}`" tabindex="-1" class="panel loan-panel loan-detail" aria-label="Xử lý phiếu đã chọn">
+            <LoanSummary :loan="selected" :penalty="penalty" :penalty-loading="penaltyLoading" />
+            <div class="loan-actions">
+              <button v-if="selected.status === 'Đặt lịch mượn'" type="button" class="btn primary" :disabled="processing || new Date(selected.reservationExpiryDate).getTime() <= Date.now()" @click="chooseAction('handover')">Xác nhận bàn giao</button>
+              <button v-if="selected.status === 'Đặt lịch mượn'" type="button" class="btn danger" :disabled="processing" @click="chooseAction('cancel')">Hủy giữ chỗ</button>
+              <button v-if="selected.status === 'Đang mượn' || selected.status === 'Quá hạn'" type="button" class="btn primary" :disabled="processing" @click="chooseAction('return')">Tiếp nhận trả</button>
+              <button v-if="selected.status === 'Chờ nộp phạt'" type="button" class="btn primary" :disabled="processing || penaltyLoading || penalty?.paymentStatus !== 'Chờ thanh toán'" @click="chooseAction('payment')">Xác nhận thu tiền</button>
+              <button type="button" class="btn" :disabled="processing" @click="selected = null; action = null">Đóng chi tiết</button>
+            </div>
+
+            <form v-if="action" class="loan-confirm-box" @submit.prevent="performAction">
+              <h3>{{ action === 'handover' ? 'Xác nhận giao sách' : action === 'cancel' ? 'Xác nhận hủy phiếu' : action === 'return' ? 'Tiếp nhận trả sách' : 'Xác nhận đã thu tiền phạt' }}</h3>
+              <p v-if="action === 'handover'">Đã kiểm tra phiếu và sách thực tế tại quầy. Hạn mượn sẽ được tính khi bàn giao.</p>
+              <p v-else-if="action === 'cancel'">Phiếu đặt giữ chỗ sẽ bị hủy và một bản sách được hoàn kho.</p>
+              <template v-else-if="action === 'return'">
+                <div class="loan-form-grid"><label class="loan-field">Tỷ lệ hư hại (%)<input v-model.number="damagePercentage" type="number" min="0" max="100" step="1" required /></label><label class="loan-field">Tình trạng sách khi trả<input v-model="returnCondition" type="text" maxlength="300" placeholder="Bỏ trống để hệ thống tự ghi nhận" /></label></div>
+                <p class="loan-muted">Hệ thống sẽ tính phí quá hạn và hư hại dựa trên ngày nhận trả thực tế và giá bìa sách.</p>
+                <p v-if="!canSubmitReturn" class="loan-danger">Tỷ lệ hư hại phải nằm trong khoảng từ 0 đến 100.</p>
+              </template>
+              <template v-else>
+                <p v-if="penalty">Số tiền phải thu: <strong class="loan-danger">{{ money(penalty.totalPenalty) }}</strong>. Chỉ xác nhận sau khi thực sự nhận đủ tiền.</p>
+                <p v-else class="loan-danger">Chưa có thông tin tiền phạt. Cần tải lại phiếu trước khi thu.</p>
+              </template>
+              <label class="loan-check"><input v-model="acknowledged" type="checkbox" />{{ action === 'payment' ? 'Tôi xác nhận đã nhận đủ số tiền nêu trên.' : 'Tôi đã kiểm tra và xác nhận thao tác này.' }}</label>
+              <div class="loan-actions"><button type="submit" class="btn primary" :disabled="processing || !acknowledged || (action === 'return' && !canSubmitReturn) || (action === 'payment' && penalty?.paymentStatus !== 'Chờ thanh toán')">{{ processing ? 'Đang xử lý…' : 'Xác nhận thực hiện' }}</button><button type="button" class="btn" :disabled="processing" @click="action = null">Quay lại</button></div>
+            </form>
+          </section>
+        </td></tr></template></tbody></table></div>
       <div v-if="result && totalPages > 1" class="loan-pagination"><span>Trang {{ page }}/{{ totalPages }}</span><div><button type="button" class="btn small" :disabled="loading || processing || page <= 1" @click="changePage(-1)">Trước</button><button type="button" class="btn small" :disabled="loading || processing || page >= totalPages" @click="changePage(1)">Sau</button></div></div>
     </section>
 
-    <section v-if="selected" class="panel loan-panel loan-detail" aria-label="Xử lý phiếu đã chọn">
-      <LoanSummary :loan="selected" :penalty="penalty" :penalty-loading="penaltyLoading" />
-      <div class="loan-actions">
-        <button v-if="selected.status === 'Đặt lịch mượn'" type="button" class="btn primary" :disabled="processing || new Date(selected.reservationExpiryDate).getTime() <= Date.now()" @click="chooseAction('handover')">Xác nhận bàn giao</button>
-        <button v-if="selected.status === 'Đặt lịch mượn'" type="button" class="btn danger" :disabled="processing" @click="chooseAction('cancel')">Hủy giữ chỗ</button>
-        <button v-if="selected.status === 'Đang mượn' || selected.status === 'Quá hạn'" type="button" class="btn primary" :disabled="processing" @click="chooseAction('return')">Tiếp nhận trả</button>
-        <button v-if="selected.status === 'Chờ nộp phạt'" type="button" class="btn primary" :disabled="processing || penaltyLoading || penalty?.paymentStatus !== 'Chờ thanh toán'" @click="chooseAction('payment')">Xác nhận thu tiền</button>
-        <button type="button" class="btn" :disabled="processing" @click="selected = null; action = null">Đóng chi tiết</button>
-      </div>
-
-      <form v-if="action" class="loan-confirm-box" @submit.prevent="performAction">
-        <h3>{{ action === 'handover' ? 'Xác nhận giao sách' : action === 'cancel' ? 'Xác nhận hủy phiếu' : action === 'return' ? 'Tiếp nhận trả sách' : 'Xác nhận đã thu tiền phạt' }}</h3>
-        <p v-if="action === 'handover'">Đã kiểm tra phiếu và sách thực tế tại quầy. Hạn mượn sẽ được tính khi bàn giao.</p>
-        <p v-else-if="action === 'cancel'">Phiếu đặt giữ chỗ sẽ bị hủy và một bản sách được hoàn kho.</p>
-        <template v-else-if="action === 'return'">
-          <div class="loan-form-grid"><label class="loan-field">Tỷ lệ hư hại (%)<input v-model.number="damagePercentage" type="number" min="0" max="100" step="1" required /></label><label class="loan-field">Tình trạng sách khi trả<input v-model="returnCondition" type="text" maxlength="300" placeholder="Bỏ trống để hệ thống tự ghi nhận" /></label></div>
-          <p class="loan-muted">Hệ thống sẽ tính phí quá hạn và hư hại dựa trên ngày nhận trả thực tế và giá bìa sách.</p>
-          <p v-if="!canSubmitReturn" class="loan-danger">Tỷ lệ hư hại phải nằm trong khoảng từ 0 đến 100.</p>
-        </template>
-        <template v-else>
-          <p v-if="penalty">Số tiền phải thu: <strong class="loan-danger">{{ money(penalty.totalPenalty) }}</strong>. Chỉ xác nhận sau khi thực sự nhận đủ tiền.</p>
-          <p v-else class="loan-danger">Chưa có thông tin tiền phạt. Cần tải lại phiếu trước khi thu.</p>
-        </template>
-        <label class="loan-check"><input v-model="acknowledged" type="checkbox" />{{ action === 'payment' ? 'Tôi xác nhận đã nhận đủ số tiền nêu trên.' : 'Tôi đã kiểm tra và xác nhận thao tác này.' }}</label>
-        <div class="loan-actions"><button type="submit" class="btn primary" :disabled="processing || !acknowledged || (action === 'return' && !canSubmitReturn) || (action === 'payment' && penalty?.paymentStatus !== 'Chờ thanh toán')">{{ processing ? 'Đang xử lý…' : 'Xác nhận thực hiện' }}</button><button type="button" class="btn" :disabled="processing" @click="action = null">Quay lại</button></div>
-      </form>
-    </section>
   </div>
 </template>

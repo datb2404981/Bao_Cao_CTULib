@@ -14,7 +14,7 @@
     "lint": "eslint src/",
     "test": "vitest run tests/loan-record.test.ts",
     "test:integration": "tsx --test --test-concurrency=1 tests/loan-concurrency.integration.ts tests/loan-api.integration.ts",
-    "test:standalone": "tsx --test tests/access-control.test.ts tests/book-create.test.ts tests/error-messages.test.ts tests/loan-http-route.test.ts tests/profile-modules.test.ts tests/system-config.test.ts",
+    "test:standalone": "tsx --test tests/access-control.test.ts tests/auth-validation.test.ts tests/author-delete.test.ts tests/book-create.test.ts tests/error-messages.test.ts tests/faculty-delete.test.ts tests/loan-http-route.test.ts tests/profile-modules.test.ts tests/system-config.test.ts",
     "test:watch": "vitest tests/loan-record.test.ts",
     "seed:books:production": "tsx src/scripts/seed-books-production.ts"
   },

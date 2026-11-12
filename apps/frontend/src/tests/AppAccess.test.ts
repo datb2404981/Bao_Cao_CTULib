@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import type { Ref } from 'vue'
 import App from '../App.vue'
-import { currentUser, refreshAuthorization, refreshSession, AuthError } from '../services/auth'
+import { currentUser, refreshAuthorization, refreshSession, authenticate, AuthError } from '../services/auth'
 import type { AuthUser } from '../services/auth'
 
 vi.mock('../services/auth', async (original) => {
@@ -115,6 +115,39 @@ describe('chặn màn hình trước khi mount', () => {
     expect(window.location.hash).toBe('#/manage')
     expect(wrapper.find('[data-testid="management"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+})
+
+describe('kiểm tra dữ liệu đăng ký trên giao diện', () => {
+  it('chặn email tên miền toàn số và mật khẩu dấu cách trước khi gọi API', async () => {
+    user.value = null
+    window.history.replaceState(null, '', '#/auth')
+    const wrapper = mount(App, { global })
+    await flushPromises()
+    await wrapper.get('.auth-text-link').trigger('click')
+    await wrapper.get('#identifier').setValue('B2101234')
+    await wrapper.get('#email').setValue('test@123.com')
+    await wrapper.get('#password').setValue('StrongPass123')
+    await wrapper.get('#confirmation').setValue('StrongPass123')
+    await wrapper.get('.auth-form-header + form').trigger('submit')
+    expect(wrapper.get('#email-error').text()).toContain('tên miền phải có chữ cái')
+    expect(authenticate).not.toHaveBeenCalled()
+
+    await wrapper.get('#email').setValue('reader@example.com')
+    await wrapper.get('#password').setValue('            ')
+    await wrapper.get('#confirmation').setValue('            ')
+    await wrapper.get('.auth-form-header + form').trigger('submit')
+    expect(wrapper.get('#password-error').text()).toContain('8 ký tự')
+    expect(authenticate).not.toHaveBeenCalled()
+
+    await wrapper.get('#password').setValue('StrongPass123')
+    await wrapper.get('#confirmation').setValue('StrongPass123')
+    await wrapper.get('.auth-form-header + form').trigger('submit')
+    await flushPromises()
+    expect(authenticate).toHaveBeenCalledExactlyOnceWith('register', {
+      ctuIdentifier: 'B2101234', email: 'reader@example.com', password: 'StrongPass123',
+    })
     wrapper.unmount()
   })
 })

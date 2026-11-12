@@ -30,6 +30,9 @@
 .loan-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; color: var(--muted); font-size: 13px; }
 .loan-pagination > div { display: flex; gap: 8px; }
 .loan-detail { border-color: #bfdbfe; box-shadow: 0 4px 24px rgba(29,78,216,.07); }
+.loan-table .loan-expanded-row > td { padding: 12px; text-align: left; background: #f8fafc; }
+.loan-table .loan-expanded-row .loan-detail { margin: 0; white-space: normal; }
+.loan-table .loan-expanded-row:hover { background: transparent; }
 .loan-summary-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
 .loan-summary-top h3 { font-size: 20px; }
 .loan-detail-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px 20px; margin: 0; }
@@ -74,6 +77,9 @@
   .loan-table td:last-child { border: none; text-align: right; }
   .loan-table td::before { content: attr(data-label); flex: 0 0 38%; text-align: left; font-size: 12px; color: var(--muted); font-weight: 500; }
   .loan-table td > .badge { margin-left: auto; }
+  .loan-table tbody tr.loan-expanded-row { margin-top: -6px; padding: 0; border: none; background: transparent; }
+  .loan-table .loan-expanded-row > td { display: block; padding: 0; border: none; text-align: left; }
+  .loan-table .loan-expanded-row > td::before { content: none; }
   .loan-detail-grid { grid-template-columns: 1fr; gap: 8px; }
   .loan-workspace .loan-actions .btn { min-height: 44px; }
   .loan-confirm-box { padding: 14px; }

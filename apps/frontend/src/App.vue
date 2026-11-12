@@ -183,10 +183,11 @@ async function submit() {
   if (ctuIdentifier.length > 10 && registering.value) fields.value.ctuIdentifier = 'Mã định danh không được vượt quá 10 ký tự.'
   if (!password.value) fields.value.password = 'Vui lòng nhập mật khẩu.'
   else if (registering.value && password.value.length < 8) fields.value.password = 'Mật khẩu phải từ 8 kí tự.'
+  else if (registering.value && password.value.trim().length < 8) fields.value.password = 'Mật khẩu phải có ít nhất 8 ký tự không tính khoảng trắng ở đầu/cuối.'
   if (registering.value && confirmation.value !== password.value) fields.value.confirmation = 'Mật khẩu nhập lại chưa khớp.'
   if (registering.value) {
     if (!email.value.trim()) fields.value.email = 'Vui lòng nhập địa chỉ email.'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) fields.value.email = 'Địa chỉ email không hợp lệ.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) || !/[a-z]/i.test(email.value.trim().split('@')[1]?.split('.')[0] ?? '')) fields.value.email = 'Địa chỉ email không hợp lệ (tên miền phải có chữ cái).'
     if (!confirmation.value) fields.value.confirmation = 'Vui lòng xác nhận mật khẩu.'
   }
   if (Object.keys(fields.value).length) {
@@ -794,8 +795,6 @@ onUnmounted(() => {
 
     <!-- Footer -->
     <footer class="footer">
-      <span>© {{ new Date().getFullYear() }} CTULib · Đại học Cần Thơ</span>
-      <span>Đồng hành cùng hành trình tri thức của bạn.</span>
     </footer>
   </div>
 </template>

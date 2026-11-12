@@ -1,4 +1,5 @@
 import authorModel, { Author as AuthorType } from "../models/author.model.js";
+import bookModel from "../models/book.model.js";
 import { AppError } from "../utils/app-error.js";
 
 export const createAuthor = async (input: AuthorType) => {
@@ -24,6 +25,17 @@ export const updateAuthor = async (id: string, updateData: AuthorType) => {
 };
 
 export const deleteAuthor = async (id: string) => {
+  if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+    throw new AppError("Mã tác giả không hợp lệ", 400);
+  }
+
+  const authorExists = await authorModel.exists({ _id: id });
+  if (!authorExists) throw new AppError("Tác giả không tồn tại", 404);
+
+  if (await bookModel.exists({ authorIds: id })) {
+    throw new AppError("Không thể xóa tác giả đang có sách liên kết.", 409);
+  }
+
   const author = await authorModel.findByIdAndDelete(id);
   if (!author) throw new AppError("Tác giả không tồn tại", 404);
   return author;

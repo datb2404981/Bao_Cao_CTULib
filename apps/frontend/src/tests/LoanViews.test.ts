@@ -22,7 +22,7 @@ const penalty: PenaltyRecord = {
   overdueFee: 10000, damageFee: 15000, totalPenalty: 25000, paymentStatus: 'Chờ thanh toán',
 }
 const pageOf = (records: LoanRecord[]): LoanPage => ({
-  records, pagination: { page: 1, limit: 10, total: records.length, totalPages: 1 },
+  records, pagination: { page: 1, limit: 5, total: records.length, totalPages: 1 },
 })
 
 beforeEach(() => {
@@ -50,7 +50,7 @@ describe('phiếu mượn của độc giả', () => {
   it('hiển thị lịch sử và chỉ hủy khi độc giả xác nhận', async () => {
     const view = mount(MyLoansView)
     await flushPromises()
-    expect(api.getMyLoans).toHaveBeenCalledWith({ page: 1, limit: 10 })
+    expect(api.getMyLoans).toHaveBeenCalledWith({ page: 1, limit: 5 })
     expect(view.text()).toContain('Phiếu mượn của tôi')
     await view.get('.loan-table button').trigger('click')
     await flushPromises()
@@ -104,14 +104,16 @@ describe('phiếu mượn của độc giả', () => {
       .mockResolvedValueOnce(null)
     const view = mount(MyLoansView)
     await flushPromises()
-    await view.findAll('.loan-table button')[0]!.trigger('click')
+    await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[0]!.trigger('click')
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(reserved._id.slice(-8).toUpperCase())
     await view.get('.loan-detail > .loan-actions button:last-child').trigger('click')
-    await view.findAll('.loan-table button')[1]!.trigger('click')
+    await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[1]!.trigger('click')
     await flushPromises()
     finishPenalty(penalty)
     await flushPromises()
     expect(view.get('.loan-detail').text()).toContain(another._id)
     expect(view.get('.loan-detail').text()).not.toContain('25.000')
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(another._id.slice(-8).toUpperCase())
     view.unmount()
   })
 })
@@ -166,13 +168,15 @@ describe('quản lý mượn trả của thủ thư', () => {
       .mockResolvedValueOnce(null)
     const view = mount(LoansManagementView)
     await flushPromises()
-    await view.findAll('.loan-table button')[0]!.trigger('click')
-    await view.findAll('.loan-table button')[1]!.trigger('click')
+    await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[0]!.trigger('click')
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(reserved._id.slice(-8).toUpperCase())
+    await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[1]!.trigger('click')
     await flushPromises()
     finishFirst(penalty)
     await flushPromises()
     expect(view.get('.loan-detail').text()).toContain(another._id)
     expect(view.get('.loan-detail').text()).not.toContain('25.000')
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(another._id.slice(-8).toUpperCase())
     view.unmount()
   })
 

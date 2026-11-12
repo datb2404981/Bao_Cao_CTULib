@@ -1,4 +1,6 @@
 import facultyModel, { Faculty } from "../models/faculty.model.js";
+import bookModel from "../models/book.model.js";
+import readerModel from "../models/reader.model.js";
 import { AppError } from "../utils/app-error.js";
 
 export const createFaculty = async (input: Faculty) => {
@@ -42,6 +44,17 @@ export const updateFaculaty = async (facultyId: string, data: Faculty) => {
 export const deleteFaculaty = async (facultyId: string) => {
   if (!/^[a-fA-F0-9]{24}$/.test(facultyId)) {
     throw new AppError("Mã khoa không hợp lệ", 400);
+  }
+
+  const facultyExists = await facultyModel.exists({ _id: facultyId });
+  if (!facultyExists) throw new AppError("Khoa không tồn tại", 404);
+
+  const [hasBooks, hasReaders] = await Promise.all([
+    bookModel.exists({ facultyId }),
+    readerModel.exists({ facultyId }),
+  ]);
+  if (hasBooks || hasReaders) {
+    throw new AppError("Không thể xóa khoa/viện đang có sách hoặc độc giả liên kết.", 409);
   }
 
   const faculty = await facultyModel.findByIdAndDelete(facultyId);
