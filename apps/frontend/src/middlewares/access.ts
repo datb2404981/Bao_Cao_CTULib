@@ -35,8 +35,8 @@ export const defaultViewForUser = (user: AuthUser | null): AppView => {
 export const brandHomeViewForUser = (user: AuthUser | null): AppView =>
   user && ['EMPLOYEE', 'ADMIN'].includes(user.role) ? defaultViewForUser(user) : 'catalog'
 
-export const viewFromHash = (hash: string): AppView => {
-  const path = hash.toLowerCase().replace(/^#\//, '')
+export const viewFromPath = (pathname: string): AppView => {
+  const path = pathname.toLowerCase().replace(/^\/|\/$/g, '')
   const aliases: Record<string, AppView> = { management: 'management', faculties: 'faculty', authors: 'author', readers: 'reader', employees: 'employee', permissions: 'permission', login: 'auth', register: 'auth' }
   return (Object.hasOwn(aliases, path) ? aliases[path] : undefined) || (Object.entries(viewPaths).find(([, value]) => value === path)?.[0] as AppView | undefined) || 'catalog'
 }

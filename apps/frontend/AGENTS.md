@@ -1,8 +1,8 @@
 # CTULib Frontend - Module Conventions
 
 - **Tech Stack**: Vue 3 (Composition API `<script setup lang="ts">`), Vite 8, TypeScript 5.7, Vitest, Happy-DOM, Scoped CSS.
-- **Routing & Views (Hash-based Routing)**:
-  - Quản lý view qua hash (`#/catalog`, `#/manage`, `#/faculty`, `#/author`, `#/reader`, `#/employee`, `#/permission`, `#/my-loans`, `#/loans`, `#/auth`).
+- **Routing & Views (History API routing)**:
+  - Quản lý view qua hash (`/catalog`, `/manage`, `/faculty`, `/author`, `/reader`, `/employee`, `/permission`, `/my-loans`, `/loans`, `/auth`).
   - Middleware bảo vệ điều hướng: `src/middlewares/access.ts` (`canAccess`, `guardView`).
   - Views chính (`src/views/`):
     - Khách / Độc giả: `BookCatalogView` (tìm kiếm/đặt sách), `MyLoansView` (lịch sử mượn cá nhân).

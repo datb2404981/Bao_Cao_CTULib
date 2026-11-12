@@ -26,12 +26,12 @@ beforeEach(() => {
   user.value = { accountId: '507f1f77bcf86cd799439011', ctuIdentifier: 'ADMIN', role: 'ADMIN', permissions: [] }
   vi.mocked(refreshSession).mockResolvedValue(undefined)
   vi.mocked(refreshAuthorization).mockResolvedValue(undefined)
-  window.history.replaceState(null, '', '#/catalog')
+  window.history.replaceState(null, '', '/catalog')
 })
 afterEach(() => { document.body.innerHTML = '' })
 describe('chặn màn hình trước khi mount', () => {
   it('đợi kiểm tra quyền trước khi tạo màn hình từ liên kết trực tiếp', async () => {
-    window.history.replaceState(null, '', '#/employee')
+    window.history.replaceState(null, '', '/employee')
     let resolve!: () => void
     vi.mocked(refreshAuthorization).mockReturnValue(new Promise<void>((done) => { resolve = done }))
     const wrapper = mount(App, { global })
@@ -44,42 +44,42 @@ describe('chặn màn hình trước khi mount', () => {
     wrapper.unmount()
   })
   it('không tạo màn hình nội bộ khi kiểm tra quyền lỗi mạng', async () => {
-    window.history.replaceState(null, '', '#/employee')
+    window.history.replaceState(null, '', '/employee')
     vi.mocked(refreshAuthorization).mockRejectedValue(new AuthError('Không thể kết nối máy chủ', 0))
     const wrapper = mount(App, { global })
     await flushPromises()
     expect(wrapper.find('[data-testid="people"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Không có quyền truy cập')
-    expect(window.location.hash).toBe('#/forbidden')
+    expect(window.location.pathname).toBe('/forbidden')
     wrapper.unmount()
   })
   it('khách mở liên kết nội bộ được chuyển đến đăng nhập', async () => {
     user.value = null
-    window.history.replaceState(null, '', '#/reader')
+    window.history.replaceState(null, '', '/reader')
     vi.mocked(refreshAuthorization).mockRejectedValue(new AuthError('Chưa đăng nhập', 401))
     const wrapper = mount(App, { global })
     await flushPromises()
     expect(wrapper.find('[data-testid="people"]').exists()).toBe(false)
-    expect(window.location.hash).toBe('#/auth')
+    expect(window.location.pathname).toBe('/auth')
     wrapper.unmount()
   })
   it('không hiện quyền sách chỉ dựa vào role ADMIN', async () => {
-    window.history.replaceState(null, '', '#/manage')
+    window.history.replaceState(null, '', '/manage')
     const wrapper = mount(App, { global })
     await flushPromises()
     expect(wrapper.find('[data-testid="management"]').exists()).toBe(false)
-    expect(wrapper.find('nav a[href="#/manage"]').exists()).toBe(false)
-    expect(wrapper.find('nav a[href="#/reader"]').exists()).toBe(true)
+    expect(wrapper.find('nav a[href="/manage"]').exists()).toBe(false)
+    expect(wrapper.find('nav a[href="/reader"]').exists()).toBe(true)
     wrapper.unmount()
   })
   it('kết quả kiểm tra đến muộn không đưa người dùng về màn hình đã rời', async () => {
-    window.history.replaceState(null, '', '#/employee')
+    window.history.replaceState(null, '', '/employee')
     let resolve!: () => void
     vi.mocked(refreshAuthorization).mockReturnValue(new Promise<void>((done) => { resolve = done }))
     const wrapper = mount(App, { global })
     await flushPromises()
-    window.history.replaceState(null, '', '#/catalog')
-    window.dispatchEvent(new Event('hashchange'))
+    window.history.replaceState(null, '', '/catalog')
+    window.dispatchEvent(new Event('popstate'))
     await flushPromises()
     resolve()
     await flushPromises()
@@ -97,8 +97,8 @@ describe('chặn màn hình trước khi mount', () => {
     expect(wrapper.get('nav.topnav').classes()).toContain('is-open')
     expect(wrapper.find('.profile-dropdown-card').exists()).toBe(true)
 
-    window.history.replaceState(null, '', '#/reader')
-    window.dispatchEvent(new Event('hashchange'))
+    window.history.replaceState(null, '', '/reader')
+    window.dispatchEvent(new Event('popstate'))
     await flushPromises()
 
     expect(wrapper.get('nav.topnav').classes()).not.toContain('is-open')
@@ -106,11 +106,11 @@ describe('chặn màn hình trước khi mount', () => {
     wrapper.unmount()
   })
 
-  it.each(['a.brand', 'nav a[href="#/catalog"]'])(
+  it.each(['a.brand', 'nav a[href="/catalog"]'])(
     'độc giả bấm %s khi đang kiểm tra phiên thì về danh mục và bỏ kết quả đến muộn',
     async (selector) => {
       user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
-      window.history.replaceState(null, '', '#/my-loans')
+      window.history.replaceState(null, '', '/my-loans')
       let resolve!: () => void
       vi.mocked(refreshAuthorization).mockReturnValue(new Promise<void>((done) => { resolve = done }))
       const wrapper = mount(App, { global })
@@ -119,34 +119,56 @@ describe('chặn màn hình trước khi mount', () => {
 
       await wrapper.get(selector).trigger('click')
       await flushPromises()
-      expect(window.location.hash).toBe('#/catalog')
+      expect(window.location.pathname).toBe('/catalog')
       expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(true)
 
       resolve()
       await flushPromises()
-      expect(window.location.hash).toBe('#/catalog')
+      expect(window.location.pathname).toBe('/catalog')
       expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(false)
       wrapper.unmount()
     },
   )
 
-  it.each(['a.brand', 'nav a[href="#/catalog"]'])(
+  it.each(['a.brand', 'nav a[href="/catalog"]'])(
     'độc giả bấm %s từ phiếu mượn thì về danh mục',
     async (selector) => {
       user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
-      window.history.replaceState(null, '', '#/my-loans')
+      window.history.replaceState(null, '', '/my-loans')
       const wrapper = mount(App, { global })
       await flushPromises()
       expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(true)
       await wrapper.get('button.menu-button').trigger('click')
       await wrapper.get(selector).trigger('click')
       await flushPromises()
-      expect(window.location.hash).toBe('#/catalog')
+      expect(window.location.pathname).toBe('/catalog')
       expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(true)
       expect(wrapper.get('nav.topnav').classes()).not.toContain('is-open')
       wrapper.unmount()
     },
   )
+
+  it('chuyển liên kết hash cũ sang đường dẫn trực tiếp', async () => {
+    user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
+    window.history.replaceState(null, '', '/#/my-loans')
+    const wrapper = mount(App, { global })
+    await flushPromises()
+    expect(window.location.pathname).toBe('/my-loans')
+    expect(window.location.hash).toBe('')
+    expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('chuẩn hóa URL forbidden bị chồng hash về một đường dẫn', async () => {
+    user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
+    window.history.replaceState(null, '', '/forbidden#/forbidden')
+    const wrapper = mount(App, { global })
+    await flushPromises()
+    expect(window.location.pathname).toBe('/forbidden')
+    expect(window.location.hash).toBe('')
+    expect(wrapper.text()).toContain('Không có quyền truy cập')
+    wrapper.unmount()
+  })
 
   it('khôi phục phiên EMPLOYEE từ catalog về màn hình nghiệp vụ mặc định', async () => {
     user.value = {
@@ -155,10 +177,10 @@ describe('chặn màn hình trước khi mount', () => {
       role: 'EMPLOYEE',
       permissions: ['MANAGE_BOOKS'],
     }
-    window.history.replaceState(null, '', '#/catalog')
+    window.history.replaceState(null, '', '/catalog')
     const wrapper = mount(App, { global })
     await flushPromises()
-    expect(window.location.hash).toBe('#/manage')
+    expect(window.location.pathname).toBe('/manage')
     expect(wrapper.find('[data-testid="management"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(false)
     wrapper.unmount()
@@ -168,7 +190,7 @@ describe('chặn màn hình trước khi mount', () => {
 describe('kiểm tra dữ liệu đăng ký trên giao diện', () => {
   it('chặn email tên miền toàn số và mật khẩu dấu cách trước khi gọi API', async () => {
     user.value = null
-    window.history.replaceState(null, '', '#/auth')
+    window.history.replaceState(null, '', '/auth')
     const wrapper = mount(App, { global })
     await flushPromises()
     await wrapper.get('.auth-text-link').trigger('click')

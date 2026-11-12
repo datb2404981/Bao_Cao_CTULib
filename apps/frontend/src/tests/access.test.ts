@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { brandHomeViewForUser, canAccess, defaultViewForUser, guardView, viewFromHash, protectedViews } from '../middlewares/access'
+import { brandHomeViewForUser, canAccess, defaultViewForUser, guardView, viewFromPath, protectedViews } from '../middlewares/access'
 import type { AuthUser } from '../services/auth'
 
 const user = (role: string, permissions: string[] = []): AuthUser => ({ accountId: '507f1f77bcf86cd799439011', ctuIdentifier: 'CB00001', role, permissions })
@@ -15,9 +15,9 @@ describe('middleware điều hướng theo role và quyền', () => {
     expect(canAccess(user('EMPLOYEE', ['MANAGE_LOANS']), 'dashboard')).toBe(true)
     expect(canAccess(user('EMPLOYEE'), 'dashboard')).toBe(false)
     expect(canAccess(user('ADMIN'), 'loans')).toBe(false)
-    expect(viewFromHash('#/my-loans')).toBe('my-loans')
-    expect(viewFromHash('#/loans')).toBe('loans')
-    expect(viewFromHash('#/dashboard')).toBe('dashboard')
+    expect(viewFromPath('/my-loans')).toBe('my-loans')
+    expect(viewFromPath('/loans')).toBe('loans')
+    expect(viewFromPath('/dashboard')).toBe('dashboard')
   })
   it('không suy ra quyền chức năng từ role ADMIN hoặc EMPLOYEE', () => {
     for (const role of ['ADMIN', 'EMPLOYEE']) {
@@ -36,11 +36,11 @@ describe('middleware điều hướng theo role và quyền', () => {
     }
   })
   it('nhận liên kết trực tiếp và các đường dẫn số nhiều', () => {
-    expect(viewFromHash('#/readers')).toBe('reader')
-    expect(viewFromHash('#/employee')).toBe('employee')
-    expect(viewFromHash('#/permissions')).toBe('permission')
-    expect(viewFromHash('#/management')).toBe('management')
-    expect(viewFromHash('#/unknown')).toBe('catalog')
+    expect(viewFromPath('/readers')).toBe('reader')
+    expect(viewFromPath('/employee')).toBe('employee')
+    expect(viewFromPath('/permissions')).toBe('permission')
+    expect(viewFromPath('/management')).toBe('management')
+    expect(viewFromPath('/unknown')).toBe('catalog')
   })
 
   it('chọn trang mặc định theo role và permission mà không rơi về catalog cho nhân viên', () => {

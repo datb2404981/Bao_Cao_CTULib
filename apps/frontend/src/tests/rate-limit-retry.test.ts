@@ -37,8 +37,8 @@ describe('Phục hồi khi Cloudflare giới hạn truy cập API', () => {
 
     expect(data.items).toEqual([]);
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/book');
-    expect(vi.mocked(fetch).mock.calls[1]?.[0]).toBe('/book');
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/api/v1/book');
+    expect(vi.mocked(fetch).mock.calls[1]?.[0]).toBe('/api/v1/book');
   });
 
   it('Báo đúng nguyên nhân nếu cả hai lần GET /book đều bị 429 HTML', async () => {
@@ -64,7 +64,7 @@ describe('Phục hồi khi Cloudflare giới hạn truy cập API', () => {
   it('Không thử lại thao tác ghi POST khi nhận 429', async () => {
     vi.mocked(fetch).mockResolvedValue(rateLimitResponse());
 
-    const response = await fetchWithRateLimitRetry('/book', { method: 'POST', body: '{}' });
+    const response = await fetchWithRateLimitRetry('/api/v1/book', { method: 'POST', body: '{}' });
     expect(response.status).toBe(429);
     expect(fetch).toHaveBeenCalledTimes(1);
   });

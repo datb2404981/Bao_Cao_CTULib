@@ -29,7 +29,7 @@ after(async () => {
   }
 });
 
-for (const endpoint of ["/loans", "/penalties", "/dashboard/stats"]) {
+for (const endpoint of ["/loans", "/penalties", "/dashboard/stats", "/reader", "/employee", "/permission", "/account", "/config", "/book/507f1f77bcf86cd799439011"]) {
   for (const prefix of ["", "/api/v1"]) {
     const path = `${prefix}${endpoint}`;
     test(`${path} yêu cầu đăng nhập`, async () => {
@@ -37,6 +37,16 @@ for (const endpoint of ["/loans", "/penalties", "/dashboard/stats"]) {
       const body = await response.json();
       assert.equal(response.status, 401);
       assert.equal(body.status, "error");
+    });
+  }
+}
+
+for (const endpoint of ["/author", "/faculty"]) {
+  for (const prefix of ["", "/api/v1"]) {
+    test(`POST ${prefix}${endpoint} yêu cầu đăng nhập`, async () => {
+      const response = await fetch(`${baseUrl}${prefix}${endpoint}`, { method: "POST" });
+      assert.equal(response.status, 401);
+      assert.equal((await response.json()).status, "error");
     });
   }
 }

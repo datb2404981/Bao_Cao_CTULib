@@ -49,7 +49,7 @@ describe('services/faculty.ts - Unit Tests', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       const [url, options] = vi.mocked(fetch).mock.calls[0]!;
-      expect(String(url)).toBe('/faculty');
+      expect(String(url)).toBe('/api/v1/faculty');
       expect(options?.method).toBe('GET');
       expect(result).toHaveLength(1);
       expect(result[0]?._id).toBe(mockFaculty._id);
@@ -92,7 +92,7 @@ describe('services/faculty.ts - Unit Tests', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       const [url] = vi.mocked(fetch).mock.calls[0]!;
-      expect(String(url)).toBe(`/faculty/${mockFaculty._id}`);
+      expect(String(url)).toBe(`/api/v1/faculty/${mockFaculty._id}`);
       expect(result._id).toBe(mockFaculty._id);
     });
 
@@ -138,7 +138,7 @@ describe('services/faculty.ts - Unit Tests', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       const [url, options] = vi.mocked(fetch).mock.calls[0]!;
-      expect(String(url)).toBe('/faculty');
+      expect(String(url)).toBe('/api/v1/faculty');
       expect(options?.method).toBe('POST');
       expect(JSON.parse(String(options?.body))).toEqual(payload);
       expect(result._id).toBe(mockCreated._id);
@@ -205,7 +205,7 @@ describe('services/faculty.ts - Unit Tests', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       const [url, options] = vi.mocked(fetch).mock.calls[0]!;
-      expect(String(url)).toBe(`/faculty/${mockFaculty._id}`);
+      expect(String(url)).toBe(`/api/v1/faculty/${mockFaculty._id}`);
       expect(options?.method).toBe('PUT');
       expect(result.facultyName).toBe(updateData.facultyName);
     });
@@ -227,7 +227,7 @@ describe('services/faculty.ts - Unit Tests', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       const [url, options] = vi.mocked(fetch).mock.calls[0]!;
-      expect(String(url)).toBe(`/faculty/${mockFaculty._id}`);
+      expect(String(url)).toBe(`/api/v1/faculty/${mockFaculty._id}`);
       expect(options?.method).toBe('DELETE');
       expect(result._id).toBe(mockFaculty._id);
     });

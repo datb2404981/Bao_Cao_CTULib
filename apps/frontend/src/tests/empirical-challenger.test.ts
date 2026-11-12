@@ -480,13 +480,13 @@ describe('Empirical Challenger: Book Catalog Stress Suite', () => {
         const path = new URL(String(input), 'http://localhost').pathname
         return new Response(JSON.stringify({
           status: 'success',
-          data: path === '/book'
+          data: path === '/api/v1/book'
             ? { items: [baseBook], meta: { totalItems: 1, totalPages: 1, currentPage: 1, limit: 12 } }
             : [],
         }), { status: 200 })
       })
       const bookRequests = () => vi.mocked(fetch).mock.calls.filter(([input]) =>
-        new URL(String(input), 'http://localhost').pathname === '/book'
+        new URL(String(input), 'http://localhost').pathname === '/api/v1/book'
       )
 
       const wrapper = mount(BookCatalogView)

@@ -7,7 +7,7 @@ export const request = async <T>(path: string, method: 'GET' | 'POST' | 'PATCH' 
   const token = await getAccessToken()
   let response: Response
   try {
-    response = await fetchWithRateLimitRetry(`${base}${path}`, {
+    response = await fetchWithRateLimitRetry(`${base}/api/v1${path}`, {
       method, credentials: 'include', signal: AbortSignal.timeout(15000),
       headers: { Authorization: `Bearer ${token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),

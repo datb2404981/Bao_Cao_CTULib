@@ -50,7 +50,7 @@ describe('services/author.ts - Unit Tests', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       const [url, options] = vi.mocked(fetch).mock.calls[0]!;
-      expect(String(url)).toBe('/author');
+      expect(String(url)).toBe('/api/v1/author');
       expect(options?.method).toBe('GET');
       expect(result).toHaveLength(1);
       expect(result[0]?._id).toBe(mockAuthor._id);
@@ -94,7 +94,7 @@ describe('services/author.ts - Unit Tests', () => {
       const result = await getAuthorById(mockAuthor._id);
       expect(result.fullName).toBe(mockAuthor.fullName);
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/author/${mockAuthor._id}`),
+        expect.stringContaining(`/api/v1/author/${mockAuthor._id}`),
         expect.objectContaining({ method: 'GET' })
       );
     });
@@ -124,7 +124,7 @@ describe('services/author.ts - Unit Tests', () => {
       const result = await createAuthor(payload);
       expect(result.fullName).toBe(payload.fullName);
       expect(fetch).toHaveBeenCalledWith(
-        '/author',
+        '/api/v1/author',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(payload),
@@ -170,7 +170,7 @@ describe('services/author.ts - Unit Tests', () => {
       const result = await updateAuthor(mockAuthor._id, updateData);
       expect(result.fullName).toBe(updateData.fullName);
       expect(fetch).toHaveBeenCalledWith(
-        `/author/${mockAuthor._id}`,
+        `/api/v1/author/${mockAuthor._id}`,
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify(updateData),
@@ -194,7 +194,7 @@ describe('services/author.ts - Unit Tests', () => {
       const result = await deleteAuthor(mockAuthor._id);
       expect(result._id).toBe(mockAuthor._id);
       expect(fetch).toHaveBeenCalledWith(
-        `/author/${mockAuthor._id}`,
+        `/api/v1/author/${mockAuthor._id}`,
         expect.objectContaining({ method: 'DELETE' })
       );
     });

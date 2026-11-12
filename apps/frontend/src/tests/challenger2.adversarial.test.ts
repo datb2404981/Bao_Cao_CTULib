@@ -69,7 +69,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
 
   beforeEach(() => {
     vi.restoreAllMocks()
-    window.location.hash = ''
+    window.location.pathname = ''
     mockCurrentUser.value = null
     vi.spyOn(facultyService, 'getAllFaculties').mockResolvedValue(dummyFaculties)
     vi.spyOn(authorService, 'getAllAuthors').mockResolvedValue(dummyAuthors)
@@ -85,7 +85,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
   describe('1. RBAC & Permission Enforcement', () => {
     it('blocks unauthenticated user from accessing management view and hides nav links', async () => {
       mockCurrentUser.value = null
-      window.location.hash = '#/manage'
+      window.location.pathname = '/manage'
 
       const wrapper = mount(App)
       await flushPromises()
@@ -94,8 +94,8 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       const manageLinks = wrapper.findAll('a').filter(a => a.text().includes('Quản lý'))
       expect(manageLinks.length).toBe(0)
 
-      // Hash sync must redirect unauthenticated access from #/manage to #/auth
-      expect(window.location.hash).toBe('#/auth')
+      // Hash sync must redirect unauthenticated access from /manage to /auth
+      expect(window.location.pathname).toBe('/auth')
       expect(wrapper.findComponent(BookManagementView).exists()).toBe(false)
       expect(wrapper.findComponent(BookCatalogView).exists()).toBe(false)
     })
@@ -107,7 +107,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
         role: 'READER',
         isActive: true,
       }
-      window.location.hash = '#/manage'
+      window.location.pathname = '/manage'
 
       const wrapper = mount(App)
       await flushPromises()
@@ -120,7 +120,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       expect(manageLinks.length).toBe(0)
 
       // Thiếu quyền phải hiển thị từ chối truy cập
-      expect(window.location.hash).toBe('#/forbidden')
+      expect(window.location.pathname).toBe('/forbidden')
       expect(wrapper.findComponent(BookManagementView).exists()).toBe(false)
       expect(wrapper.findComponent(BookCatalogView).exists()).toBe(false)
     })
@@ -158,7 +158,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
         permissions: ['MANAGE_BOOKS'],
         isActive: true,
       }
-      window.location.hash = '#/manage'
+      window.location.pathname = '/manage'
       vi.spyOn(bookService, 'getAllBooks').mockResolvedValue({
         items: [sampleBook],
         meta: { totalItems: 1, totalPages: 1, currentPage: 1, limit: 10 },
@@ -182,7 +182,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
         permissions: ['MANAGE_BOOKS'],
         isActive: true,
       }
-      window.location.hash = '#/manage'
+      window.location.pathname = '/manage'
       vi.spyOn(bookService, 'getAllBooks').mockResolvedValue({
         items: [],
         meta: { totalItems: 0, totalPages: 0, currentPage: 1, limit: 10 },

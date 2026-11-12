@@ -43,7 +43,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   let response: Response;
   try {
-    response = await fetchWithRateLimitRetry(`${base}${endpoint}`, {
+    response = await fetchWithRateLimitRetry(`${base}/api/v1${endpoint}`, {
       method,
       headers,
       credentials: 'include',

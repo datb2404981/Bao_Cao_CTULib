@@ -25,16 +25,17 @@ libraryApiRouter.use("/dashboard", dashboardRouter);
 router.get("/health", getHealth);
 router.use(AUTH_PATH, authRouter);
 router.use("/auth", authRouter);
-router.use("/book", bookRouter);
-router.use("/faculty", facultyRouter);
-router.use("/author", authorRouter);
+libraryApiRouter.use("/book", bookRouter);
+libraryApiRouter.use("/faculty", facultyRouter);
+libraryApiRouter.use("/author", authorRouter);
 
-router.use("/reader", readerRouter);
-router.use("/employee", employeeRouter);
-router.use("/permission", permissionRouter);
+libraryApiRouter.use("/reader", readerRouter);
+libraryApiRouter.use("/employee", employeeRouter);
+libraryApiRouter.use("/permission", permissionRouter);
+libraryApiRouter.use("/account", accountRouter);
+libraryApiRouter.use("/config", systemConfigRouter);
+
 router.use(libraryApiRouter);
 router.use("/api/v1", libraryApiRouter);
-router.use('/account', accountRouter);
-router.use("/config", systemConfigRouter);
 
 export default router;

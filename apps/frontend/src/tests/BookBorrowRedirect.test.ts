@@ -64,7 +64,7 @@ beforeEach(() => {
   vi.mocked(booksApi.getBookById).mockResolvedValue(sampleBook)
   vi.mocked(facultyApi.getAllFaculties).mockResolvedValue([])
   vi.mocked(authorApi.getAllAuthors).mockResolvedValue([])
-  window.history.replaceState(null, '', '#/catalog')
+  window.history.replaceState(null, '', '/catalog')
 })
 
 afterEach(() => {
@@ -146,7 +146,7 @@ describe('Luồng đăng nhập để mượn sách và quay lại đúng trang 
 
     // 3. Màn hình chuyển sang Auth/Login, không hiển thị banner mượn sách.
     // Thông tin sách vẫn được giữ để quay lại trang chi tiết sau khi đăng nhập.
-    expect(window.location.hash).toBe('#/auth')
+    expect(window.location.pathname).toBe('/auth')
     expect(wrapper.find('.pending-borrow-banner').exists()).toBe(false)
     expect(JSON.parse(sessionStorage.getItem('ctulib_pending_borrow_book') || 'null')).toEqual(sampleBook)
 
@@ -166,7 +166,7 @@ describe('Luồng đăng nhập để mượn sách và quay lại đúng trang 
     await flushPromises()
 
     // 5. Kiểm tra kết quả: không chuyển sang my-loans mà quay lại đúng catalog và mở sẵn chi tiết quyển sách đó
-    expect(window.location.hash).toBe('#/catalog')
+    expect(window.location.pathname).toBe('/catalog')
     expect(wrapper.text()).toContain('Chi tiết sách')
     expect(wrapper.text()).toContain(sampleBook.title)
 

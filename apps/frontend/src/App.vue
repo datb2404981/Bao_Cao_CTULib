@@ -15,7 +15,7 @@ import PenaltiesView from './views/PenaltiesView.vue'
 import DashboardView from './views/DashboardView.vue'
 import AccountProfile from './components/profile/AccountProfile.vue'
 import './styles/loans.css'
-import { canAccess, defaultViewForUser, guardView, protectedViews, viewFromHash, viewPaths } from './middlewares/access'
+import { canAccess, defaultViewForUser, guardView, protectedViews, viewFromPath, viewPaths } from './middlewares/access'
 import type { AppView } from './middlewares/access'
 export type { AppView } from './middlewares/access'
 import type { Book } from './types/book'
@@ -76,10 +76,10 @@ const userInitials = computed(() => {
   return id.slice(0, 2).toUpperCase()
 })
 
-async function syncViewFromHash(normalizeStaffLanding = false) {
+async function syncViewFromPath(normalizeStaffLanding = false) {
   if (starting.value) return
   const id = ++navigationId
-  const requested = viewFromHash(window.location.hash)
+  const requested = viewFromPath(window.location.pathname)
   navigationError.value = ''
   checkingAccess.value = protectedViews.includes(requested)
   let target = requested
@@ -98,15 +98,15 @@ async function syncViewFromHash(normalizeStaffLanding = false) {
   }
   currentView.value = guardView(currentUser.value, target)
   checkingAccess.value = false
-  if (currentView.value !== requested) window.history.replaceState(null, '', `#/${viewPaths[currentView.value]}`)
+  if (currentView.value !== requested) window.history.replaceState(null, '', `/${viewPaths[currentView.value]}`)
 }
 
 function navigateTo(view: AppView) {
   mobileMenuOpen.value = false
   profileDropdownOpen.value = false
-  const hash = `#/${viewPaths[view]}`
-  if (window.location.hash !== hash) window.history.pushState(null, '', hash)
-  void syncViewFromHash()
+  const path = `/${viewPaths[view]}`
+  if (window.location.pathname !== path) window.history.pushState(null, '', path)
+  void syncViewFromPath()
 }
 
 function retryAccess() {
@@ -249,16 +249,19 @@ function handleGlobalClick(e: MouseEvent) {
   }
 }
 
-function handleHashChange() {
+function handlePopState() {
   mobileMenuOpen.value = false
   profileDropdownOpen.value = false
-  void syncViewFromHash()
+  void syncViewFromPath()
 }
 
 onMounted(async () => {
+  if (window.location.hash.startsWith('#/')) {
+    window.history.replaceState(null, '', window.location.hash.slice(1))
+  }
   document.addEventListener('click', handleGlobalClick)
   document.addEventListener('keydown', handleEscape)
-  window.addEventListener('hashchange', handleHashChange)
+  window.addEventListener('popstate', handlePopState)
   try {
     const stored = sessionStorage.getItem('ctulib_pending_borrow_book')
     if (stored) {
@@ -272,7 +275,7 @@ onMounted(async () => {
     if (!(cause instanceof AuthError && cause.status === 401)) error.value = cause instanceof Error ? cause.message : 'Không thể khôi phục phiên đăng nhập.'
   } finally {
     starting.value = false
-    void syncViewFromHash(true)
+    void syncViewFromPath(true)
   }
 })
 
@@ -280,7 +283,7 @@ onUnmounted(() => {
   navigationId++
   document.removeEventListener('click', handleGlobalClick)
   document.removeEventListener('keydown', handleEscape)
-  window.removeEventListener('hashchange', handleHashChange)
+  window.removeEventListener('popstate', handlePopState)
 })
 </script>
 
@@ -304,7 +307,7 @@ onUnmounted(() => {
           </svg>
         </button>
 
-        <a class="brand" href="#/catalog" @click.prevent="handleBrandHomeClick" aria-label="CTULib - Thư viện Đại học Cần Thơ">
+        <a class="brand" href="/catalog" @click.prevent="handleBrandHomeClick" aria-label="CTULib - Thư viện Đại học Cần Thơ">
           <img src="/ctu-logo.png" alt="Logo Đại học Cần Thơ" class="brand-logo" />
           <div class="brand-meta">
             <strong><span class="brand-ctu">CTU</span><span class="brand-lib">Lib</span></strong>
@@ -316,27 +319,27 @@ onUnmounted(() => {
           <a
             v-if="!isStaffUser"
             :class="{ active: currentView === 'catalog' }"
-            href="#/catalog"
+            href="/catalog"
             @click.prevent="handleSearchNavClick"
           >
             Tìm sách
           </a>
-          <a v-if="canViewDashboard" href="#/dashboard" :class="{ active: currentView === 'dashboard' }" :aria-current="currentView === 'dashboard' ? 'page' : undefined" @click.prevent="navigateTo('dashboard')">Tổng quan</a>
+          <a v-if="canViewDashboard" href="/dashboard" :class="{ active: currentView === 'dashboard' }" :aria-current="currentView === 'dashboard' ? 'page' : undefined" @click.prevent="navigateTo('dashboard')">Tổng quan</a>
           <a
             v-if="canManageBooks"
             :class="{ active: currentView === 'management' }"
-            href="#/manage"
+            href="/manage"
             @click.prevent="navigateTo('management')"
           >
             Quản lý sách
           </a>
-          <a v-if="canViewMyLoans" href="#/my-loans" :class="{ active: currentView === 'my-loans' }" @click.prevent="navigateTo('my-loans')">Phiếu mượn của tôi</a>
-          <a v-if="canManageLoans" href="#/loans" :class="{ active: currentView === 'loans' }" @click.prevent="navigateTo('loans')">Mượn – trả</a>
-          <a v-if="canCollectPenalty" href="#/penalties" :class="{ active: currentView === 'penalties' }" :aria-current="currentView === 'penalties' ? 'page' : undefined" @click.prevent="navigateTo('penalties')">Phiếu phạt</a>
+          <a v-if="canViewMyLoans" href="/my-loans" :class="{ active: currentView === 'my-loans' }" @click.prevent="navigateTo('my-loans')">Phiếu mượn của tôi</a>
+          <a v-if="canManageLoans" href="/loans" :class="{ active: currentView === 'loans' }" @click.prevent="navigateTo('loans')">Mượn – trả</a>
+          <a v-if="canCollectPenalty" href="/penalties" :class="{ active: currentView === 'penalties' }" :aria-current="currentView === 'penalties' ? 'page' : undefined" @click.prevent="navigateTo('penalties')">Phiếu phạt</a>
           <a
             v-if="canManageFaculties"
             :class="{ active: currentView === 'faculty' }"
-            href="#/faculty"
+            href="/faculty"
             @click.prevent="navigateTo('faculty')"
           >
             Khoa/Viện
@@ -344,16 +347,16 @@ onUnmounted(() => {
           <a
             v-if="canManageAuthors"
             :class="{ active: currentView === 'author' }"
-            href="#/author"
+            href="/author"
             @click.prevent="navigateTo('author')"
           >
             Tác giả
           </a>
-          <a v-if="canManagePeople" href="#/reader" :class="{ active: currentView === 'reader' }" @click.prevent="navigateTo('reader')">Độc giả</a>
-          <a v-if="canManagePeople" href="#/employee" :class="{ active: currentView === 'employee' }" @click.prevent="navigateTo('employee')">Nhân viên</a>
-          <a v-if="canManagePeople" href="#/permission" :class="{ active: currentView === 'permission' }" @click.prevent="navigateTo('permission')">Quyền chức năng</a>
-          <a v-if="canManageAccounts" href="#/accounts" :class="{ active: currentView === 'accounts' }" :aria-current="currentView === 'accounts' ? 'page' : undefined" @click.prevent="navigateTo('accounts')">Quản lý tài khoản</a>
-          <a v-if="canManageSettings" href="#/settings" :class="{ active: currentView === 'settings' }" :aria-current="currentView === 'settings' ? 'page' : undefined" @click.prevent="navigateTo('settings')">Cài đặt hệ thống</a>
+          <a v-if="canManagePeople" href="/reader" :class="{ active: currentView === 'reader' }" @click.prevent="navigateTo('reader')">Độc giả</a>
+          <a v-if="canManagePeople" href="/employee" :class="{ active: currentView === 'employee' }" @click.prevent="navigateTo('employee')">Nhân viên</a>
+          <a v-if="canManagePeople" href="/permission" :class="{ active: currentView === 'permission' }" @click.prevent="navigateTo('permission')">Quyền chức năng</a>
+          <a v-if="canManageAccounts" href="/accounts" :class="{ active: currentView === 'accounts' }" :aria-current="currentView === 'accounts' ? 'page' : undefined" @click.prevent="navigateTo('accounts')">Quản lý tài khoản</a>
+          <a v-if="canManageSettings" href="/settings" :class="{ active: currentView === 'settings' }" :aria-current="currentView === 'settings' ? 'page' : undefined" @click.prevent="navigateTo('settings')">Cài đặt hệ thống</a>
         </nav>
       </div>
 
@@ -744,7 +747,7 @@ onUnmounted(() => {
     <nav class="mobile-nav" aria-label="Điều hướng trên điện thoại">
       <a
         :class="{ active: currentView === 'catalog' }"
-        href="#/catalog"
+        href="/catalog"
         @click.prevent="navigateTo('catalog')"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -756,7 +759,7 @@ onUnmounted(() => {
       <a
         v-if="canManageBooks"
         :class="{ active: currentView === 'management' }"
-        href="#/manage"
+        href="/manage"
         @click.prevent="navigateTo('management')"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -768,7 +771,7 @@ onUnmounted(() => {
       <a
         v-if="canManageFaculties"
         :class="{ active: currentView === 'faculty' }"
-        href="#/faculty"
+        href="/faculty"
         @click.prevent="navigateTo('faculty')"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -778,7 +781,7 @@ onUnmounted(() => {
       </a>
       <a
         :class="{ active: currentView === 'auth' }"
-        href="#/auth"
+        href="/auth"
         @click.prevent="navigateTo('auth')"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

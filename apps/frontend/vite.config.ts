@@ -35,9 +35,6 @@ export default defineConfig(({ mode }) => {
       headers: securityHeaders,
       proxy: {
         '/api': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
-        '/account': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
-        '^/(?:reader|employee|permission|faculty|author|loans|penalties|dashboard|config)(?:/|\\?|$)': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
-        '^/book(?:/|\\?|$)': { target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: false },
       },
     },
     preview: {
