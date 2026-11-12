@@ -26,6 +26,15 @@ let authorizationVersion = 0
 let pendingRefresh: Promise<void> | undefined
 const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
+// Các tab/khung cùng origin dùng chung cookie HttpOnly nhưng có bộ nhớ riêng.
+// Khóa cả request và nhận phiên để không gửi lại refresh token vừa được xoay.
+const withSessionLock = async <T>(action: () => Promise<T>): Promise<T> => {
+  if (typeof navigator !== 'undefined' && navigator.locks) {
+    return navigator.locks.request(`ctulib-auth:${base}`, action)
+  }
+  return action()
+}
+
 async function request(endpoint: string, body: object = {}): Promise<SessionData> {
   let response: Response
   try {
@@ -94,7 +103,9 @@ async function acceptSession(data: SessionData) {
 }
 export function refreshSession(): Promise<void> {
   if (!pendingRefresh) {
-    pendingRefresh = request('refresh').then(acceptSession).catch((error: unknown) => {
+    pendingRefresh = withSessionLock(async () => {
+      await acceptSession(await request('refresh'))
+    }).catch((error: unknown) => {
       if (error instanceof AuthError && [401, 403].includes(error.status)) clearSession()
       else timer = setTimeout(() => { void refreshSession().catch(() => {}) }, 30000)
       throw error
@@ -104,12 +115,16 @@ export function refreshSession(): Promise<void> {
 }
 export async function authenticate(mode: 'login' | 'register', input: { ctuIdentifier: string; password: string; email?: string }) {
   if (pendingRefresh) await pendingRefresh.catch(() => {})
-  await acceptSession(await request(mode, input))
+  await withSessionLock(async () => {
+    await acceptSession(await request(mode, input))
+  })
 }
 export async function logout() {
   if (pendingRefresh) await pendingRefresh.catch(() => {})
-  await request('logout')
-  clearSession()
+  await withSessionLock(async () => {
+    await request('logout')
+    clearSession()
+  })
 }
 export async function getAccessToken() {
   if (!accessToken || Date.now() >= expiresAt - 30000) await refreshSession()
