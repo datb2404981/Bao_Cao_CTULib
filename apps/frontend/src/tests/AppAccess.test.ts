@@ -12,9 +12,13 @@ vi.mock('../services/auth', async (original) => {
 })
 const user = currentUser as Ref<AuthUser | null>
 const global = { stubs: {
-  BookCatalogView: { template: '<p data-testid="catalog">Tìm sách</p>' },
+  BookCatalogView: {
+    template: '<p data-testid="catalog">Tìm sách</p>',
+    methods: { resetAllAndScrollTop: vi.fn(), focusSearchInput: vi.fn() },
+  },
   BookManagementView: { template: '<p data-testid="management">Quản lý sách</p>' },
   FacultyManagementView: true, AuthorManagementView: true,
+  MyLoansView: { template: '<p data-testid="my-loans">Phiếu mượn</p>' },
   PeopleManagementView: { props: ['resource'], template: '<p data-testid="people">Hồ sơ {{ resource }}</p>' },
 } }
 beforeEach(() => {
@@ -101,6 +105,48 @@ describe('chặn màn hình trước khi mount', () => {
     expect(wrapper.find('.profile-dropdown-card').exists()).toBe(false)
     wrapper.unmount()
   })
+
+  it.each(['a.brand', 'nav a[href="#/catalog"]'])(
+    'độc giả bấm %s khi đang kiểm tra phiên thì về danh mục và bỏ kết quả đến muộn',
+    async (selector) => {
+      user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
+      window.history.replaceState(null, '', '#/my-loans')
+      let resolve!: () => void
+      vi.mocked(refreshAuthorization).mockReturnValue(new Promise<void>((done) => { resolve = done }))
+      const wrapper = mount(App, { global })
+      await flushPromises()
+      expect(wrapper.text()).toContain('Đang kiểm tra quyền truy cập')
+
+      await wrapper.get(selector).trigger('click')
+      await flushPromises()
+      expect(window.location.hash).toBe('#/catalog')
+      expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(true)
+
+      resolve()
+      await flushPromises()
+      expect(window.location.hash).toBe('#/catalog')
+      expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(false)
+      wrapper.unmount()
+    },
+  )
+
+  it.each(['a.brand', 'nav a[href="#/catalog"]'])(
+    'độc giả bấm %s từ phiếu mượn thì về danh mục',
+    async (selector) => {
+      user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
+      window.history.replaceState(null, '', '#/my-loans')
+      const wrapper = mount(App, { global })
+      await flushPromises()
+      expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(true)
+      await wrapper.get('button.menu-button').trigger('click')
+      await wrapper.get(selector).trigger('click')
+      await flushPromises()
+      expect(window.location.hash).toBe('#/catalog')
+      expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(true)
+      expect(wrapper.get('nav.topnav').classes()).not.toContain('is-open')
+      wrapper.unmount()
+    },
+  )
 
   it('khôi phục phiên EMPLOYEE từ catalog về màn hình nghiệp vụ mặc định', async () => {
     user.value = {

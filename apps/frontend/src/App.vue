@@ -114,18 +114,14 @@ function retryAccess() {
 }
 
 function handleBrandHomeClick() {
-  if (currentView.value !== 'catalog') {
-    navigateTo('catalog')
-  }
+  navigateTo('catalog')
   nextTick(() => {
     catalogViewRef.value?.resetAllAndScrollTop()
   })
 }
 
 function handleSearchNavClick() {
-  if (currentView.value !== 'catalog') {
-    navigateTo('catalog')
-  }
+  navigateTo('catalog')
   nextTick(() => {
     catalogViewRef.value?.focusSearchInput()
   })
