@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 export const facultySchema = z.object({
+  facultyCode: z
+    .string({ message: "Mã khoa phải là chuỗi" })
+    .trim()
+    .min(2, { error: "Mã khoa phải có ít nhất 2 ký tự" })
+    .max(30, { error: "Mã khoa không được vượt quá 30 ký tự" })
+    .optional(),
   facultyName: z
     .string({ message: "Tên khoa phải là chuỗi và không được bỏ trống" })
     .trim()

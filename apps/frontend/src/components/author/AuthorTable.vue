@@ -11,9 +11,10 @@ const emit = defineEmits<{
   (e: 'edit', author: Author): void;
 }>();
 
-function formatAuthorCode(id: string): string {
-  if (!id) return '---';
-  return `TG-${id.slice(-6).toUpperCase()}`;
+function formatAuthorCode(author: Author): string {
+  if (author.authorCode) return author.authorCode;
+  if (!author._id) return '---';
+  return `TG-${author._id.slice(-6).toUpperCase()}`;
 }
 </script>
 
@@ -68,7 +69,7 @@ function formatAuthorCode(id: string): string {
             </td>
             <td data-label="Mã tác giả" class="col-code">
               <span class="author-code-tag" :title="`ID: ${author._id}`">
-                {{ formatAuthorCode(author._id) }}
+                {{ formatAuthorCode(author) }}
               </span>
             </td>
             <td data-label="Đơn vị công tác" class="col-affiliation">

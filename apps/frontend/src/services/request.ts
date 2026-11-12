@@ -2,7 +2,7 @@ import { AuthError, getAccessToken } from './auth'
 
 const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
-export const request = async <T>(path: string, method: 'GET' | 'POST' | 'PATCH' = 'GET', body?: unknown): Promise<T> => {
+export const request = async <T>(path: string, method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' = 'GET', body?: unknown): Promise<T> => {
   const token = await getAccessToken()
   let response: Response
   try {

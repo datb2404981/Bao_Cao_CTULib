@@ -23,9 +23,15 @@ export const toLoanDetail = (loan: LoanEntity, penalty: PenaltyEntity | null) =>
 
   return {
     loanId: loan._id.toString(),
+    _id: loan._id.toString(),
     bookId: loan.bookId.toString(),
     readerAccountId: loan.readerId.toString(),
+    readerId: loan.readerId.toString(),
     status: loanStatuses[loan.status],
+    reservationDate: loan.reservationDate ? loan.reservationDate.toISOString() : null,
+    reservationExpiryDate: loan.reservationExpiryDate ? loan.reservationExpiryDate.toISOString() : null,
+    handoverDate: loan.handoverDate ? loan.handoverDate.toISOString() : null,
+    dueDate: loan.dueDate ? loan.dueDate.toISOString() : null,
     actualReturnDate: loan.actualReturnDate ?? null,
     returnCondition,
     damageRatio,

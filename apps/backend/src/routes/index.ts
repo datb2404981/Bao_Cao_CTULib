@@ -13,8 +13,14 @@ import loadRecordRouter from "./loadRecord.route.js";
 import penaltyRouter from "./penalty.route.js";
 import dashboardRouter from "./dashboard.route.js";
 import accountRouter from './account.route.js';
+import systemConfigRouter from './systemConfig.route.js'
 
 const router = Router();
+const libraryApiRouter = Router();
+
+libraryApiRouter.use("/loans", loadRecordRouter);
+libraryApiRouter.use("/penalties", penaltyRouter);
+libraryApiRouter.use("/dashboard", dashboardRouter);
 
 router.get("/health", getHealth);
 router.use(AUTH_PATH, authRouter);
@@ -26,12 +32,9 @@ router.use("/author", authorRouter);
 router.use("/reader", readerRouter);
 router.use("/employee", employeeRouter);
 router.use("/permission", permissionRouter);
-router.use("/loans", loadRecordRouter);
-router.use("/api/v1/loans", loadRecordRouter);
-router.use("/penalties", penaltyRouter);
-router.use("/api/v1/penalties", penaltyRouter);
-router.use("/dashboard", dashboardRouter);
+router.use(libraryApiRouter);
+router.use("/api/v1", libraryApiRouter);
 router.use('/account', accountRouter);
-router.use("/api/v1/dashboard", dashboardRouter);
+router.use("/config", systemConfigRouter);
 
 export default router;

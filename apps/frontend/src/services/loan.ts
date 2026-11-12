@@ -1,7 +1,7 @@
 import { request } from './request'
 import type { LoanFilters, LoanPage, LoanPaymentResult, LoanRecord, LoanReturnResult, PenaltyRecord } from '../types/loan'
 
-const base = '/api/v1/loans'
+const base = '/loans'
 
 const withQuery = (path: string, options: LoanFilters): string => {
   const params = new URLSearchParams()

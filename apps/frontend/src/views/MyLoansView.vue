@@ -124,14 +124,14 @@ onMounted(() => { void load() })
       <p v-if="loading" role="status" class="loan-placeholder">Đang tải danh sách phiếu…</p>
       <p v-else-if="!result" class="loan-placeholder" role="status">Không thể hiển thị danh sách phiếu mượn. Hãy thử tải lại.</p>
       <p v-else-if="!records.length" class="loan-placeholder">Chưa có phiếu mượn phù hợp với bộ lọc.</p>
-      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu mượn</th><th>Ấn phẩm</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th></th></tr></thead>
+      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu mượn</th><th>Ấn phẩm</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
         <tbody><tr v-for="loan in records" :key="loan._id">
           <td data-label="Phiếu mượn"><strong>#{{ loan._id.slice(-8).toUpperCase() }}</strong></td>
           <td data-label="Mã sách" class="loan-code">{{ loan.bookId }}</td>
           <td data-label="Ngày đặt">{{ formatLoanDate(loan.reservationDate) }}</td>
           <td data-label="Hạn giữ / trả">{{ formatLoanDate(loan.dueDate || loan.reservationExpiryDate) }}</td>
           <td data-label="Trạng thái"><span class="badge" :class="isLoanOverdue(loan) ? 'red' : loanStatusTone(loan.status)">{{ isLoanOverdue(loan) ? 'Quá hạn' : loan.status }}</span></td>
-          <td data-label="Thao tác"><button type="button" class="btn small" :disabled="loading || processing" @click="openDetail(loan)">Chi tiết</button></td>
+          <td data-label="Thao tác"><button type="button" class="btn small" :aria-label="`Xem chi tiết phiếu mượn #${loan._id.slice(-8).toUpperCase()}`" :disabled="loading || processing" @click="openDetail(loan)">Chi tiết</button></td>
         </tr></tbody></table></div>
       <div v-if="result && totalPages > 1" class="loan-pagination"><span>Trang {{ page }}/{{ totalPages }} · {{ result.pagination.total }} phiếu</span><div><button type="button" class="btn small" :disabled="loading || processing || page <= 1" @click="changePage(-1)">Trước</button><button type="button" class="btn small" :disabled="loading || processing || page >= totalPages" @click="changePage(1)">Sau</button></div></div>
     </section>

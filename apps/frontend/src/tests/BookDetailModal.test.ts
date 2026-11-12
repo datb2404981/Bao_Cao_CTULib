@@ -78,6 +78,30 @@ describe('BookDetailModal.vue', () => {
     expect(wrapper.text()).toContain('2024');
   });
 
+  it('uses the same academic book cover placeholder as the catalog when no cover exists', () => {
+    const wrapper = mount(BookDetailModal, {
+      props: { isOpen: true, bookId: sampleBook.bookId, initialBook: sampleBook },
+    });
+
+    const cover = wrapper.get('.record-hero .academic-fallback');
+    expect(cover.attributes('aria-label')).toBe(`Chưa có ảnh bìa của ${sampleBook.title}`);
+    expect(cover.find('.spine-strip').exists()).toBe(true);
+    expect(cover.find('.cover-placeholder-icon').exists()).toBe(true);
+    expect(cover.find('.univ-stamp').text()).toBe('CTULIB');
+    expect(cover.find('.sub-stamp').text()).toBe('GIÁO TRÌNH');
+  });
+
+  it('shows the reference-book variant in the detail cover placeholder', () => {
+    const referenceBook: Book = { ...sampleBook, bookType: 'REFERENCE' };
+    const wrapper = mount(BookDetailModal, {
+      props: { isOpen: true, bookId: referenceBook.bookId, initialBook: referenceBook },
+    });
+
+    const cover = wrapper.get('.record-hero .academic-fallback');
+    expect(cover.classes()).toContain('is-reference');
+    expect(cover.find('.sub-stamp').text()).toBe('THAM KHẢO');
+  });
+
   it('formats coverPrice = 120000 correctly as "120.000 đồng"', () => {
     const wrapper = mount(BookDetailModal, {
       props: {

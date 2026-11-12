@@ -88,4 +88,47 @@ describe('BookFilters.vue', () => {
     await select.setValue(mockFaculties[0]!._id)
     expect(wrapper.emitted('update:facultyId')?.[0]).toEqual([mockFaculties[0]!._id])
   })
+
+  it('updates advanced filters immediately with one explicit search action', async () => {
+    const wrapper = mount(BookFilters, { props: { faculties: mockFaculties } })
+
+    expect(wrapper.findAll('button[type="submit"]')).toHaveLength(1)
+    expect(wrapper.get('button.btn-search').text()).toContain('Tìm kiếm')
+    expect(wrapper.get('.filter-update-note').text()).toContain('Kết quả tự cập nhật')
+
+    await wrapper.get('select.faculty-select').setValue(mockFaculties[0]!._id)
+    await wrapper.get('select.kind-select').setValue('REFERENCE')
+
+    expect(wrapper.emitted('update:facultyId')?.at(-1)).toEqual([mockFaculties[0]!._id])
+    expect(wrapper.emitted('update:bookType')?.at(-1)).toEqual(['REFERENCE'])
+    expect(wrapper.get('details summary').text()).toContain('Đang lọc 2 tiêu chí')
+
+    await wrapper.get('form').trigger('submit.prevent')
+    expect(wrapper.emitted('submit')).toHaveLength(1)
+  })
+
+  it('clears every active filter even while an older request is loading', async () => {
+    const wrapper = mount(BookFilters, {
+      props: {
+        faculties: mockFaculties,
+        search: 'Lập trình',
+        facultyId: mockFaculties[0]!._id,
+        bookType: 'TEXTBOOK',
+        isLoading: true,
+      },
+    })
+
+    const reset = wrapper.get('button.btn-reset')
+    expect(reset.attributes('disabled')).toBeUndefined()
+    await reset.trigger('click')
+
+    expect(wrapper.get('input[type="search"]').element).toHaveProperty('value', '')
+    expect(wrapper.get('select.faculty-select').element).toHaveProperty('value', '')
+    expect(wrapper.get('select.kind-select').element).toHaveProperty('value', '')
+    expect(wrapper.get('details summary').text()).not.toContain('Đang lọc')
+    expect(wrapper.emitted('update:search')?.at(-1)).toEqual([''])
+    expect(wrapper.emitted('update:facultyId')?.at(-1)).toEqual([''])
+    expect(wrapper.emitted('update:bookType')?.at(-1)).toEqual([''])
+    expect(wrapper.emitted('reset')).toHaveLength(1)
+  })
 })

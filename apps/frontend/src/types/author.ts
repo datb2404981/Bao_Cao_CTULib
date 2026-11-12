@@ -6,6 +6,7 @@
 
 export interface Author {
   _id: string;
+  authorCode?: string;
   fullName: string;
   affiliation?: string;
   notes?: string;
@@ -14,12 +15,14 @@ export interface Author {
 }
 
 export interface CreateAuthorPayload {
+  authorCode?: string;
   fullName: string;
   affiliation?: string;
   notes?: string;
 }
 
 export interface UpdateAuthorPayload {
+  authorCode?: string;
   fullName: string;
   affiliation?: string;
   notes?: string;

@@ -38,6 +38,9 @@ const showDeleteConfirm = ref(false);
 const dialogRef = ref<HTMLDialogElement | null>(null);
 
 const displayAuthorCode = computed(() => {
+  if (props.authorToEdit?.authorCode) {
+    return props.authorToEdit.authorCode;
+  }
   if (props.authorToEdit?._id) {
     return `TG-${props.authorToEdit._id.slice(-6).toUpperCase()}`;
   }

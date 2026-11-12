@@ -71,4 +71,4 @@ const accountSchema = new Schema(
 );
 
 export type Account = InferSchemaType<typeof accountSchema>;
-export const AccountModel = mongoose.model("Account", accountSchema, "acounts");
+export const AccountModel = mongoose.model("Account", accountSchema, "accounts");

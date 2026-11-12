@@ -24,5 +24,12 @@ logs/
 coverage/
 .agents/
 .apidog/
+# QA & Local Testing Tools
+qa/
+explorbot.config.js
+packages/tester-mcp/
+render.staging.yaml
 docs/qa
-apidog-reports/dashboard/
+docs/qa-production-*
+apidog-reports/
+*.zip

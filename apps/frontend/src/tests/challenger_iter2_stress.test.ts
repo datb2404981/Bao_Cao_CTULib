@@ -199,7 +199,7 @@ describe('Challenger Iteration 2: Stress Testing Suite', () => {
 
       // Initial state: shows 2 books
       expect(wrapper.findAll('.book-card').length).toBe(2);
-      expect(wrapper.find('.results-line').text()).toContain('2 ấn phẩm');
+      expect(wrapper.findAll('.book-card')).toHaveLength(2);
 
       // Filter by TEXTBOOK
       await wrapper.find('select.kind-select').setValue('TEXTBOOK');
@@ -212,7 +212,7 @@ describe('Challenger Iteration 2: Stress Testing Suite', () => {
       expect(wrapper.text()).toContain('Giáo trình Mạng Máy Tính');
       expect(wrapper.text()).not.toContain('Tài liệu Tham Khảo An Ninh Mạng');
       // Count synchronised to 1
-      expect(wrapper.find('.results-line').text()).toContain('1 ấn phẩm');
+      expect(wrapper.findAll('.book-card')).toHaveLength(1);
 
       // Wait 60ms to exceed search throttle
       await new Promise((r) => setTimeout(r, 60));
@@ -226,9 +226,9 @@ describe('Challenger Iteration 2: Stress Testing Suite', () => {
       await wrapper.find('form.filters').trigger('submit.prevent');
       await flushPromises();
 
-      // Empty state displayed, results-line shows 0
+      // Không có kết quả: chỉ hiển thị trạng thái trống.
       expect(wrapper.find('.empty-state').exists()).toBe(true);
-      expect(wrapper.find('.results-line').text()).toContain('0 ấn phẩm');
+      expect(wrapper.findAll('.book-card')).toHaveLength(0);
       expect(wrapper.find('.pagination-bar').exists()).toBe(false); // pagination hidden when 0 items
     });
 

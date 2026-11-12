@@ -9,6 +9,7 @@ import {
   type LoadRecord,
   type LoanStatus,
 } from "../models/loanRecord.model.js";
+import { getLoanDuration, getOverdueFeePerDay, getMaxBorrowLimit } from "./systemConfig.service.js";
 
 /**
  * BR_01, BR_02: Đăng ký đặt giữ chỗ sách trực tuyến
@@ -35,7 +36,9 @@ export const createLoanRecord = async (input: { readerId: string; bookId: string
       if (!reader) {
         const exists = await readerModel.exists({ _id: input.readerId }).session(session);
         throw new AppError(
-          exists ? "Tài khoản đang bị khoá mượn sách" : "Độc giả không tồn tại",
+          exists
+            ? "Tài khoản đang bị khoá mượn sách"
+            : "Tài khoản chưa có hồ sơ độc giả. Vui lòng liên hệ thư viện hoặc cập nhật hồ sơ để mượn sách.",
           exists ? 403 : 404,
         );
       }
@@ -64,15 +67,16 @@ export const createLoanRecord = async (input: { readerId: string; bookId: string
         );
       }
 
+      const maxBorrowLimit = await getMaxBorrowLimit();
       const activeLoanCount = await loanRecordModel
         .countDocuments({
           readerId: reader._id,
           status: { $in: ["Đặt lịch mượn", "Đang mượn"] },
         })
         .session(session);
-      if (activeLoanCount >= 3) {
+      if (activeLoanCount >= maxBorrowLimit) {
         throw new AppError(
-          "Độc giả đã đạt hạn mức tối đa 03 quyển sách đang giữ/đặt",
+          `Độc giả đã đạt hạn mức tối đa ${maxBorrowLimit} quyển sách đang giữ/đặt`,
           400,
         );
       }
@@ -139,8 +143,9 @@ export const approveHandoverLoanRecord = async (input: {
     throw new AppError("Phiếu đã hết hạn giữ chỗ", 400);
   }
 
+  const loanDuration = await getLoanDuration();
   const dueDate: Date = new Date(now);
-  dueDate.setDate(dueDate.getDate() + 7);
+  dueDate.setDate(dueDate.getDate() + loanDuration);
   dueDate.setHours(23, 59, 59, 999);
 
   const updateRecord = await loanRecordModel.findOneAndUpdate(
@@ -286,8 +291,8 @@ export const processReturnLoanRecord = async (input: {
       );
 
       const overdueDays = Math.ceil(overdueMilliseconds / (24 * 60 * 60 * 1000));
-
-      const overdueFee = overdueDays * 5000;
+      const overdueFeePerDay = await getOverdueFeePerDay();
+      const overdueFee = overdueDays * overdueFeePerDay;
 
       const damageFee = Math.round((book.coverPrice * input.damagePercentage) / 100);
 
@@ -732,3 +737,4 @@ export const archiveLoanRecord = async (loanId: string) => {
     {new: true}
   )
 };
+

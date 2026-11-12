@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { AccountModel } from "../models/user.model.js";
+import employeeModel from "../models/employee.model.js";
+import permissionModel from "../models/permission.model.js";
 import { registerSchema } from "../schemas/auth.schema.js";
 
 // Only the dedicated, fixed QA fixtures are eligible. Never update existing accounts.
@@ -11,6 +13,41 @@ const fixtures = csv.trim().split(/\r?\n/).slice(1).map((line) => {
   const [fixtureId, ctuIdentifier, email, password, role, active] = line.split(",");
   return { fixtureId, ...registerSchema.parse({ ctuIdentifier, email, password }), role, isActive: active === "true" };
 });
+
+const employeePermissionSpecs = [
+  { permissionName: "MANAGE_BOOKS", description: "Quản lý kho sách" },
+  { permissionName: "MANAGE_LOANS", description: "Quản lý phiếu mượn" },
+  { permissionName: "APPROVE_HANDOVER", description: "Duyệt bàn giao sách" },
+  { permissionName: "PROCESS_RETURN", description: "Xử lý trả sách" },
+  { permissionName: "COLLECT_PENALTY", description: "Thu và quản lý phiếu phạt" },
+  { permissionName: "MANAGE_FACULTIES", description: "Quản lý khoa/viện" },
+  { permissionName: "MANAGE_AUTHORS", description: "Quản lý tác giả" },
+] as const;
+
+async function ensureEmployeeManagementAccess(): Promise<void> {
+  const employeeFixture = fixtures.find((fixture) => fixture.role === "EMPLOYEE");
+  if (!employeeFixture) throw new Error("Bộ fixture thiếu tài khoản Employee.");
+
+  const account = await AccountModel.findOne({
+    ctuIdentifier: employeeFixture.ctuIdentifier,
+    role: "EMPLOYEE",
+    isActive: true,
+  }).select("_id");
+  if (!account) throw new Error("Fixture Employee chưa sẵn sàng để cấp quyền quản lý.");
+
+  const permissionIds = [];
+  for (const spec of employeePermissionSpecs) {
+    const existing = await permissionModel.findOne({ permissionName: spec.permissionName }).select("_id");
+    const permission = existing ?? await permissionModel.create(spec);
+    permissionIds.push(permission._id);
+  }
+
+  await employeeModel.findByIdAndUpdate(
+    account._id,
+    { $addToSet: { permissionIds: { $each: permissionIds } } },
+    { upsert: true, new: true, runValidators: true },
+  );
+}
 
 async function login(ctuIdentifier: string, password: string) {
   const response = await fetch("http://localhost:8080/auth/login", {
@@ -64,6 +101,10 @@ async function main() {
     });
     console.log(`Đã tạo ${fixture.ctuIdentifier}: ${fixture.role}, isActive=${fixture.isActive}`);
   }
+
+  await ensureEmployeeManagementAccess();
+  console.log("Đã chuẩn bị hồ sơ Employee và quyền truy cập các màn hình quản lý.");
+
   for (const fixture of fixtures) {
     const result = await login(fixture.ctuIdentifier, fixture.password);
     const expectedCode = fixture.isActive ? 200 : 403;

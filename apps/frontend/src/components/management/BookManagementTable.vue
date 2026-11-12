@@ -84,6 +84,7 @@ const emit = defineEmits<{
                 class="row-link btn quiet small"
                 type="button"
                 :data-book-id="book.bookId"
+                :aria-label="`Xem sách ${book.title}`"
                 @click="emit('view', book)"
               >
                 Xem sách

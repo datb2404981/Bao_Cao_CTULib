@@ -6,6 +6,7 @@
   "scripts": {
     "seed:admin": "tsx src/scripts/seed-admin.ts",
     "seed:employee": "tsx src/scripts/seed-employee.ts",
+    "seed:login-test": "tsx src/scripts/seed-login-test-accounts.ts",
     "seed:books": "tsx src/scripts/seed-books-qa.ts",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -13,8 +14,9 @@
     "lint": "eslint src/",
     "test": "vitest run tests/loan-record.test.ts",
     "test:integration": "tsx --test --test-concurrency=1 tests/loan-concurrency.integration.ts tests/loan-api.integration.ts",
-    "test:standalone": "tsx --test tests/access-control.test.ts tests/book-create.test.ts tests/error-messages.test.ts tests/loan-http-route.test.ts tests/profile-modules.test.ts",
-    "test:watch": "vitest tests/loan-record.test.ts"
+    "test:standalone": "tsx --test tests/access-control.test.ts tests/book-create.test.ts tests/error-messages.test.ts tests/loan-http-route.test.ts tests/profile-modules.test.ts tests/system-config.test.ts",
+    "test:watch": "vitest tests/loan-record.test.ts",
+    "seed:books:production": "tsx src/scripts/seed-books-production.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

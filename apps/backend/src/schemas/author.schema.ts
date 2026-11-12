@@ -1,6 +1,12 @@
 import z from "zod";
 
 export const authorSchema = z.object({
+  authorCode: z
+    .string()
+    .trim()
+    .min(2, { message: "Mã tác giả phải có ít nhất 2 ký tự" })
+    .max(30, { message: "Mã tác giả không được vượt quá 30 ký tự" })
+    .optional(),
   fullName: z
     .string()
     .min(1, { message: "Full name is required" })

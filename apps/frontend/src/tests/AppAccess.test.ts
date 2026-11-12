@@ -83,4 +83,38 @@ describe('chặn màn hình trước khi mount', () => {
     expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(true)
     wrapper.unmount()
   })
+
+  it('đóng điều hướng và menu tài khoản khi dùng lịch sử trình duyệt', async () => {
+    const wrapper = mount(App, { global })
+    await flushPromises()
+
+    await wrapper.get('button.menu-button').trigger('click')
+    await wrapper.get('button.profile').trigger('click')
+    expect(wrapper.get('nav.topnav').classes()).toContain('is-open')
+    expect(wrapper.find('.profile-dropdown-card').exists()).toBe(true)
+
+    window.history.replaceState(null, '', '#/reader')
+    window.dispatchEvent(new Event('hashchange'))
+    await flushPromises()
+
+    expect(wrapper.get('nav.topnav').classes()).not.toContain('is-open')
+    expect(wrapper.find('.profile-dropdown-card').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('khôi phục phiên EMPLOYEE từ catalog về màn hình nghiệp vụ mặc định', async () => {
+    user.value = {
+      accountId: '507f1f77bcf86cd799439012',
+      ctuIdentifier: 'CB99101',
+      role: 'EMPLOYEE',
+      permissions: ['MANAGE_BOOKS'],
+    }
+    window.history.replaceState(null, '', '#/catalog')
+    const wrapper = mount(App, { global })
+    await flushPromises()
+    expect(window.location.hash).toBe('#/manage')
+    expect(wrapper.find('[data-testid="management"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
 })

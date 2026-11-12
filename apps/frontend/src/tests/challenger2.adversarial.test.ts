@@ -263,8 +263,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
 
       expect(wrapper.find('.loading-skeleton').exists()).toBe(false)
       expect(wrapper.find('.book-card').exists()).toBe(true)
-      expect(wrapper.find('.results-line').exists()).toBe(true)
-      expect(wrapper.find('.results-line').text()).toContain('1')
+      expect(wrapper.findAll('.book-card')).toHaveLength(1)
     })
 
     it('transitions to Empty State and resets filters on action', async () => {
@@ -284,7 +283,7 @@ describe('Challenger 2: Adversarial RBAC, State Transitions & Validation Tests',
       // State: Empty
       expect(wrapper.find('.empty-state').exists()).toBe(true)
       expect(wrapper.text()).toContain('Không tìm thấy sách phù hợp')
-      expect(wrapper.find('.results-line').text()).toContain('0')
+      expect(wrapper.find('.pagination-bar').exists()).toBe(false)
 
       // Click "Xóa bộ lọc"
       await wrapper.find('button[data-reset-filter]').trigger('click')

@@ -6,6 +6,7 @@
 
 export interface Faculty {
   _id: string;
+  facultyCode?: string;
   facultyName: string;
   description?: string;
   createdAt?: string;
@@ -13,11 +14,13 @@ export interface Faculty {
 }
 
 export interface CreateFacultyPayload {
+  facultyCode?: string;
   facultyName: string;
   description?: string;
 }
 
 export interface UpdateFacultyPayload {
+  facultyCode?: string;
   facultyName: string;
   description?: string;
 }

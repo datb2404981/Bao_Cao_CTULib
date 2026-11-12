@@ -35,6 +35,7 @@ const emit = defineEmits<{
 const localSearch = ref(props.search);
 const localFacultyId = ref(props.facultyId);
 const localBookType = ref(props.bookType);
+const searchInputRef = ref<HTMLInputElement | null>(null);
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -64,6 +65,7 @@ function clearSearch() {
   localSearch.value = '';
   if (debounceTimer) clearTimeout(debounceTimer);
   emit('update:search', '');
+  searchInputRef.value?.focus();
 }
 
 function onFacultyChange(event: Event) {
@@ -252,13 +254,12 @@ watch(
           </div>
         </div>
 
-        <!-- Hàng nút hành động -->
-        <div class="row end filter-actions">
+        <div class="filter-actions">
+          <p class="filter-update-note">Kết quả tự cập nhật khi thay đổi bộ lọc.</p>
           <button
             class="btn quiet btn-reset"
             type="button"
             data-reset-filter
-            :disabled="isLoading"
             @click="onReset"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -266,12 +267,6 @@ watch(
               <path d="M3 3v5h5" />
             </svg>
             <span>Xóa bộ lọc</span>
-          </button>
-          <button class="btn primary btn-apply" type="submit" :disabled="isLoading">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span>Áp dụng</span>
           </button>
         </div>
       </div>
@@ -291,7 +286,7 @@ watch(
 }
 
 .filters:focus-within {
-  border-color: #cbd5e1;
+  border-color: var(--color-border);
 }
 
 .filter-row {
@@ -333,38 +328,38 @@ watch(
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #64748b;
+  color: var(--color-text-secondary);
   pointer-events: none;
 }
 
 #catalog-search-input {
   width: 100%;
   min-height: 44px;
-  padding: 10px 40px 10px 42px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  background: #ffffff;
+  padding: 10px 48px 10px 42px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
   font-size: 14px;
-  color: #172033;
+  color: var(--color-text);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 #catalog-search-input:focus {
-  border-color: #1d4ed8;
+  border-color: var(--color-focus);
   outline: none;
   box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
 }
 
 .clear-search-btn {
   position: absolute;
-  right: 12px;
+  right: 3px;
   top: 50%;
   transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #e2e8f0;
-  color: #475569;
+  background: transparent;
+  color: var(--color-text-secondary);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -374,8 +369,8 @@ watch(
 }
 
 .clear-search-btn:hover {
-  background: #cbd5e1;
-  color: #0f172a;
+  background: var(--color-border-subtle);
+  color: var(--color-text);
 }
 
 /* KHỐI BỘ LỌC NÂNG CAO */
@@ -554,15 +549,22 @@ watch(
 .filter-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #e2e8f0;
 }
 
+.filter-update-note {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .btn-reset {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 16px;
   display: inline-flex;
   align-items: center;
@@ -574,6 +576,7 @@ watch(
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -581,26 +584,6 @@ watch(
   background: #f1f5f9;
   color: #0f172a;
   border-color: #94a3b8;
-}
-
-.btn-apply {
-  min-height: 40px;
-  padding: 0 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
-  font-weight: 600;
-  border-radius: 6px;
-  background-color: var(--primary, #1d4ed8);
-  color: #ffffff;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.btn-apply:hover:not(:disabled) {
-  background-color: var(--primary-hover, #1e40af);
 }
 
 @media (max-width: 640px) {
@@ -616,6 +599,11 @@ watch(
 
   .btn-search {
     justify-content: center;
+  }
+
+  .filter-actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

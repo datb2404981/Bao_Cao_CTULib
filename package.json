@@ -15,18 +15,6 @@
     "seed:books": "pnpm --filter @ctulib/backend seed:books",
     "test": "pnpm --recursive test",
     "docker:dev": "docker compose -f infra/docker/docker-compose.dev.yml up --build",
-    "docker:dev:down": "docker compose -f infra/docker/docker-compose.dev.yml down",
-    "qa:web": "pnpm --filter @ctulib/frontend exec vite --host 127.0.0.1 --port 5174 --strictPort",
-    "qa:smoke": "node qa/explorbot/guest-smoke.cjs",
-    "qa:loan": "node qa/explorbot/run-loan-qa.cjs",
-    "qa:context": "explorbot context",
-    "qa:plan": "explorbot plan",
-    "qa:explore": "explorbot explore",
-    "qa:start": "explorbot start"
-  },
-  "devDependencies": {
-    "@ai-sdk/openai": "^4.0.111",
-    "explorbot": "0.6.2",
-    "playwright": "1.65.0"
+    "docker:dev:down": "docker compose -f infra/docker/docker-compose.dev.yml down"
   }
 }

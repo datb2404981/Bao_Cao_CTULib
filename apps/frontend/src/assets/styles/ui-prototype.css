@@ -757,20 +757,6 @@ label > span:first-child {
   padding-left: 38px;
 }
 
-.results-line {
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--color-text-secondary);
-  margin: 0 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.results-line strong {
-  color: var(--color-text);
-}
-
 /* Lưới sách: 4 cột trên màn hình rộng (>= 1024px), 3 cột trên tablet, 1-2 cột trên điện thoại */
 .book-grid {
   display: grid;

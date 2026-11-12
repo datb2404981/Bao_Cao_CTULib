@@ -449,7 +449,8 @@ describe('Empirical Challenger: Book Catalog Stress Suite', () => {
 
       // Ban đầu: hiển thị 12 sách giáo trình
       expect(wrapper.findAll('.book-card').length).toBe(12)
-      expect(wrapper.text()).toContain('Tìm thấy 24 ấn phẩm phù hợp.')
+      expect(wrapper.find('.result-count').exists()).toBe(false)
+      expect(wrapper.find('.pagination-info').text()).toContain('Trang 1 / 2')
 
       // Bây giờ người dùng chọn Loại sách: Sách tham khảo (REFERENCE)
       // API trả danh sách và tổng đã lọc tại server.
@@ -466,15 +467,11 @@ describe('Empirical Challenger: Book Catalog Stress Suite', () => {
       await wrapper.find('form.filters').trigger('submit.prevent')
       await flushPromises()
 
-      const resultText = wrapper.find('.results-line')?.text()
       const emptyStateExists = wrapper.find('.empty-state').exists()
 
       expect(wrapper.findAll('.book-card').length).toBe(1)
       expect(emptyStateExists).toBe(false)
-      if (resultText) {
-        expect(resultText).not.toContain('24')
-        expect(resultText).toContain('6')
-      }
+      expect(wrapper.find('.pagination-bar').exists()).toBe(false)
       expect(new URL(String(vi.mocked(fetch).mock.calls.at(-1)?.[0]), 'http://localhost').searchParams.get('bookType')).toBe('REFERENCE')
     })
 

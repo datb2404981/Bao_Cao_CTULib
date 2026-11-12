@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { canAccess, guardView, viewFromHash, protectedViews } from '../middlewares/access'
+import { brandHomeViewForUser, canAccess, defaultViewForUser, guardView, viewFromHash, protectedViews } from '../middlewares/access'
 import type { AuthUser } from '../services/auth'
 
 const user = (role: string, permissions: string[] = []): AuthUser => ({ accountId: '507f1f77bcf86cd799439011', ctuIdentifier: 'CB00001', role, permissions })
@@ -41,5 +41,19 @@ describe('middleware điều hướng theo role và quyền', () => {
     expect(viewFromHash('#/permissions')).toBe('permission')
     expect(viewFromHash('#/management')).toBe('management')
     expect(viewFromHash('#/unknown')).toBe('catalog')
+  })
+
+  it('chọn trang mặc định theo role và permission mà không rơi về catalog cho nhân viên', () => {
+    expect(defaultViewForUser(null)).toBe('catalog')
+    expect(defaultViewForUser(user('READER'))).toBe('my-loans')
+    expect(defaultViewForUser(user('EMPLOYEE', ['MANAGE_LOANS']))).toBe('dashboard')
+    expect(defaultViewForUser(user('EMPLOYEE', ['MANAGE_BOOKS']))).toBe('management')
+    expect(defaultViewForUser(user('EMPLOYEE', ['MANAGE_FACULTIES']))).toBe('faculty')
+    expect(defaultViewForUser(user('EMPLOYEE', ['MANAGE_AUTHORS']))).toBe('author')
+    expect(defaultViewForUser(user('EMPLOYEE', ['COLLECT_PENALTY']))).toBe('penalties')
+    expect(defaultViewForUser(user('EMPLOYEE'))).toBe('auth')
+    expect(defaultViewForUser(user('ADMIN'))).toBe('reader')
+    expect(brandHomeViewForUser(user('EMPLOYEE', ['MANAGE_BOOKS']))).toBe('management')
+    expect(brandHomeViewForUser(user('READER'))).toBe('catalog')
   })
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { getAllBooks } from '@/services/book';
+import { getAllBooks, getBookById } from '@/services/book';
 import type { Book, PaginationMeta } from '../types/book';
 import { FACULTIES, AUTHORS } from '../types/book';
 import { getAllFaculties } from '../services/faculty';
@@ -15,8 +15,21 @@ import { reserveBook } from '../services/loan';
 import type { LoanRecord } from '../types/loan';
 import ReservationDialog from '../components/catalog/ReservationDialog.vue';
 
+const props = withDefaults(
+  defineProps<{
+    initialBook?: Book | null;
+    initialBookId?: string | null;
+  }>(),
+  {
+    initialBook: null,
+    initialBookId: null,
+  }
+);
+
 const emit = defineEmits<{
   (e: 'navigate', view: 'catalog' | 'management' | 'auth' | 'my-loans'): void;
+  (e: 'require-login', book: Book): void;
+  (e: 'clear-initial-book'): void;
 }>();
 
 const books = ref<Book[]>([]);
@@ -91,9 +104,9 @@ async function loadCatalogs() {
 }
 
 watch(
-  () => filters.search,
-  (newVal, oldVal) => {
-    if (newVal !== oldVal) {
+  [() => filters.search, () => filters.facultyId, () => filters.bookType],
+  ([newSearch, newFaculty, newType], [oldSearch, oldFaculty, oldType]) => {
+    if (newSearch !== oldSearch || newFaculty !== oldFaculty || newType !== oldType) {
       pagination.currentPage = 1;
       void loadBooks();
     }
@@ -184,15 +197,44 @@ function openDetailModal(book: Book) {
   isDetailModalOpen.value = true;
 }
 
-function closeDetailModal() {
+function closeDetailModal(isRequiringLogin = false) {
   isDetailModalOpen.value = false;
   selectedBook.value = null;
+  if (!isRequiringLogin) {
+    emit('clear-initial-book');
+  }
 }
 
-function onRequireLogin() {
-  closeDetailModal();
+function onRequireLogin(book?: Book) {
+  const target = book || selectedBook.value;
+  closeDetailModal(true);
+  if (target) {
+    emit('require-login', target);
+  }
   emit('navigate', 'auth');
 }
+
+async function loadAndOpenBookById(id: string) {
+  try {
+    const book = await getBookById(id);
+    openDetailModal(book);
+  } catch {
+    const found = books.value.find((b) => b.bookId === id);
+    if (found) openDetailModal(found);
+  }
+}
+
+watch(
+  [() => props.initialBook, () => props.initialBookId],
+  ([newBook, newId]) => {
+    if (newBook) {
+      openDetailModal(newBook);
+    } else if (newId) {
+      void loadAndOpenBookById(newId);
+    }
+  },
+  { immediate: true }
+);
 
 function beginReservation(book: Book) {
   if (reservationBusy.value || reservationStep.value !== 'idle') return;
@@ -246,18 +288,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="catalog-view container">
-    <!-- Hero Header: Tối giản, thanh lịch, chuẩn nhận diện Đại học Cần Thơ -->
     <div class="page-head catalog-hero-banner">
       <div class="hero-left">
-        <div class="hero-brand-mark">
-          <img src="/ctu-logo.png" alt="Logo Đại học Cần Thơ" class="ctu-crest-img" />
-        </div>
+        <img src="/ctu-logo.png" alt="Logo Đại học Cần Thơ" class="ctu-crest-img" />
         <div class="hero-banner-content">
           <div class="hero-subtitle">Mục lục trực tuyến OPAC · Đại học Cần Thơ</div>
-          <h1>Tra cứu Học liệu & Giáo trình</h1>
-          <p>
-            Cổng kết nối nguồn học liệu số, giáo trình chính quy và tài liệu nghiên cứu chuyên sâu.
-          </p>
+          <h1>Tra cứu Học liệu &amp; Giáo trình</h1>
+          <p>Cổng kết nối nguồn học liệu số, giáo trình chính quy và tài liệu nghiên cứu chuyên sâu.</p>
         </div>
       </div>
     </div>
@@ -276,10 +313,7 @@ onBeforeUnmount(() => {
       @reset="onResetFilters"
     />
 
-    <p v-if="!loading && !error" class="results-line">
-      Tìm thấy <strong class="num">{{ pagination.totalItems }}</strong> ấn phẩm phù hợp.
-    </p>
-
+    <h2 class="sr-only">Danh mục học liệu</h2>
     <BookGrid
       :books="books"
       :loading="loading"
@@ -296,6 +330,7 @@ onBeforeUnmount(() => {
       :current-page="pagination.currentPage"
       :total-pages="pagination.totalPages"
       :total-items="pagination.totalItems"
+      :show-total-items="false"
       :limit="pagination.limit"
       :is-loading="loading"
       @page-change="onPageChange"
@@ -347,22 +382,11 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
-.hero-brand-mark {
-  width: 58px;
-  height: 58px;
-  border-radius: 14px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  padding: 6px;
-}
-
 .ctu-crest-img {
-  width: 100%;
-  height: 100%;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .hero-banner-content {
@@ -403,11 +427,9 @@ onBeforeUnmount(() => {
     gap: 14px;
   }
 
-  .hero-brand-mark {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    padding: 5px;
+  .ctu-crest-img {
+    width: 44px;
+    height: 44px;
   }
 
   .hero-banner-content h1 {

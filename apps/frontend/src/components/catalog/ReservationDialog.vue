@@ -82,15 +82,20 @@ function onCancel(event: Event) {
 
       <div v-else class="dialog-body reservation-success" role="status">
         <span class="reservation-check" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6" /></svg>
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6" /></svg>
         </span>
         <h2>Đặt mượn thành công</h2>
-        <p>{{ book.title }}</p>
+        <p class="reservation-success-book">{{ book.title }}</p>
         <div class="reservation-deadline">
-          <span>Nhận sách trước</span>
-          <strong>{{ formatLoanDate(loan?.reservationExpiryDate) }}</strong>
+          <div class="reservation-deadline-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+          </div>
+          <div class="reservation-deadline-content">
+            <span>Hạn đến thư viện nhận sách</span>
+            <strong>{{ formatLoanDate(loan?.reservationExpiryDate) }}</strong>
+          </div>
         </div>
-        <p>Vui lòng đến Thư viện CTU nhận sách trước hạn.</p>
+        <p class="reservation-pickup-hint">Vui lòng mang thẻ sinh viên / thẻ bạn đọc đến quầy phục vụ Thư viện CTU trước thời hạn trên để nhận sách.</p>
       </div>
 
       <footer class="dialog-footer">
@@ -152,30 +157,93 @@ function onCancel(event: Event) {
 
 .reservation-dialog .notice { margin-top: 14px; }
 
-.reservation-success { text-align: center; }
+.reservation-success {
+  text-align: center;
+  padding: 8px 4px 16px;
+}
 
-.reservation-success h2 { margin: 12px 0 6px; font-size: 20px; }
+.reservation-success h2 {
+  margin: 16px 0 6px;
+  font-size: 21px;
+  font-weight: 700;
+  color: #0f172a;
+}
 
-.reservation-success p { color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+.reservation-success-book {
+  color: #334155;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
 
 .reservation-check {
   display: inline-grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.reservation-deadline {
+  margin: 16px 0;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.reservation-deadline-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: #dcfce7;
+  color: #15803d;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.reservation-deadline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reservation-deadline-content span {
+  font-size: 12px;
+  font-weight: 500;
   color: #166534;
 }
 
-.reservation-deadline { margin: 20px 0; text-align: left; }
+.reservation-deadline-content strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #14532d;
+}
 
-.reservation-deadline strong { font-size: 17px; }
+.reservation-pickup-hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #64748b;
+  text-align: center;
+}
 
 @media (max-width: 520px) {
-  .reservation-dialog { width: calc(100% - 20px); max-height: calc(100dvh - 20px); height: auto; border-radius: 12px; }
+  .reservation-dialog { width: calc(100% - 20px); max-height: calc(100dvh - 20px); height: auto; border-radius: 14px; }
   .reservation-facts { grid-template-columns: 1fr; }
   .reservation-dialog .dialog-footer { flex-direction: column-reverse; align-items: stretch; }
   .reservation-dialog .dialog-footer .btn { width: 100%; min-height: 44px; }
+  .reservation-deadline { flex-direction: row; align-items: center; }
 }
 </style>

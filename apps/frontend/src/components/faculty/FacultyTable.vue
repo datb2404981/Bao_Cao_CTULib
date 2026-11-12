@@ -11,10 +11,11 @@ const emit = defineEmits<{
   (e: 'edit', faculty: Faculty): void;
 }>();
 
-function formatFacultyCode(id: string): string {
-  if (!id) return '---';
+function formatFacultyCode(faculty: Faculty): string {
+  if (faculty.facultyCode) return faculty.facultyCode;
+  if (!faculty._id) return '---';
   // Hiển thị 6 ký tự cuối của ObjectId dưới dạng mã code dễ nhìn, kèm tooltip full id
-  return `KH-${id.slice(-6).toUpperCase()}`;
+  return `KH-${faculty._id.slice(-6).toUpperCase()}`;
 }
 </script>
 
@@ -68,7 +69,7 @@ function formatFacultyCode(id: string): string {
             </td>
             <td data-label="Mã khoa" class="col-code">
               <span class="faculty-code-tag" :title="`ID: ${faculty._id}`">
-                {{ formatFacultyCode(faculty._id) }}
+                {{ formatFacultyCode(faculty) }}
               </span>
             </td>
             <td data-label="Mô tả" class="col-desc">

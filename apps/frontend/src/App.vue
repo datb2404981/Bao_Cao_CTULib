@@ -8,30 +8,60 @@ import AuthorManagementView from './views/AuthorManagementView.vue'
 
 import PeopleManagementView from './views/PeopleManagementView.vue'
 import AccountsManagementView from './views/AccountsManagementView.vue'
+import SettingsView from './views/SettingsView.vue'
 import MyLoansView from './views/MyLoansView.vue'
 import LoansManagementView from './views/LoansManagementView.vue'
 import PenaltiesView from './views/PenaltiesView.vue'
 import DashboardView from './views/DashboardView.vue'
+import AccountProfile from './components/profile/AccountProfile.vue'
 import './styles/loans.css'
-import { canAccess, guardView, protectedViews, viewFromHash, viewPaths } from './middlewares/access'
+import { canAccess, defaultViewForUser, guardView, protectedViews, viewFromHash, viewPaths } from './middlewares/access'
 import type { AppView } from './middlewares/access'
 export type { AppView } from './middlewares/access'
+import type { Book } from './types/book'
 
 // View routing state
 const currentView = ref<AppView>('catalog')
 const mobileMenuOpen = ref(false)
 const profileDropdownOpen = ref(false)
 const catalogViewRef = ref<InstanceType<typeof BookCatalogView> | null>(null)
+const pendingBorrowBook = ref<Book | null>(null)
+
+function clearPendingBorrowBook() {
+  pendingBorrowBook.value = null
+  try {
+    sessionStorage.removeItem('ctulib_pending_borrow_book')
+  } catch {
+    // ignore
+  }
+}
+
+function handleRequireLogin(book: Book) {
+  pendingBorrowBook.value = book
+  try {
+    sessionStorage.setItem('ctulib_pending_borrow_book', JSON.stringify(book))
+  } catch {
+    // ignore
+  }
+  navigateTo('auth')
+}
+
+function openDirectLogin() {
+  clearPendingBorrowBook()
+  navigateTo('auth')
+}
 
 function toggleProfileDropdown() {
   profileDropdownOpen.value = !profileDropdownOpen.value
 }
 
+const isStaffUser = computed(() => !!currentUser.value && ['EMPLOYEE', 'ADMIN'].includes(currentUser.value.role))
 const canManageBooks = computed(() => canAccess(currentUser.value, 'management'))
 const canManageFaculties = computed(() => canAccess(currentUser.value, 'faculty'))
 const canManageAuthors = computed(() => canAccess(currentUser.value, 'author'))
 const canManagePeople = computed(() => canAccess(currentUser.value, 'reader'))
 const canManageAccounts = computed(() => canAccess(currentUser.value, 'accounts'))
+const canManageSettings = computed(() => canAccess(currentUser.value, 'settings'))
 const canManageLoans = computed(() => canAccess(currentUser.value, 'loans'))
 const canCollectPenalty = computed(() => canAccess(currentUser.value, 'penalties'))
 const canViewDashboard = computed(() => canAccess(currentUser.value, 'dashboard'))
@@ -46,7 +76,7 @@ const userInitials = computed(() => {
   return id.slice(0, 2).toUpperCase()
 })
 
-async function syncViewFromHash() {
+async function syncViewFromHash(normalizeStaffLanding = false) {
   if (starting.value) return
   const id = ++navigationId
   const requested = viewFromHash(window.location.hash)
@@ -63,6 +93,9 @@ async function syncViewFromHash() {
     }
   }
   if (id !== navigationId) return
+  if (normalizeStaffLanding && requested === 'catalog' && currentUser.value && ['EMPLOYEE', 'ADMIN'].includes(currentUser.value.role)) {
+    target = defaultViewForUser(currentUser.value)
+  }
   currentView.value = guardView(currentUser.value, target)
   checkingAccess.value = false
   if (currentView.value !== requested) window.history.replaceState(null, '', `#/${viewPaths[currentView.value]}`)
@@ -166,6 +199,31 @@ async function submit() {
     await authenticate(mode.value, { ctuIdentifier, password: password.value, ...(registering.value ? { email: email.value.trim() } : {}) })
     password.value = confirmation.value = ''
     visible.value = false
+
+    let bookToBorrow = pendingBorrowBook.value
+    if (!bookToBorrow) {
+      try {
+        const stored = sessionStorage.getItem('ctulib_pending_borrow_book')
+        if (stored) {
+          bookToBorrow = JSON.parse(stored)
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (bookToBorrow) {
+      pendingBorrowBook.value = bookToBorrow
+      try {
+        sessionStorage.removeItem('ctulib_pending_borrow_book')
+      } catch {
+        // ignore
+      }
+      intendedView = null
+      navigateTo('catalog')
+      return
+    }
+
     navigateTo(intendedView || (canViewMyLoans.value ? 'my-loans' : canViewDashboard.value ? 'dashboard' : canManagePeople.value ? 'reader' : canManageBooks.value ? 'management' : 'catalog'))
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : 'Đã xảy ra lỗi. Vui lòng thử lại.'
@@ -181,6 +239,7 @@ async function signOut() {
     await logout()
     switchMode('login')
     intendedView = null
+    clearPendingBorrowBook()
     navigateTo('catalog')
   } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Không thể đăng xuất. Vui lòng thử lại.' }
   finally { busy.value = false }
@@ -193,16 +252,30 @@ function handleGlobalClick(e: MouseEvent) {
   }
 }
 
+function handleHashChange() {
+  mobileMenuOpen.value = false
+  profileDropdownOpen.value = false
+  void syncViewFromHash()
+}
+
 onMounted(async () => {
   document.addEventListener('click', handleGlobalClick)
   document.addEventListener('keydown', handleEscape)
-  window.addEventListener('hashchange', syncViewFromHash)
+  window.addEventListener('hashchange', handleHashChange)
+  try {
+    const stored = sessionStorage.getItem('ctulib_pending_borrow_book')
+    if (stored) {
+      pendingBorrowBook.value = JSON.parse(stored)
+    }
+  } catch {
+    // ignore
+  }
   try { await refreshSession() }
   catch (cause) {
     if (!(cause instanceof AuthError && cause.status === 401)) error.value = cause instanceof Error ? cause.message : 'Không thể khôi phục phiên đăng nhập.'
   } finally {
     starting.value = false
-    void syncViewFromHash()
+    void syncViewFromHash(true)
   }
 })
 
@@ -210,7 +283,7 @@ onUnmounted(() => {
   navigationId++
   document.removeEventListener('click', handleGlobalClick)
   document.removeEventListener('keydown', handleEscape)
-  window.removeEventListener('hashchange', syncViewFromHash)
+  window.removeEventListener('hashchange', handleHashChange)
 })
 </script>
 
@@ -234,12 +307,17 @@ onUnmounted(() => {
           </svg>
         </button>
 
-        <a class="brand" href="#/catalog" @click.prevent="handleBrandHomeClick">
-          <strong>CTULib</strong>
+        <a class="brand" href="#/catalog" @click.prevent="handleBrandHomeClick" aria-label="CTULib - Thư viện Đại học Cần Thơ">
+          <img src="/ctu-logo.png" alt="Logo Đại học Cần Thơ" class="brand-logo" />
+          <div class="brand-meta">
+            <strong><span class="brand-ctu">CTU</span><span class="brand-lib">Lib</span></strong>
+            <span class="brand-sub">Đại học Cần Thơ</span>
+          </div>
         </a>
 
         <nav id="main-navigation" aria-label="Điều hướng chính" class="topnav" :class="{ 'is-open': mobileMenuOpen }">
           <a
+            v-if="!isStaffUser"
             :class="{ active: currentView === 'catalog' }"
             href="#/catalog"
             @click.prevent="handleSearchNavClick"
@@ -278,14 +356,7 @@ onUnmounted(() => {
           <a v-if="canManagePeople" href="#/employee" :class="{ active: currentView === 'employee' }" @click.prevent="navigateTo('employee')">Nhân viên</a>
           <a v-if="canManagePeople" href="#/permission" :class="{ active: currentView === 'permission' }" @click.prevent="navigateTo('permission')">Quyền chức năng</a>
           <a v-if="canManageAccounts" href="#/accounts" :class="{ active: currentView === 'accounts' }" :aria-current="currentView === 'accounts' ? 'page' : undefined" @click.prevent="navigateTo('accounts')">Quản lý tài khoản</a>
-          <a
-            v-if="currentUser"
-            :class="{ active: currentView === 'auth' }"
-            href="#/auth"
-            @click.prevent="navigateTo('auth')"
-          >
-            Tài khoản
-          </a>
+          <a v-if="canManageSettings" href="#/settings" :class="{ active: currentView === 'settings' }" :aria-current="currentView === 'settings' ? 'page' : undefined" @click.prevent="navigateTo('settings')">Cài đặt hệ thống</a>
         </nav>
       </div>
 
@@ -408,7 +479,7 @@ onUnmounted(() => {
           v-else
           class="btn small primary btn-login-top"
           type="button"
-          @click="navigateTo('auth')"
+          @click="openDirectLogin"
         >
           <span>Đăng nhập</span>
         </button>
@@ -420,7 +491,13 @@ onUnmounted(() => {
       <!-- 1. Catalog View (SC02) -->
       <div v-if="starting || checkingAccess" class="container" role="status" aria-live="polite" style="padding-top: 40px">{{ starting ? 'Đang khôi phục phiên đăng nhập…' : 'Đang kiểm tra quyền truy cập…' }}</div>
       <section v-else-if="currentView === 'catalog'" aria-label="Tra cứu sách">
-        <BookCatalogView ref="catalogViewRef" @navigate="navigateTo" />
+        <BookCatalogView
+          ref="catalogViewRef"
+          :initial-book="pendingBorrowBook"
+          @navigate="navigateTo"
+          @require-login="handleRequireLogin"
+          @clear-initial-book="clearPendingBorrowBook"
+        />
       </section>
 
       <section v-else-if="currentView === 'my-loans' && canViewMyLoans" aria-label="Phiếu mượn của tôi">
@@ -460,72 +537,57 @@ onUnmounted(() => {
       <section v-else-if="currentView === 'accounts' && canManageAccounts" aria-label="Quản lý tài khoản">
         <AccountsManagementView />
       </section>
+      <section v-else-if="currentView === 'settings' && canManageSettings" aria-label="Cài đặt hệ thống">
+        <SettingsView />
+      </section>
       <section v-else-if="currentView === 'forbidden' || (protectedViews.includes(currentView) && !canAccess(currentUser, currentView))" class="container" style="padding-top: 40px" aria-labelledby="access-denied-title">
         <div class="notice warning" role="alert"><div><h1 id="access-denied-title">Không có quyền truy cập</h1><p>{{ navigationError || 'Tài khoản hiện tại chưa được cấp quyền truy cập màn hình này.' }}</p></div></div>
         <div class="row"><button class="btn primary" @click="navigateTo('catalog')">Về tìm sách</button><button class="btn" @click="retryAccess">Kiểm tra lại quyền</button></div>
       </section>
 
       <!-- 3. Auth Layout (SC01) -->
+      <!-- 3. Auth Layout (SC01) -->
+      <AccountProfile v-else-if="currentView === 'auth' && currentUser && !starting" :busy="busy" :sign-out-error="error" @sign-out="signOut" />
       <div v-else-if="currentView === 'auth'" class="auth-layout">
         <section class="intro" aria-labelledby="intro-title">
-          <div class="intro-badge">
-            <span class="badge-dot"></span>
-            <span>Thư viện Số · Đại học Cần Thơ</span>
+          <div class="intro-brand">
+            <img src="/ctu-logo.png" alt="Logo Đại học Cần Thơ" class="intro-ctu-logo" />
+            <div class="intro-brand-text">
+              <span class="intro-org-title">ĐẠI HỌC CẦN THƠ</span>
+              <span class="intro-suborg-title">THƯ VIỆN</span>
+            </div>
           </div>
 
-          <h1 id="intro-title">
-            Không gian Tri thức<br />& Học thuật Hiện đại
-          </h1>
-
+          <h1 id="intro-title">Hệ thống Thư viện CTULib</h1>
           <p class="intro-lead">
-            Cổng kết nối nguồn tài nguyên học liệu số, giáo trình chính quy và tài liệu nghiên cứu chuyên sâu phục vụ cộng đồng giảng viên, sinh viên Đại học Cần Thơ.
+            Cổng tra cứu học liệu số, mục lục giáo trình chính quy và tài nguyên nghiên cứu khoa học dành cho cán bộ, giảng viên và sinh viên.
           </p>
 
-          <!-- 3 Thẻ thống kê tài nguyên học thuật -->
-          <div class="academic-stats-grid">
-            <div class="stat-card">
-              <span class="stat-num">50.000+</span>
-              <span class="stat-label">Học liệu & Giáo trình</span>
+          <div class="intro-quick-meta">
+            <div class="intro-meta-item">
+              <span class="intro-meta-label">Giờ phục vụ</span>
+              <strong>07:00 – 21:00</strong>
+              <span class="intro-meta-sub">Tất cả các ngày trong tuần</span>
             </div>
-            <div class="stat-card">
-              <span class="stat-num">16</span>
-              <span class="stat-label">Khoa & Viện chuyên môn</span>
+            <div class="intro-meta-item">
+              <span class="intro-meta-label">Địa điểm</span>
+              <strong>Tòa nhà Thư viện (Khu II)</strong>
+              <span class="intro-meta-sub">Đường 3/2, Q. Ninh Kiều, Cần Thơ</span>
             </div>
-            <div class="stat-card">
-              <span class="stat-num">24/7</span>
-              <span class="stat-label">Mục lục trực tuyến OPAC</span>
+            <div class="intro-meta-item">
+              <span class="intro-meta-label">Hỗ trợ kỹ thuật</span>
+              <strong>(0292) 3832 663</strong>
+              <span class="intro-meta-sub">thuvien@ctu.edu.vn</span>
             </div>
           </div>
 
-          <!-- Danh sách tiện ích học thuật -->
-          <ul class="academic-features-list">
-            <li>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              <span>Tra cứu mục lục liên thông chính xác theo mã chuyên ngành & tác giả</span>
-            </li>
-            <li>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              <span>Đặt mượn và theo dõi tình trạng ấn phẩm trực tuyến bằng tài khoản CTU ID</span>
-            </li>
-            <li>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              <span>Hỗ trợ học tập, nghiên cứu khoa học và phát triển học liệu số bền vững</span>
-            </li>
-          </ul>
-
-          <!-- Dòng cam kết học thuật Đại học Cần Thơ -->
-          <div class="intro-motto">
-            <span class="motto-line"></span>
-            <span class="motto-text">HỌC TẬP · NGHIÊN CỨU · PHỤNG SỰ CỘNG ĐỒNG</span>
+          <div class="intro-notice-tip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span>Bạn đọc sử dụng tài khoản <strong>MSSV</strong> hoặc <strong>MSCB</strong> do nhà trường cung cấp để tra cứu và đặt mượn tài liệu trực tuyến.</span>
           </div>
         </section>
 
@@ -534,65 +596,10 @@ onUnmounted(() => {
             <span class="spinner"></span> Đang kiểm tra phiên đăng nhập…
           </div>
 
-          <template v-else-if="currentUser">
-            <div class="auth-header-crest">
-              <div class="auth-icon-badge">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-              <div class="auth-header-text">
-                <h2>Hồ sơ tài khoản</h2>
-                <p class="form-description">Phiên đăng nhập Thư viện Đại học Cần Thơ</p>
-              </div>
-            </div>
-
-            <dl class="account-details-ledger">
-              <div class="ledger-item">
-                <dt>Mã định danh</dt>
-                <dd>{{ currentUser.ctuIdentifier }}</dd>
-              </div>
-              <div v-if="currentUser.email" class="ledger-item">
-                <dt>Địa chỉ email</dt>
-                <dd>{{ currentUser.email }}</dd>
-              </div>
-              <div class="ledger-item">
-                <dt>Vai trò người dùng</dt>
-                <dd><span class="role-badge">{{ role }}</span></dd>
-              </div>
-            </dl>
-
-            <p v-if="error" class="alert error" role="alert">{{ error }}</p>
-
-            <button class="submit-btn btn-logout" type="button" :disabled="busy" @click="signOut">
-              <span>{{ busy ? 'Đang đăng xuất…' : 'Đăng xuất khỏi hệ thống' }}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
-          </template>
-
           <template v-else>
-            <div class="auth-header-crest">
-              <div class="auth-icon-badge">
-                <svg v-if="!registering" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="8.5" cy="7" r="4"></circle>
-                  <line x1="20" y1="8" x2="20" y2="14"></line>
-                  <line x1="23" y1="11" x2="17" y2="11"></line>
-                </svg>
-              </div>
-              <div class="auth-header-text">
-                <h2>{{ registering ? 'Tạo tài khoản mới' : 'Đăng nhập CTULib' }}</h2>
-                <p class="form-description">{{ registering ? 'Đăng ký tài khoản bạn đọc thư viện Đại học Cần Thơ.' : 'Truy cập cổng học liệu số bằng tài khoản CTU ID.' }}</p>
-              </div>
+            <div class="auth-form-header">
+              <h2>{{ registering ? 'Đăng ký tài khoản bạn đọc' : 'Đăng nhập tài khoản' }}</h2>
+              <span class="auth-portal-tag">{{ registering ? 'Thành viên mới hệ thống thư viện' : 'Học liệu số & tra cứu tài liệu Đại học Cần Thơ' }}</span>
             </div>
 
             <div v-if="error" class="alert error" role="alert">
@@ -610,12 +617,6 @@ onUnmounted(() => {
                 <div class="field">
                   <label for="identifier">Mã số sinh viên / cán bộ</label>
                   <div class="input-control">
-                    <span class="field-icon-lead">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
-                    </span>
                     <input
                       id="identifier"
                       v-model="identifier"
@@ -634,14 +635,8 @@ onUnmounted(() => {
 
                 <!-- Email (chỉ hiện khi đăng ký) -->
                 <div v-if="registering" class="field">
-                  <label for="email">Địa chỉ email Đại học Cần Thơ</label>
+                  <label for="email">Địa chỉ email</label>
                   <div class="input-control">
-                    <span class="field-icon-lead">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                      </svg>
-                    </span>
                     <input
                       id="email"
                       v-model="email"
@@ -663,19 +658,13 @@ onUnmounted(() => {
                 <div class="field">
                   <label for="password">Mật khẩu</label>
                   <div class="input-control password-input">
-                    <span class="field-icon-lead">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                      </svg>
-                    </span>
                     <input
                       id="password"
                       v-model="password"
                       :type="visible ? 'text' : 'password'"
                       name="password"
                       :autocomplete="registering ? 'new-password' : 'current-password'"
-                      :placeholder="registering ? 'Tối thiểu 8 ký tự' : 'Nhập mật khẩu của bạn'"
+                      :placeholder="registering ? 'Tối thiểu 8 ký tự' : 'Nhập mật khẩu'"
                       required
                       :aria-invalid="!!fields.password"
                       aria-describedby="password-error"
@@ -707,11 +696,6 @@ onUnmounted(() => {
                 <div v-if="registering" class="field">
                   <label for="confirmation">Xác nhận lại mật khẩu</label>
                   <div class="input-control password-input">
-                    <span class="field-icon-lead">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                      </svg>
-                    </span>
                     <input
                       id="confirmation"
                       v-model="confirmation"
@@ -729,28 +713,28 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Submit Button -->
-                <button class="submit-btn primary-button" type="submit">
-                  <span>{{ busy ? 'Đang xử lý…' : registering ? 'Tạo tài khoản thư viện' : 'Đăng nhập vào hệ thống' }}</span>
+                <button class="auth-submit-btn" type="submit">
+                  <span>{{ busy ? 'Đang xử lý…' : registering ? 'Tạo tài khoản' : 'Đăng nhập' }}</span>
                   <span v-if="busy" class="spinner" aria-hidden="true"></span>
                   <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
                   </svg>
                 </button>
               </fieldset>
             </form>
 
-            <div class="auth-switch-footer">
-              <span v-if="!registering" class="auth-switch-text">
+            <div class="auth-form-switch">
+              <span v-if="!registering">
                 Chưa có tài khoản?
-                <button type="button" class="auth-switch-link" :disabled="busy" @click="switchMode('register')">
-                   Đăng ký
+                <button type="button" class="auth-text-link" :disabled="busy" @click="switchMode('register')">
+                  Đăng ký tài khoản
                 </button>
               </span>
-              <span v-else class="auth-switch-text">
-                Đã có tài khoản thư viện?
-                <button type="button" class="auth-switch-link" :disabled="busy" @click="switchMode('login')">
-                  Đăng nhập ngay
+              <span v-else>
+                Đã có tài khoản bạn đọc?
+                <button type="button" class="auth-text-link" :disabled="busy" @click="switchMode('login')">
+                  Đăng nhập
                 </button>
               </span>
             </div>
@@ -825,16 +809,6 @@ onUnmounted(() => {
 
 .main-content {
   flex: 1;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.brand-icon {
-  color: var(--text);
 }
 
 .profile-menu-container {

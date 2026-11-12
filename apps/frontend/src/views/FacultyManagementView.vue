@@ -40,7 +40,7 @@ const filteredFaculties = computed(() => {
   return faculties.value.filter((f) => {
     const nameMatch = f.facultyName.toLowerCase().includes(query);
     const idMatch = f._id.toLowerCase().includes(query);
-    const codeMatch = `kh-${f._id.slice(-6)}`.toLowerCase().includes(query);
+    const codeMatch = (f.facultyCode || `kh-${f._id.slice(-6)}`).toLowerCase().includes(query);
     const descMatch = (f.description || '').toLowerCase().includes(query);
     return nameMatch || idMatch || codeMatch || descMatch;
   });

@@ -29,16 +29,14 @@ after(async () => {
   }
 });
 
-test("API mượn sách qua /api/v1/loans yêu cầu đăng nhập", async () => {
-  const response = await fetch(`${baseUrl}/api/v1/loans`);
-  const body = await response.json();
-  assert.equal(response.status, 401);
-  assert.equal(body.status, "error");
-});
-
-test("Đường dẫn /loans cũ vẫn hoạt động", async () => {
-  const response = await fetch(`${baseUrl}/loans`);
-  const body = await response.json();
-  assert.equal(response.status, 401);
-  assert.equal(body.status, "error");
-});
+for (const endpoint of ["/loans", "/penalties", "/dashboard/stats"]) {
+  for (const prefix of ["", "/api/v1"]) {
+    const path = `${prefix}${endpoint}`;
+    test(`${path} yêu cầu đăng nhập`, async () => {
+      const response = await fetch(`${baseUrl}${path}`);
+      const body = await response.json();
+      assert.equal(response.status, 401);
+      assert.equal(body.status, "error");
+    });
+  }
+}

@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import { currentUser } from '../../services/auth';
 import { getBookById } from '../../services/book';
 import type { Book } from '../../types/book';
+import BookCoverFallback from './BookCoverFallback.vue';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -16,7 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'require-login'): void;
+  (e: 'require-login', book?: Book): void;
   (e: 'borrow', book: Book): void;
 }>();
 
@@ -121,7 +122,7 @@ function handleDialogClick(event: MouseEvent) {
 function handleBorrow() {
   if (props.reserving || (isLoggedIn.value && !isReader.value)) return;
   if (!isLoggedIn.value) {
-    emit('require-login');
+    emit('require-login', activeBook.value || undefined);
     return;
   }
   if (activeBook.value) {
@@ -186,13 +187,7 @@ function handleBorrow() {
                 class="cover-image"
                 @error="handleImageError"
               />
-              <div v-else class="cover-fallback-large" role="img" :aria-label="`Chưa có ảnh bìa của ${activeBook.title}`">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-                <span>Chưa có ảnh bìa</span>
-              </div>
+              <BookCoverFallback v-else :title="activeBook.title" :book-type="activeBook.bookType" />
             </div>
 
             <div class="record-hero-info">
@@ -380,30 +375,6 @@ function handleBorrow() {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.cover-fallback-large {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #64748b;
-  text-align: center;
-}
-
-.cover-fallback-large svg {
-  width: 28px;
-  height: 28px;
-  color: #8090a5;
-}
-
-.cover-fallback-large span {
-  width: 80px;
-  font-size: 11px;
-  line-height: 1.45;
 }
 
 .record-hero-info {

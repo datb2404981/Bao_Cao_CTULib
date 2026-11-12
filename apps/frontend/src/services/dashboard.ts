@@ -23,4 +23,4 @@ export interface DashboardStatistics {
 }
 
 export const getDashboardStatistics = (): Promise<DashboardStatistics> =>
-  request<DashboardStatistics>('/api/v1/dashboard/stats')
+  request<DashboardStatistics>('/dashboard/stats')

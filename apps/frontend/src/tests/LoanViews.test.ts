@@ -34,6 +34,19 @@ beforeEach(() => {
 })
 
 describe('phiếu mượn của độc giả', () => {
+  it('đặt tên cột thao tác và phân biệt từng nút chi tiết bằng mã phiếu', async () => {
+    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088' }
+    vi.mocked(api.getMyLoans).mockResolvedValue(pageOf([reserved, another]))
+    const view = mount(MyLoansView)
+    await flushPromises()
+    expect(view.findAll('.loan-table th').at(-1)?.text()).toBe('Thao tác')
+    expect(view.findAll('.loan-table tbody button').map(button => button.attributes('aria-label'))).toEqual([
+      'Xem chi tiết phiếu mượn #99439099',
+      'Xem chi tiết phiếu mượn #99439088',
+    ])
+    view.unmount()
+  })
+
   it('hiển thị lịch sử và chỉ hủy khi độc giả xác nhận', async () => {
     const view = mount(MyLoansView)
     await flushPromises()
@@ -104,6 +117,19 @@ describe('phiếu mượn của độc giả', () => {
 })
 
 describe('quản lý mượn trả của thủ thư', () => {
+  it('đặt tên cột thao tác và phân biệt từng nút xử lý bằng mã phiếu', async () => {
+    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088' }
+    vi.mocked(api.getAllLoans).mockResolvedValue(pageOf([reserved, another]))
+    const view = mount(LoansManagementView)
+    await flushPromises()
+    expect(view.findAll('.loan-table th').at(-1)?.text()).toBe('Thao tác')
+    expect(view.findAll('.loan-table tbody button').map(button => button.attributes('aria-label'))).toEqual([
+      'Xử lý phiếu mượn #99439099',
+      'Xử lý phiếu mượn #99439088',
+    ])
+    view.unmount()
+  })
+
   it('giữ nguyên phiếu đang xử lý và chặn thao tác khác khi chờ API', async () => {
     const another = { ...reserved, _id: '507f1f77bcf86cd799439088' }
     vi.mocked(api.getAllLoans).mockResolvedValue(pageOf([reserved, another]))

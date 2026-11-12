@@ -15,7 +15,7 @@ export const createReaderController: RequestHandler = async (req, res, next) => 
     next(error);
   }
 };
-export const getAllReadersController: RequestHandler = async (_req, res, next) => {
+export const getAllReadersController: RequestHandler = async (req, res, next) => {
   try {
     const data = await getAllReaders();
     res.status(200).json({ status: "success", data });

@@ -126,7 +126,7 @@ describe('BookCatalogView.vue', () => {
     expect(getAllSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('uses server-side totals and pagination for a bookType filter', async () => {
+  it('updates server-side totals and pagination when the book type changes without submitting', async () => {
     const textbook = {
       bookId: '56e6630ff48c0647904890f3',
       title: 'Lập trình Web với Node.js và TypeScript',
@@ -151,20 +151,43 @@ describe('BookCatalogView.vue', () => {
     const wrapper = mount(BookCatalogView)
     await flushPromises()
 
-    expect(wrapper.find('.results-line').text()).toContain('24')
+    expect(wrapper.find('.results-line').exists()).toBe(false)
+    expect(wrapper.find('.result-count').exists()).toBe(false)
+    expect(wrapper.find('.pagination-info').text()).toContain('Trang 1 / 2')
 
     // Bộ lọc truyền đến server, kết quả không phụ thuộc các sách của trang trước.
     const kindSelect = wrapper.find('select.kind-select')
     await kindSelect.setValue('REFERENCE')
-    await wrapper.find('form.filters').trigger('submit.prevent')
     await flushPromises()
 
+    expect(getAllSpy).toHaveBeenCalledTimes(2)
     expect(getAllSpy).toHaveBeenCalledWith(expect.objectContaining({ bookType: 'REFERENCE', page: 1 }))
-    expect(wrapper.find('.results-line').text()).toContain('13')
-    expect(wrapper.find('.results-line').text()).not.toContain('24')
+    expect(wrapper.find('.result-count').exists()).toBe(false)
+    expect(wrapper.find('.pagination-info').text()).toContain('Trang 1 / 2')
     expect(wrapper.find('.empty-state').exists()).toBe(false)
     expect(wrapper.text()).toContain('Tài liệu chuyên khảo')
     expect(wrapper.find('.pagination-bar').exists()).toBe(true)
+  })
+
+  it('reloads catalog results when faculty changes without submitting', async () => {
+    const facultyId = '69cabe960354ac17e1a6b451'
+    vi.mocked(facultyService.getAllFaculties).mockResolvedValue([
+      { _id: facultyId, facultyName: 'Khoa Công nghệ thông tin' },
+    ])
+    const getAllSpy = vi.spyOn(bookService, 'getAllBooks').mockResolvedValue({
+      items: [],
+      meta: { totalItems: 0, totalPages: 0, currentPage: 1, limit: 12 },
+    })
+
+    const wrapper = mount(BookCatalogView)
+    await flushPromises()
+    expect(getAllSpy).toHaveBeenCalledTimes(1)
+
+    await wrapper.get('select.faculty-select').setValue(facultyId)
+    await flushPromises()
+
+    expect(getAllSpy).toHaveBeenCalledTimes(2)
+    expect(getAllSpy).toHaveBeenLastCalledWith(expect.objectContaining({ facultyId, page: 1 }))
   })
 
   it('ignores stale API responses when the search changes during a request', async () => {
@@ -187,7 +210,7 @@ describe('BookCatalogView.vue', () => {
     resolveFirst({ items: [], meta: { totalItems: 0, totalPages: 0, currentPage: 1, limit: 12 } })
     await flushPromises()
     expect(wrapper.text()).toContain('Kết quả mới')
-    expect(wrapper.find('.results-line').text()).toContain('1')
+    expect(wrapper.findAll('.book-card')).toHaveLength(1)
     expect(getAllSpy).toHaveBeenCalledTimes(2)
   })
 

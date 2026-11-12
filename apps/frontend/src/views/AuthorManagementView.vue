@@ -40,7 +40,7 @@ const filteredAuthors = computed(() => {
   return authors.value.filter((a) => {
     const nameMatch = a.fullName.toLowerCase().includes(query);
     const idMatch = a._id.toLowerCase().includes(query);
-    const codeMatch = `tg-${a._id.slice(-6)}`.toLowerCase().includes(query);
+    const codeMatch = (a.authorCode || `tg-${a._id.slice(-6)}`).toLowerCase().includes(query);
     const affMatch = (a.affiliation || '').toLowerCase().includes(query);
     const notesMatch = (a.notes || '').toLowerCase().includes(query);
     return nameMatch || idMatch || codeMatch || affMatch || notesMatch;

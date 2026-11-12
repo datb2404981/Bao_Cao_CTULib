@@ -17,7 +17,7 @@ pnpm install
 pnpm --filter @ctulib/frontend dev
 ```
 
-Mở `http://localhost:5173`. Backend mặc định ở `http://localhost:8080`; đặt `CLIENT_URL` phía backend đúng `http://localhost:5173` để đáp ứng kiểm tra Origin. Vite chuyển tiếp `/api` và `/book` đến backend và giữ Origin gốc.
+Mở `http://localhost:5173`. Backend mặc định ở `http://localhost:8080`; đặt `CLIENT_URL` phía backend đúng `http://localhost:5173` để đáp ứng kiểm tra Origin. Vite chuyển tiếp `/api`, `/book`, `/loans`, `/penalties`, `/dashboard` và các route quản lý hiện có đến backend, giữ Origin gốc.
 
 Nếu backend dùng cổng khác, đặt `VITE_API_PROXY_TARGET` khi khởi chạy Vite. Frontend cũng hỗ trợ `VITE_API_BASE_URL` là origin API (không kèm `/api/v1/auth`); mặc định dùng cùng origin.
 
@@ -27,7 +27,7 @@ pnpm --filter @ctulib/frontend build
 
 ## Triển khai
 
-Proxy Vite chỉ hoạt động trong chế độ dev. Khi triển khai, cấu hình reverse proxy `/api/*`, `/book` và `/book/*` đến backend trước SPA fallback, hoặc đặt `VITE_API_BASE_URL` lúc build. Cloudflare Pages có Functions chuyển tiếp `/api/*` và `/book/*`. `vercel.json` hiện chỉ cung cấp SPA fallback, chưa có đích backend để cấu hình rewrite API.
+Proxy Vite chỉ hoạt động trong chế độ dev. Khi triển khai, cấu hình reverse proxy `/api/*`, `/book/*`, `/loans/*`, `/penalties/*`, `/dashboard/*` (bao gồm đường dẫn gốc của mỗi nhóm) đến backend trước SPA fallback, hoặc đặt `VITE_API_BASE_URL` lúc build. Cloudflare Pages có Functions chuyển tiếp `/api/*`, `/book/*`, `/loans/*`, `/penalties/*` và `/dashboard/*`. `vercel.json` hiện chỉ cung cấp SPA fallback, chưa có đích backend để cấu hình rewrite API.
 
 Backend dùng cookie `SameSite=strict`, `Secure` trong production: dùng HTTPS và triển khai frontend/API cùng site (hoặc reverse proxy cùng origin). Hai tên miền khác site sẽ không duy trì phiên bằng cấu hình backend hiện tại. CORS và `CLIENT_URL` phải khớp origin frontend.
 

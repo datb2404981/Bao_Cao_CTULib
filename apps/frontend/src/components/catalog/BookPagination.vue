@@ -7,10 +7,12 @@ const props = withDefaults(
     totalPages: number;
     totalItems: number;
     limit: number;
+    showTotalItems?: boolean;
     disabled?: boolean;
     isLoading?: boolean;
   }>(),
   {
+    showTotalItems: true,
     disabled: false,
     isLoading: false,
   }
@@ -70,25 +72,20 @@ function onLimitChange(e: Event) {
 
 <template>
   <div v-if="totalPages > 0" class="pagination-bar">
-    <!-- Thông tin tóm tắt bên trái -->
     <div class="pagination-info">
-      <div class="info-badge">
-        <span>
-          <strong class="num highlight-count">{{ totalItems }}</strong> sách
-        </span>
-      </div>
-      <span class="info-divider">·</span>
+      <strong v-if="showTotalItems" class="result-count num">{{ totalItems }} sách</strong>
+      <span v-if="showTotalItems" class="info-divider" aria-hidden="true"></span>
       <span class="page-counter">
-        Trang <strong class="num current-num">{{ currentPage }}</strong> / <strong class="num total-num">{{ totalPages }}</strong>
+        Trang <strong class="num current-num">{{ currentPage }}</strong> / <span class="num total-num">{{ totalPages }}</span>
       </span>
     </div>
 
     <!-- Cụm điều khiển bên phải -->
     <div class="pagination-controls">
-      <!-- Bộ chọn số lượng / trang -->
       <div class="limit-selector-wrapper">
-        <label class="limit-selector" aria-label="Số sách mỗi trang">
-          <select :value="limit" :disabled="isDisabled" @change="onLimitChange">
+        <label class="limit-selector">
+          <span>Hiển thị</span>
+          <select aria-label="Số sách mỗi trang" :value="limit" :disabled="isDisabled" @change="onLimitChange">
             <option :value="10">10 / trang</option>
             <option :value="12">12 / trang</option>
             <option :value="24">24 / trang</option>
@@ -100,7 +97,6 @@ function onLimitChange(e: Event) {
         </label>
       </div>
 
-      <!-- Dãy nút chuyển trang -->
       <nav class="pagination" aria-label="Phân trang">
         <!-- Nút Trang trước -->
         <button
@@ -124,6 +120,7 @@ function onLimitChange(e: Event) {
             type="button"
             class="page-num-btn num"
             :class="{ active: p === currentPage }"
+            :aria-label="`Trang ${p}`"
             :aria-current="p === currentPage ? 'page' : undefined"
             :disabled="isDisabled"
             @click="goToPage(p)"
@@ -156,48 +153,38 @@ function onLimitChange(e: Event) {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 20px;
   margin-top: 24px;
-  padding: 12px 18px;
+  padding: 12px 20px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 10px;
 }
 
 .pagination-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 12px;
+  font-size: 14px;
   color: var(--muted);
-  flex-wrap: wrap;
+  white-space: nowrap;
 }
 
-.info-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--ground);
-  border: 1px solid var(--line);
-  padding: 3px 8px;
-  border-radius: 4px;
-  color: var(--text);
-  font-weight: 500;
-}
-
-.highlight-count {
+.result-count {
   font-variant-numeric: tabular-nums;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .info-divider {
-  color: var(--control);
+  width: 1px;
+  height: 16px;
+  background: var(--line);
 }
 
 .page-counter {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 14px;
 }
 
 .current-num,
@@ -210,7 +197,7 @@ function onLimitChange(e: Event) {
 .pagination-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
@@ -222,18 +209,22 @@ function onLimitChange(e: Event) {
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .limit-selector select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text);
-  height: 32px;
-  min-height: 32px;
-  padding: 0 28px 0 10px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 32px 0 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--control);
   background: var(--surface);
@@ -262,24 +253,25 @@ function onLimitChange(e: Event) {
 }
 
 .pagination {
+  position: static;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   user-select: none;
 }
 
 .page-nav-btn,
 .page-num-btn {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   padding: 0;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
@@ -301,13 +293,13 @@ function onLimitChange(e: Event) {
   border-color: var(--line);
   color: var(--muted-light);
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
 .page-num-btn {
   font-variant-numeric: tabular-nums;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   color: var(--muted);
 }
 
@@ -333,8 +325,8 @@ function onLimitChange(e: Event) {
 }
 
 .page-ellipsis {
-  width: 22px;
-  height: 32px;
+  width: 20px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -346,8 +338,8 @@ function onLimitChange(e: Event) {
   .pagination-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
-    padding: 12px 14px;
+    gap: 14px;
+    padding: 14px;
   }
 
   .pagination-info {
@@ -356,6 +348,10 @@ function onLimitChange(e: Event) {
 
   .pagination-controls {
     justify-content: space-between;
+    gap: 10px;
   }
+
+  .pagination { gap: 4px; }
+  .page-num-btn:not(.active), .page-ellipsis { display: none; }
 }
 </style>

@@ -1,7 +1,7 @@
 import { request } from './request'
 import type { PenaltyCollectionResult, PenaltyDetail, PenaltyFilters, PenaltyPage } from '../types/penalty'
 
-const base = '/api/v1/penalties'
+const base = '/penalties'
 
 export const getPenalties = (filters: PenaltyFilters = {}): Promise<PenaltyPage> => {
   const params = new URLSearchParams()
