@@ -5,6 +5,7 @@ export async function onRequest({ request, env }) {
     const hostname = new URL(request.url).hostname;
     const isPagesDev = hostname.endsWith('.pages.dev') || hostname === 'localhost' || hostname === '127.0.0.1';
     const fallbackOrigin = isPagesDev ? 'https://ctulib-api-staging.onrender.com' : '';
+    const fallbackOrigin = isPagesDev ? 'https://bao-cao-ctulib.onrender.com' : '';
     const configuredOrigin = env.API_ORIGIN || fallbackOrigin;
     origin = new URL(configuredOrigin);
     if (origin.protocol !== 'https:' || origin.username || origin.password ||

@@ -2,6 +2,8 @@
 
 Hệ thống quản lý thư viện hiện đại, toàn diện và phân quyền theo vai trò (Độc giả, Nhân viên thư viện, Quản trị viên). Dự án được thiết kế theo mô hình Monorepo hiệu năng cao với kiến trúc hàm chức năng (Functional Architecture), đảm bảo tính module hóa, bảo mật và khả năng mở rộng.
 
+🌐 **Website Demo / Báo Cáo Dự Án**: [https://bao-cao-ctulib.pages.dev/](https://bao-cao-ctulib.pages.dev/)
+
 ---
 
 ## 🛠 Công Nghệ Sử Dụng (Tech Stack)
