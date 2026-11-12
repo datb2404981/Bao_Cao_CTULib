@@ -52,6 +52,35 @@ describe('phiên dùng chung cookie giữa các khung', () => {
     expect(lock).toHaveBeenCalledTimes(2)
   })
 
+  it('cùng tài khoản đăng nhập ở hai khung rồi cả hai vẫn refresh được', async () => {
+    let queue = Promise.resolve()
+    vi.stubGlobal('navigator', { locks: { request: (_name: string, action: () => Promise<unknown>) => {
+      const result = queue.then(action)
+      queue = result.then(() => undefined, () => undefined)
+      return result
+    } } })
+    let cookieVersion = 0
+    const logins: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, options?: RequestInit) => {
+      if (url.endsWith('/me')) return success(reader)
+      if (url.endsWith('/login')) {
+        logins.push((JSON.parse(String(options?.body)) as { ctuIdentifier: string }).ctuIdentifier)
+      }
+      cookieVersion++
+      return success({ token: `access-${cookieVersion}`, expiresIn: 900 })
+    }))
+    const first = await import('../services/auth')
+    vi.resetModules()
+    const second = await import('../services/auth')
+    const input = { ctuIdentifier: reader.ctuIdentifier, password: 'test-password' }
+    await Promise.all([first.authenticate('login', input), second.authenticate('login', input)])
+    await Promise.all([first.refreshSession(), second.refreshSession()])
+    expect(logins).toEqual([reader.ctuIdentifier, reader.ctuIdentifier])
+    expect(first.currentUser.value?.accountId).toBe(reader.accountId)
+    expect(second.currentUser.value?.accountId).toBe(reader.accountId)
+    expect(cookieVersion).toBe(4)
+  })
+
   it('login, refresh và logout dùng cùng khóa để không ghi đè cookie đồng thời', async () => {
     const lock = vi.fn(async (_name: string, action: () => Promise<unknown>) => action())
     vi.stubGlobal('navigator', { locks: { request: lock } })

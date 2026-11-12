@@ -1,4 +1,5 @@
 import { readonly, ref } from 'vue'
+import { fetchWithRateLimitRetry } from './fetchWithRateLimitRetry'
 
 export interface AuthUser {
   accountId: string
@@ -71,7 +72,7 @@ export async function refreshAuthorization(): Promise<void> {
   const token = accessToken
   let response: Response
   try {
-    response = await fetch(`${base}/api/v1/auth/me`, {
+    response = await fetchWithRateLimitRetry(`${base}/api/v1/auth/me`, {
       credentials: 'include', headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(15000),
     })
@@ -79,7 +80,6 @@ export async function refreshAuthorization(): Promise<void> {
   const result = await response.json().catch(() => null)
   if (version !== sessionVersion || check !== authorizationVersion) return
   if (!response.ok || result?.status !== 'success') {
-    user.value = null
     if ([401, 403].includes(response.status)) clearSession()
     throw new AuthError(result?.message || 'Không thể kiểm tra quyền truy cập.', response.status)
   }
@@ -87,7 +87,6 @@ export async function refreshAuthorization(): Promise<void> {
   if (!data || typeof data.accountId !== 'string' || typeof data.ctuIdentifier !== 'string'
     || !['READER', 'EMPLOYEE', 'ADMIN'].includes(data.role)
     || !Array.isArray(data.permissions) || !data.permissions.every((value: unknown) => typeof value === 'string')) {
-    user.value = null
     throw new AuthError('Thông tin quyền truy cập không hợp lệ.', 502)
   }
   user.value = data as AuthUser
@@ -96,8 +95,7 @@ async function acceptSession(data: SessionData) {
   sessionVersion++
   accessToken = data.token
   expiresAt = Date.now() + data.expiresIn * 1000
-  try { await refreshAuthorization() }
-  catch (cause) { user.value = null; throw cause }
+  await refreshAuthorization()
   clearTimeout(timer)
   timer = setTimeout(() => { void refreshSession().catch(() => {}) }, Math.max(1000, data.expiresIn * 1000 - 60000))
 }
@@ -116,7 +114,9 @@ export function refreshSession(): Promise<void> {
 export async function authenticate(mode: 'login' | 'register', input: { ctuIdentifier: string; password: string; email?: string }) {
   if (pendingRefresh) await pendingRefresh.catch(() => {})
   await withSessionLock(async () => {
-    await acceptSession(await request(mode, input))
+    const data = await request(mode, input)
+    clearSession()
+    await acceptSession(data)
   })
 }
 export async function logout() {
