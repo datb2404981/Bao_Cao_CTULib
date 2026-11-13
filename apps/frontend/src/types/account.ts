@@ -1,4 +1,5 @@
 export type AccountRole = 'READER' | 'EMPLOYEE' | 'ADMIN'
+export type AccountRoleFilter = AccountRole | 'STAFF'
 
 export interface AccountRow {
   _id: string
@@ -7,9 +8,23 @@ export interface AccountRow {
   role: AccountRole
   isActive: boolean
   fullName?: string
+  position?: string
+  permissionIds?: string[]
   isBorrowingBlocked?: boolean
   isBorrowingManuallyBlocked?: boolean
   createdAt?: string
+}
+
+export interface CreateStaffAccountPayload {
+  ctuIdentifier: string
+  email: string
+  password: string
+  role: 'EMPLOYEE' | 'ADMIN'
+  fullName: string
+  position?: string
+  phoneNumber?: string
+  address?: string
+  permissionIds: string[]
 }
 
 export interface AccountsResult {
@@ -21,6 +36,6 @@ export interface AccountFilters {
   page: number
   limit: number
   search?: string
-  role?: AccountRole
+  role?: AccountRoleFilter
   isActive?: 'true' | 'false'
 }

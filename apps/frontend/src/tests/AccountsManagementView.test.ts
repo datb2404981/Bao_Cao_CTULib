@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import AccountsManagementView from '../views/AccountsManagementView.vue'
-import { getAccounts, updateAccount } from '../services/account'
+import { createStaffAccount, getAccounts, updateAccount } from '../services/account'
+import { getPermissions, updateEmployee } from '../services/people'
 import type { AccountsResult, AccountRow } from '../types/account'
 
-vi.mock('../services/account', () => ({ getAccounts: vi.fn(), updateAccount: vi.fn() }))
+vi.mock('../services/account', () => ({ getAccounts: vi.fn(), createStaffAccount: vi.fn(), updateAccount: vi.fn() }))
+vi.mock('../services/people', () => ({ getPermissions: vi.fn(), updateEmployee: vi.fn() }))
 
 const row: AccountRow = { _id: '507f1f77bcf86cd799439011', ctuIdentifier: 'B2404981', email: 'student@ctu.edu.vn', role: 'READER', isActive: true, fullName: 'Nguyễn Văn An' }
 const result = (items: AccountRow[], totalItems = items.length, totalPages = 1): AccountsResult => ({ items, meta: { totalItems, totalPages, currentPage: 1, limit: 10 } })
@@ -13,6 +15,10 @@ beforeEach(() => {
   vi.restoreAllMocks()
   vi.resetAllMocks()
   vi.mocked(getAccounts).mockResolvedValue(result([row]))
+  vi.mocked(getPermissions).mockResolvedValue([
+    { _id: '507f1f77bcf86cd799439021', permissionName: 'Quản lý mượn trả', description: 'Duyệt bàn giao & nhận trả' },
+  ])
+  vi.mocked(updateEmployee).mockResolvedValue({ _id: '507f1f77bcf86cd799439012', fullName: 'NV', permissionIds: [] })
   vi.mocked(updateAccount).mockResolvedValue(row)
   vi.spyOn(HTMLDialogElement.prototype, 'showModal').mockImplementation(function (this: HTMLDialogElement) { this.setAttribute('open', '') })
   vi.spyOn(HTMLDialogElement.prototype, 'close').mockImplementation(function (this: HTMLDialogElement) { this.removeAttribute('open') })
@@ -97,6 +103,57 @@ describe('quản lý tài khoản SC23–SC24', () => {
     complete(result([{ ...row, fullName: 'Kết quả cũ' }]))
     await flushPromises()
     expect(view.text()).not.toContain('Kết quả cũ')
+    view.unmount()
+  })
+
+  it('tách tab Nhân viên & Quản trị với Độc giả và tạo tài khoản nhân viên kèm phân quyền', async () => {
+    const createdStaff: AccountRow = {
+      _id: '507f1f77bcf86cd799439099',
+      ctuIdentifier: 'CB1001',
+      email: 'thuthu@ctu.edu.vn',
+      role: 'EMPLOYEE',
+      isActive: true,
+      fullName: 'Trần Thủ Thư',
+      position: 'Thủ thư',
+      permissionIds: ['507f1f77bcf86cd799439021'],
+    }
+    vi.mocked(createStaffAccount).mockResolvedValue(createdStaff)
+
+    const view = mount(AccountsManagementView, { attachTo: document.body })
+    await flushPromises()
+
+    const tabs = view.findAll('.account-tabs [role="tab"]')
+    await tabs[1]!.trigger('click')
+    await flushPromises()
+    expect(getAccounts).toHaveBeenLastCalledWith({ page: 1, limit: 10, search: '', role: 'STAFF', isActive: undefined })
+
+    await tabs[2]!.trigger('click')
+    await flushPromises()
+    expect(getAccounts).toHaveBeenLastCalledWith({ page: 1, limit: 10, search: '', role: 'READER', isActive: undefined })
+
+    await view.get('.accounts-head button.primary').trigger('click')
+    await flushPromises()
+
+    await view.get('input[name="ctuIdentifier"]').setValue('CB1001')
+    await view.get('input[name="fullName"]').setValue('Trần Thủ Thư')
+    await view.get('input[name="staffEmail"]').setValue('thuthu@ctu.edu.vn')
+    await view.get('input[name="staffPassword"]').setValue('Matkhau123!')
+    await view.get('input[name="position"]').setValue('Thủ thư')
+    await view.get('.perm-list input[type="checkbox"]').setValue(true)
+    await view.get('dialog form').trigger('submit')
+    await flushPromises()
+
+    expect(createStaffAccount).toHaveBeenCalledWith({
+      ctuIdentifier: 'CB1001',
+      email: 'thuthu@ctu.edu.vn',
+      password: 'Matkhau123!',
+      role: 'EMPLOYEE',
+      fullName: 'Trần Thủ Thư',
+      position: 'Thủ thư',
+      phoneNumber: undefined,
+      permissionIds: ['507f1f77bcf86cd799439021'],
+    })
+    expect(view.text()).toContain('Đã tạo tài khoản nhân viên CB1001')
     view.unmount()
   })
 })
