@@ -35,12 +35,29 @@ export const createLoanRecord = async (input: { readerId: string; bookId: string
         { session, new: true },
       );
       if (!reader) {
-        const exists = await readerModel.exists({ _id: input.readerId }).session(session);
+        const existingReader = await readerModel
+          .findById(input.readerId)
+          .select("isBorrowingBlocked isBorrowingManuallyBlocked borrowingBlockReason")
+          .session(session)
+          .lean();
+        if (!existingReader) {
+          throw new AppError(
+            "Tài khoản chưa có hồ sơ độc giả. Vui lòng liên hệ thư viện hoặc cập nhật hồ sơ để mượn sách.",
+            404,
+          );
+        }
+        if (existingReader.isBorrowingBlocked) {
+          throw new AppError(
+            "Tài khoản đang bị khoá quyền mượn vì bạn đang có quyển sách bị phạt hoặc quá hạn. Vui lòng nộp phạt trước khi mượn sách tiếp theo.",
+            403,
+          );
+        }
+        const reason = existingReader.borrowingBlockReason?.trim();
         throw new AppError(
-          exists
-            ? "Tài khoản đang bị khoá mượn sách"
-            : "Tài khoản chưa có hồ sơ độc giả. Vui lòng liên hệ thư viện hoặc cập nhật hồ sơ để mượn sách.",
-          exists ? 403 : 404,
+          reason
+            ? `Tài khoản đang bị khoá quyền mượn (${reason}). Vui lòng liên hệ thư viện trước khi mượn sách tiếp theo.`
+            : "Tài khoản đang bị khoá quyền mượn bởi thủ thư. Vui lòng liên hệ thư viện trước khi mượn sách tiếp theo.",
+          403,
         );
       }
 

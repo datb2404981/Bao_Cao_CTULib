@@ -14,7 +14,7 @@ const money = (value: number): string => new Intl.NumberFormat('vi-VN', {
     <div class="loan-summary-top">
       <div>
         <span class="loan-eyebrow">Chi tiết phiếu mượn</span>
-        <h3>Phiếu #{{ loan._id.slice(-8).toUpperCase() }}</h3>
+        <h3>{{ loan.bookTitle || 'Phiếu mượn' }}</h3>
       </div>
       <span class="badge" :class="isLoanOverdue(loan) ? 'red' : loanStatusTone(loan.status)">
         {{ isLoanOverdue(loan) ? 'Quá hạn' : loan.status }}

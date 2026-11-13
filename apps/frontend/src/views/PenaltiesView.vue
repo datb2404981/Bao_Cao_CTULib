@@ -160,15 +160,15 @@ onMounted(() => { void load() })
       <p v-else-if="!response" class="loan-placeholder" role="status">Chưa tải được danh sách phiếu phạt.</p>
       <p v-else-if="!items.length" class="loan-placeholder">Không có phiếu phạt phù hợp với bộ lọc hiện tại.</p>
       <div v-else class="loan-table-wrap"><table class="loan-table">
-        <thead><tr><th scope="col">Phiếu phạt</th><th scope="col">Mã SV / Cán bộ</th><th scope="col">Tên sách</th><th scope="col">Ngày lập</th><th scope="col">Tổng tiền</th><th scope="col">Thanh toán</th><th scope="col">Thao tác</th></tr></thead>
-        <tbody><tr v-for="item in items" :key="item.penaltyId">
-          <td data-label="Phiếu phạt"><strong>#{{ item.penaltyId.slice(-8).toUpperCase() }}</strong></td>
+        <thead><tr><th scope="col">STT</th><th scope="col">Mã SV / Cán bộ</th><th scope="col">Tên sách</th><th scope="col">Ngày lập</th><th scope="col">Tổng tiền</th><th scope="col">Thanh toán</th><th scope="col">Thao tác</th></tr></thead>
+        <tbody><tr v-for="(item, index) in items" :key="item.penaltyId">
+          <td data-label="STT"><strong>{{ (page - 1) * 10 + index + 1 }}</strong></td>
           <td data-label="Mã SV / Cán bộ" class="loan-code">{{ item.readerCode || '—' }}</td>
           <td data-label="Tên sách">{{ item.bookTitle || '—' }}</td>
           <td data-label="Ngày lập">{{ formatLoanDate(item.issuedDate) }}</td>
           <td data-label="Tổng tiền"><strong>{{ money(item.totalPenalty) }}</strong></td>
           <td data-label="Thanh toán"><span class="badge" :class="item.paymentStatus === 'PAID' ? 'green' : 'orange'">{{ item.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</span></td>
-          <td data-label="Thao tác"><button type="button" class="btn small" :disabled="loading || processing" :aria-label="`Xem phiếu phạt ${item.penaltyId.slice(-8)}`" @click="selectPenalty(item)">Chi tiết</button></td>
+          <td data-label="Thao tác"><button type="button" class="btn small" :disabled="loading || processing" :aria-label="`Xem phiếu phạt ${item.readerCode || `#${(page - 1) * 10 + index + 1}`}`" @click="selectPenalty(item)">Chi tiết</button></td>
         </tr></tbody>
       </table></div>
       <div v-if="response && totalPages > 1" class="loan-pagination">
@@ -179,7 +179,7 @@ onMounted(() => { void load() })
     <p v-if="detailLoading" class="loan-placeholder" role="status">Đang tải chi tiết phiếu phạt…</p>
     <div v-if="detailError" class="notice error" role="alert">{{ detailError }}</div>
     <section v-if="selected" class="panel loan-panel loan-detail" aria-labelledby="penalty-detail-title">
-      <div class="loan-section-heading"><h2 id="penalty-detail-title">Chi tiết phiếu phạt #{{ selected.penaltyId.slice(-8).toUpperCase() }}</h2><button type="button" class="btn small" :disabled="processing" @click="closeDetail">Đóng</button></div>
+      <div class="loan-section-heading"><h2 id="penalty-detail-title">Chi tiết phiếu phạt</h2><button type="button" class="btn small" :disabled="processing" @click="closeDetail">Đóng</button></div>
       <dl class="loan-detail-grid">
         <div><dt>Tên sách</dt><dd>{{ selected.bookTitle || '—' }}</dd></div>
         <div><dt>Mã SV / Cán bộ</dt><dd class="loan-code">{{ selected.readerCode || '—' }}</dd></div>

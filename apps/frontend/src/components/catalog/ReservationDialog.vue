@@ -77,7 +77,7 @@ function onCancel(event: Event) {
           <div><dt>Nơi nhận</dt><dd>Thư viện CTU</dd></div>
         </dl>
         <p class="reservation-note">Đây là thao tác giữ chỗ. Hạn đến nhận sách sẽ do hệ thống xác định khi đặt thành công.</p>
-        <p v-if="error" role="alert" class="notice error">{{ error }} Bạn có thể thử đặt lại.</p>
+        <p v-if="error" role="alert" class="notice error">{{ error }}</p>
       </div>
 
       <div v-else class="dialog-body reservation-success" role="status">

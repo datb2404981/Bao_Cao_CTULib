@@ -126,14 +126,14 @@ onMounted(() => { void load() })
       <p v-if="loading" role="status" class="loan-placeholder">Đang tải danh sách phiếu…</p>
       <p v-else-if="!result" class="loan-placeholder" role="status">Không thể hiển thị danh sách phiếu mượn. Hãy thử tải lại.</p>
       <p v-else-if="!records.length" class="loan-placeholder">Chưa có phiếu mượn phù hợp với bộ lọc.</p>
-      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu mượn</th><th>Tên sách</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-        <tbody><template v-for="loan in records" :key="loan._id"><tr>
-          <td data-label="Phiếu mượn"><strong>#{{ loan._id.slice(-8).toUpperCase() }}</strong></td>
+      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>STT</th><th>Tên sách</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody><template v-for="(loan, index) in records" :key="loan._id"><tr>
+          <td data-label="STT"><strong>{{ (page - 1) * 5 + index + 1 }}</strong></td>
           <td data-label="Tên sách">{{ loan.bookTitle || '—' }}</td>
           <td data-label="Ngày đặt">{{ formatLoanDate(loan.reservationDate) }}</td>
           <td data-label="Hạn giữ / trả">{{ formatLoanDate(loan.dueDate || loan.reservationExpiryDate) }}</td>
           <td data-label="Trạng thái"><span class="badge" :class="isLoanOverdue(loan) ? 'red' : loanStatusTone(loan.status)">{{ isLoanOverdue(loan) ? 'Quá hạn' : loan.status }}</span></td>
-          <td data-label="Thao tác"><button type="button" class="btn small" :aria-label="`Xem chi tiết phiếu mượn #${loan._id.slice(-8).toUpperCase()}`" :aria-expanded="selected?._id === loan._id" :aria-controls="selected?._id === loan._id ? `loan-detail-${loan._id}` : undefined" :disabled="loading || processing" @click="openDetail(loan)">Chi tiết</button></td>
+          <td data-label="Thao tác"><button type="button" class="btn small" :aria-label="`Xem chi tiết phiếu mượn ${loan.bookTitle || `#${(page - 1) * 5 + index + 1}`}`" :aria-expanded="selected?._id === loan._id" :aria-controls="selected?._id === loan._id ? `loan-detail-${loan._id}` : undefined" :disabled="loading || processing" @click="openDetail(loan)">Chi tiết</button></td>
         </tr>
         <tr v-if="selected?._id === loan._id" class="loan-expanded-row"><td colspan="6">
           <section v-if="selected" :id="`loan-detail-${loan._id}`" tabindex="-1" class="panel loan-panel loan-detail" aria-label="Chi tiết phiếu đã chọn">

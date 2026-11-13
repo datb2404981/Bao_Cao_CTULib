@@ -52,7 +52,7 @@ describe('quản lý phiếu phạt', () => {
     await view.get('.loan-filter-panel').trigger('submit')
     await view.get('.loan-table button').trigger('click')
     expect(penaltiesApi.getPenalties).toHaveBeenCalledTimes(1)
-    expect(view.get('.loan-detail').text()).toContain(pending.penaltyId.slice(-8).toUpperCase())
+    expect(view.get('.loan-detail').text()).toContain('Chi tiết phiếu phạt')
 
     finishPayment({ penalty: paid, loan: { loanId: pending.loanId, status: 'Đã trả' }, isBorrowingBlocked: false })
     await flushPromises()

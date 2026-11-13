@@ -34,15 +34,15 @@ beforeEach(() => {
 })
 
 describe('phiếu mượn của độc giả', () => {
-  it('đặt tên cột thao tác và phân biệt từng nút chi tiết bằng mã phiếu', async () => {
-    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088' }
+  it('đặt tên cột thao tác và phân biệt từng nút chi tiết', async () => {
+    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088', bookTitle: 'Lập trình Web' }
     vi.mocked(api.getMyLoans).mockResolvedValue(pageOf([reserved, another]))
     const view = mount(MyLoansView)
     await flushPromises()
     expect(view.findAll('.loan-table th').at(-1)?.text()).toBe('Thao tác')
     expect(view.findAll('.loan-table tbody button').map(button => button.attributes('aria-label'))).toEqual([
-      'Xem chi tiết phiếu mượn #99439099',
-      'Xem chi tiết phiếu mượn #99439088',
+      'Xem chi tiết phiếu mượn #1',
+      'Xem chi tiết phiếu mượn Lập trình Web',
     ])
     view.unmount()
   })
@@ -84,7 +84,7 @@ describe('phiếu mượn của độc giả', () => {
     await view.findAll('.loan-table button')[1]!.trigger('click')
     await view.get('.loan-detail > .loan-actions button').trigger('click')
     await view.get('.loan-heading button').trigger('click')
-    expect(view.get('.loan-detail').text()).toContain(`#${reserved._id.slice(-8).toUpperCase()}`)
+    expect(view.get('.loan-detail').text()).toContain('Chi tiết phiếu mượn')
     expect(api.getMyLoans).toHaveBeenCalledTimes(1)
 
     finishCancel({ ...reserved, status: 'Đã huỷ' })
@@ -96,7 +96,7 @@ describe('phiếu mượn của độc giả', () => {
   })
 
   it('loại bỏ phản hồi phiếu phạt cũ khi đóng chi tiết và mở phiếu khác', async () => {
-    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088' }
+    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088', bookTitle: 'Lập trình Web' }
     vi.mocked(api.getMyLoans).mockResolvedValue(pageOf([reserved, another]))
     let finishPenalty!: (value: PenaltyRecord | null) => void
     vi.mocked(api.getLoanPenalty)
@@ -105,29 +105,29 @@ describe('phiếu mượn của độc giả', () => {
     const view = mount(MyLoansView)
     await flushPromises()
     await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[0]!.trigger('click')
-    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(reserved._id.slice(-8).toUpperCase())
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain('1')
     await view.get('.loan-detail > .loan-actions button:last-child').trigger('click')
     await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[1]!.trigger('click')
     await flushPromises()
     finishPenalty(penalty)
     await flushPromises()
-    expect(view.get('.loan-detail').text()).toContain(`#${another._id.slice(-8).toUpperCase()}`)
+    expect(view.get('.loan-detail').text()).toContain('Lập trình Web')
     expect(view.get('.loan-detail').text()).not.toContain('25.000')
-    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(another._id.slice(-8).toUpperCase())
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain('Lập trình Web')
     view.unmount()
   })
 })
 
 describe('quản lý mượn trả của thủ thư', () => {
-  it('đặt tên cột thao tác và phân biệt từng nút xử lý bằng mã phiếu', async () => {
-    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088' }
+  it('đặt tên cột thao tác và phân biệt từng nút xử lý', async () => {
+    const another: LoanRecord = { ...reserved, _id: '507f1f77bcf86cd799439088', readerCode: 'B2200001' }
     vi.mocked(api.getAllLoans).mockResolvedValue(pageOf([reserved, another]))
     const view = mount(LoansManagementView)
     await flushPromises()
     expect(view.findAll('.loan-table th').at(-1)?.text()).toBe('Thao tác')
     expect(view.findAll('.loan-table tbody button').map(button => button.attributes('aria-label'))).toEqual([
-      'Xử lý phiếu mượn #99439099',
-      'Xử lý phiếu mượn #99439088',
+      'Xử lý phiếu mượn #1',
+      'Xử lý phiếu mượn B2200001',
     ])
     view.unmount()
   })
@@ -150,7 +150,7 @@ describe('quản lý mượn trả của thủ thư', () => {
     expect(view.get('.loan-heading button').attributes('disabled')).toBeDefined()
     await view.findAll('.loan-table button')[1]!.trigger('click')
     await view.get('.loan-filter-panel').trigger('submit')
-    expect(view.get('.loan-detail').text()).toContain(`#${reserved._id.slice(-8).toUpperCase()}`)
+    expect(view.get('.loan-detail').text()).toContain('Chi tiết phiếu mượn')
     expect(api.getAllLoans).toHaveBeenCalledTimes(1)
     finishCancel({ ...reserved, status: 'Đã huỷ' })
     await flushPromises()
@@ -160,7 +160,7 @@ describe('quản lý mượn trả của thủ thư', () => {
   })
 
   it('không hiển thị tiền phạt trả về muộn của phiếu trước khi chuyển phiếu', async () => {
-    const another = { ...reserved, _id: '507f1f77bcf86cd799439088', status: 'Chờ nộp phạt' as const }
+    const another = { ...reserved, _id: '507f1f77bcf86cd799439088', status: 'Chờ nộp phạt' as const, bookTitle: 'Lập trình Web' }
     vi.mocked(api.getAllLoans).mockResolvedValue(pageOf([reserved, another]))
     let finishFirst!: (value: PenaltyRecord | null) => void
     vi.mocked(api.getLoanPenalty)
@@ -169,14 +169,14 @@ describe('quản lý mượn trả của thủ thư', () => {
     const view = mount(LoansManagementView)
     await flushPromises()
     await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[0]!.trigger('click')
-    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(reserved._id.slice(-8).toUpperCase())
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain('1')
     await view.findAll('.loan-table tbody tr:not(.loan-expanded-row) > td:last-child button')[1]!.trigger('click')
     await flushPromises()
     finishFirst(penalty)
     await flushPromises()
-    expect(view.get('.loan-detail').text()).toContain(`#${another._id.slice(-8).toUpperCase()}`)
+    expect(view.get('.loan-detail').text()).toContain('Lập trình Web')
     expect(view.get('.loan-detail').text()).not.toContain('25.000')
-    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(another._id.slice(-8).toUpperCase())
+    expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain('Lập trình Web')
     view.unmount()
   })
 
