@@ -27,8 +27,22 @@ const signedIn = async () => {
 describe('lỗi kiểm tra phiên sau đăng nhập', () => {
   it.each([429, 500, 502, 503])('không xóa người dùng khi /me trả %s, nhưng vẫn báo lỗi kiểm tra quyền', async (status) => {
     const { auth, fetchMock } = await signedIn()
-    fetchMock.mockResolvedValueOnce(new Response('Server error', { status, headers: { 'Retry-After': '60' } }))
+    fetchMock.mockResolvedValueOnce(Response.json({ status: 'error', message: 'Máy chủ tạm thời lỗi' }, { status, headers: { 'Retry-After': '60' } }))
     await expect(auth.refreshAuthorization()).rejects.toMatchObject({ status })
+    expect(auth.currentUser.value?.accountId).toBe(reader.accountId)
+  })
+
+  it.each([401, 403])('giữ phiên khi proxy trả HTML %s thay vì lỗi API', async (status) => {
+    const { auth, fetchMock } = await signedIn()
+    fetchMock.mockResolvedValueOnce(new Response('<html>Request blocked</html>', { status }))
+    await expect(auth.refreshAuthorization()).rejects.toMatchObject({ status: 502 })
+    expect(auth.currentUser.value?.accountId).toBe(reader.accountId)
+  })
+
+  it('không xóa phiên khi refresh nhận HTML 403 từ proxy', async () => {
+    const { auth, fetchMock } = await signedIn()
+    fetchMock.mockResolvedValueOnce(new Response('<html>Request blocked</html>', { status: 403 }))
+    await expect(auth.refreshSession()).rejects.toMatchObject({ status: 502 })
     expect(auth.currentUser.value?.accountId).toBe(reader.accountId)
   })
 
@@ -50,7 +64,7 @@ describe('lỗi kiểm tra phiên sau đăng nhập', () => {
   it('không giữ danh tính tài khoản cũ khi đăng nhập tài khoản mới mà /me lỗi', async () => {
     const { auth, fetchMock } = await signedIn()
     fetchMock.mockResolvedValueOnce(success({ token: 'other-access', expiresIn: 900 }))
-    fetchMock.mockResolvedValueOnce(new Response('Server error', { status: 503 }))
+    fetchMock.mockResolvedValueOnce(Response.json({ status: 'error', message: 'Máy chủ tạm thời lỗi' }, { status: 503 }))
     await expect(auth.authenticate('login', { ctuIdentifier: 'B2109999', password: 'test-password' })).rejects.toMatchObject({ status: 503 })
     expect(auth.currentUser.value).toBeNull()
   })

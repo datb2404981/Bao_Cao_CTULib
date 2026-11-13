@@ -49,6 +49,10 @@ async function request(endpoint: string, body: object = {}): Promise<SessionData
   }
   const result = await response.json().catch(() => null)
   if (!response.ok || result?.status !== 'success') {
+    if (response.status === 429) throw new AuthError('Máy chủ đang giới hạn truy cập. Vui lòng thử lại sau ít phút.', 429)
+    if (result?.status !== 'error' || typeof result.message !== 'string') {
+      throw new AuthError('Máy chủ trả về phản hồi không hợp lệ. Vui lòng thử lại.', 502)
+    }
     const fields: Record<string, string> = {}
     if (Array.isArray(result?.data)) {
       for (const item of result.data) if (typeof item.field === 'string' && typeof item.message === 'string') fields[item.field] = item.message
@@ -80,6 +84,10 @@ export async function refreshAuthorization(): Promise<void> {
   const result = await response.json().catch(() => null)
   if (version !== sessionVersion || check !== authorizationVersion) return
   if (!response.ok || result?.status !== 'success') {
+    if (response.status === 429) throw new AuthError('Máy chủ đang giới hạn truy cập. Vui lòng thử lại sau ít phút.', 429)
+    if (result?.status !== 'error' || typeof result.message !== 'string') {
+      throw new AuthError('Không thể kiểm tra quyền truy cập do phản hồi máy chủ không hợp lệ.', 502)
+    }
     if ([401, 403].includes(response.status)) clearSession()
     throw new AuthError(result?.message || 'Không thể kiểm tra quyền truy cập.', response.status)
   }

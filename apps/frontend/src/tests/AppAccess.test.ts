@@ -49,10 +49,29 @@ describe('chặn màn hình trước khi mount', () => {
     const wrapper = mount(App, { global })
     await flushPromises()
     expect(wrapper.find('[data-testid="people"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Không có quyền truy cập')
-    expect(window.location.pathname).toBe('/forbidden')
+    expect(wrapper.text()).toContain('Chưa thể kiểm tra quyền truy cập')
+    expect(window.location.pathname).toBe('/employee')
     wrapper.unmount()
   })
+  it('429 khi độc giả chuyển trang giữ phiên và URL, thử lại thành công mới mở phiếu mượn', async () => {
+    user.value = { accountId: 'reader-id', ctuIdentifier: 'B2101234', role: 'READER', permissions: [] }
+    const wrapper = mount(App, { global })
+    await flushPromises()
+    vi.mocked(refreshAuthorization).mockRejectedValueOnce(new AuthError('Máy chủ đang giới hạn truy cập.', 429))
+    await wrapper.get('nav a[href="/my-loans"]').trigger('click')
+    await flushPromises()
+    expect(window.location.pathname).toBe('/my-loans')
+    expect(wrapper.get('#access-check-error-title').text()).toContain('Chưa thể kiểm tra quyền')
+    expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(false)
+    expect(wrapper.find('button.profile').exists()).toBe(true)
+    await wrapper.get('section[aria-labelledby="access-check-error-title"] button').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="my-loans"]').exists()).toBe(true)
+    expect(wrapper.find('#access-check-error-title').exists()).toBe(false)
+    expect(window.location.pathname).toBe('/my-loans')
+    wrapper.unmount()
+  })
+
   it('khách mở liên kết nội bộ được chuyển đến đăng nhập', async () => {
     user.value = null
     window.history.replaceState(null, '', '/reader')

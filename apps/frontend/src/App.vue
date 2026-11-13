@@ -68,6 +68,7 @@ const canViewDashboard = computed(() => canAccess(currentUser.value, 'dashboard'
 const canViewMyLoans = computed(() => canAccess(currentUser.value, 'my-loans'))
 const checkingAccess = ref(false)
 const navigationError = ref('')
+const accessCheckFailed = ref(false)
 let navigationId = 0
 let intendedView: AppView | null = null
 
@@ -81,6 +82,7 @@ async function syncViewFromPath(normalizeStaffLanding = false) {
   const id = ++navigationId
   const requested = viewFromPath(window.location.pathname)
   navigationError.value = ''
+  accessCheckFailed.value = false
   checkingAccess.value = protectedViews.includes(requested)
   let target = requested
   if (protectedViews.includes(requested)) {
@@ -89,14 +91,19 @@ async function syncViewFromPath(normalizeStaffLanding = false) {
     catch (cause) {
       if (id !== navigationId) return
       navigationError.value = cause instanceof Error ? cause.message : 'Không thể kiểm tra quyền truy cập.'
-      target = cause instanceof AuthError && cause.status === 401 ? 'auth' : 'forbidden'
+      if (cause instanceof AuthError && [401, 403].includes(cause.status)) {
+        target = 'auth'
+        error.value = navigationError.value
+      } else {
+        accessCheckFailed.value = true
+      }
     }
   }
   if (id !== navigationId) return
   if (normalizeStaffLanding && requested === 'catalog' && currentUser.value && ['EMPLOYEE', 'ADMIN'].includes(currentUser.value.role)) {
     target = defaultViewForUser(currentUser.value)
   }
-  currentView.value = guardView(currentUser.value, target)
+  currentView.value = accessCheckFailed.value ? requested : guardView(currentUser.value, target)
   checkingAccess.value = false
   if (currentView.value !== requested) window.history.replaceState(null, '', `/${viewPaths[currentView.value]}`)
 }
@@ -490,6 +497,12 @@ onUnmounted(() => {
     <main class="main-content">
       <!-- 1. Catalog View (SC02) -->
       <div v-if="starting || checkingAccess" class="container" role="status" aria-live="polite" style="padding-top: 40px">{{ starting ? 'Đang khôi phục phiên đăng nhập…' : 'Đang kiểm tra quyền truy cập…' }}</div>
+      <section v-else-if="accessCheckFailed" class="container" aria-labelledby="access-check-error-title" style="padding-top: 40px">
+        <div class="notice warning" role="alert">
+          <div><h1 id="access-check-error-title">Chưa thể kiểm tra quyền truy cập</h1><p>{{ navigationError }}</p></div>
+        </div>
+        <div class="row"><button class="btn primary" type="button" @click="retryAccess">Thử lại</button><button class="btn" type="button" @click="navigateTo('catalog')">Về tìm sách</button></div>
+      </section>
       <section v-else-if="currentView === 'catalog'" aria-label="Tra cứu sách">
         <BookCatalogView
           ref="catalogViewRef"
