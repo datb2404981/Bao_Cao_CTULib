@@ -10,8 +10,8 @@ const money = (value: number): string => new Intl.NumberFormat('vi-VN', {
   style: 'currency', currency: 'VND', maximumFractionDigits: 0,
 }).format(value)
 
-const draft = reactive({ status: '' as LoanStatus | '', readerId: '', bookId: '', fromDate: '', toDate: '' })
-const filters = reactive({ status: '' as LoanStatus | '', readerId: '', bookId: '', fromDate: '', toDate: '' })
+const draft = reactive({ status: '' as LoanStatus | '', readerCode: '', bookTitle: '', fromDate: '', toDate: '' })
+const filters = reactive({ status: '' as LoanStatus | '', readerCode: '', bookTitle: '', fromDate: '', toDate: '' })
 const page = ref(1)
 const result = ref<LoanPage | null>(null)
 const selected = ref<LoanRecord | null>(null)
@@ -41,8 +41,8 @@ const load = async (): Promise<void> => {
     const data = await getAllLoans({
       page: page.value, limit: 5,
       ...(filters.status ? { status: filters.status } : {}),
-      ...(filters.readerId ? { readerId: filters.readerId } : {}),
-      ...(filters.bookId ? { bookId: filters.bookId } : {}),
+      ...(filters.readerCode ? { readerCode: filters.readerCode } : {}),
+      ...(filters.bookTitle ? { bookTitle: filters.bookTitle } : {}),
       ...(filters.fromDate ? { fromDate: new Date(`${filters.fromDate}T00:00:00`).toISOString() } : {}),
       ...(filters.toDate ? { toDate: new Date(`${filters.toDate}T23:59:59.999`).toISOString() } : {}),
     })
@@ -59,16 +59,11 @@ const load = async (): Promise<void> => {
 
 const applyFilters = (): void => {
   if (processing.value) return
-  const idRegex = /^[0-9a-fA-F]{24}$/
-  if ((draft.readerId.trim() && !idRegex.test(draft.readerId.trim())) || (draft.bookId.trim() && !idRegex.test(draft.bookId.trim()))) {
-    error.value = 'Mã độc giả và mã sách phải là ObjectId gồm 24 ký tự hex.'
-    return
-  }
   if (draft.fromDate && draft.toDate && draft.fromDate > draft.toDate) {
     error.value = 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.'
     return
   }
-  Object.assign(filters, { ...draft, readerId: draft.readerId.trim(), bookId: draft.bookId.trim() })
+  Object.assign(filters, { ...draft, readerCode: draft.readerCode.trim(), bookTitle: draft.bookTitle.trim() })
   page.value = 1
   selected.value = null
   penaltyVersion++
@@ -80,7 +75,7 @@ const applyFilters = (): void => {
 
 const clearFilters = (): void => {
   if (processing.value) return
-  Object.assign(draft, { status: '', readerId: '', bookId: '', fromDate: '', toDate: '' })
+  Object.assign(draft, { status: '', readerCode: '', bookTitle: '', fromDate: '', toDate: '' })
   applyFilters()
 }
 
@@ -179,8 +174,8 @@ onMounted(() => { void load() })
       <div class="loan-section-heading"><h2>Lọc phiếu mượn</h2><button type="button" class="btn quiet small" :disabled="processing" @click="clearFilters">Đặt lại</button></div>
       <div class="loan-filter-grid">
         <label class="loan-field">Trạng thái<select v-model="draft.status" :disabled="processing"><option value="">Tất cả</option><option v-for="item in LOAN_STATUSES" :key="item" :value="item">{{ item }}</option></select></label>
-        <label class="loan-field">Mã độc giả<input v-model="draft.readerId" type="text" placeholder="24 ký tự ObjectId" maxlength="24" :disabled="processing" /></label>
-        <label class="loan-field">Mã sách<input v-model="draft.bookId" type="text" placeholder="24 ký tự ObjectId" maxlength="24" :disabled="processing" /></label>
+        <label class="loan-field">Mã sinh viên / cán bộ<input v-model="draft.readerCode" type="text" placeholder="Nhập mã SV / CB..." maxlength="64" :disabled="processing" /></label>
+        <label class="loan-field">Tên sách<input v-model="draft.bookTitle" type="text" placeholder="Nhập tên sách..." maxlength="200" :disabled="processing" /></label>
         <label class="loan-field">Từ ngày<input v-model="draft.fromDate" type="date" :disabled="processing" /></label>
         <label class="loan-field">Đến ngày<input v-model="draft.toDate" type="date" :disabled="processing" /></label>
         <button type="submit" class="btn primary" :disabled="loading || processing">Áp dụng lọc</button>
@@ -192,11 +187,11 @@ onMounted(() => { void load() })
       <p v-if="loading" class="loan-placeholder" role="status">Đang tải danh sách phiếu…</p>
       <p v-else-if="!result" class="loan-placeholder" role="status">Không thể hiển thị danh sách phiếu mượn. Hãy thử tải lại.</p>
       <p v-else-if="!records.length" class="loan-placeholder">Không tìm thấy phiếu mượn nào với điều kiện lọc.</p>
-      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu</th><th>Độc giả</th><th>Mã sách</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu</th><th>Mã SV / Cán bộ</th><th>Tên sách</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
         <tbody><template v-for="loan in records" :key="loan._id"><tr>
           <td data-label="Phiếu"><strong>#{{ loan._id.slice(-8).toUpperCase() }}</strong></td>
-          <td data-label="Độc giả" class="loan-code">{{ loan.readerId }}</td>
-          <td data-label="Mã sách" class="loan-code">{{ loan.bookId }}</td>
+          <td data-label="Mã SV / Cán bộ" class="loan-code">{{ loan.readerCode || '—' }}</td>
+          <td data-label="Tên sách">{{ loan.bookTitle || '—' }}</td>
           <td data-label="Ngày đặt">{{ formatLoanDate(loan.reservationDate) }}</td>
           <td data-label="Hạn giữ / trả">{{ formatLoanDate(loan.dueDate || loan.reservationExpiryDate) }}</td>
           <td data-label="Trạng thái"><span class="badge" :class="isLoanOverdue(loan) ? 'red' : loanStatusTone(loan.status)">{{ isLoanOverdue(loan) ? 'Quá hạn' : loan.status }}</span></td>

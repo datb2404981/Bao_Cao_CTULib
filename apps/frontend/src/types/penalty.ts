@@ -2,6 +2,9 @@ export interface PenaltyDetail {
   penaltyId: string
   loanId: string
   readerAccountId: string
+  readerCode?: string
+  readerName?: string
+  bookTitle?: string
   issuedDate: string
   overdueDays: number
   appliedCoverPrice: number
@@ -13,6 +16,7 @@ export interface PenaltyDetail {
   paymentStatus: 'PENDING' | 'PAID'
   paymentDate: string | null
   collectorAccountId: string | null
+  collectorCode?: string
   amountCollected: number
   paymentMethod: string | null
 }
@@ -28,6 +32,8 @@ export interface PenaltyFilters {
   paymentStatus?: PenaltyDetail['paymentStatus']
   loanId?: string
   readerAccountId?: string
+  readerCode?: string
+  bookTitle?: string
 }
 
 export interface PenaltyCollectionResult {

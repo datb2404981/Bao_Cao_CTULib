@@ -7,9 +7,8 @@ import type { PenaltyDetail, PenaltyPage } from '../types/penalty'
 const money = (amount: number): string => new Intl.NumberFormat('vi-VN', {
   style: 'currency', currency: 'VND', maximumFractionDigits: 0,
 }).format(amount)
-const objectId = /^[a-f\d]{24}$/i
-const draft = reactive({ paymentStatus: '' as '' | 'PENDING' | 'PAID', loanId: '', readerAccountId: '' })
-const filters = reactive({ paymentStatus: '' as '' | 'PENDING' | 'PAID', loanId: '', readerAccountId: '' })
+const draft = reactive({ paymentStatus: '' as '' | 'PENDING' | 'PAID', readerCode: '', bookTitle: '' })
+const filters = reactive({ paymentStatus: '' as '' | 'PENDING' | 'PAID', readerCode: '', bookTitle: '' })
 const page = ref(1)
 const response = ref<PenaltyPage | null>(null)
 const selected = ref<PenaltyDetail | null>(null)
@@ -36,8 +35,8 @@ const load = async (preservePaidReceipt = false): Promise<void> => {
     const data = await getPenalties({
       page: page.value, limit: 10,
       ...(filters.paymentStatus ? { paymentStatus: filters.paymentStatus } : {}),
-      ...(filters.loanId ? { loanId: filters.loanId } : {}),
-      ...(filters.readerAccountId ? { readerAccountId: filters.readerAccountId } : {}),
+      ...(filters.readerCode ? { readerCode: filters.readerCode } : {}),
+      ...(filters.bookTitle ? { bookTitle: filters.bookTitle } : {}),
     })
     if (id !== listRequestId) return
     response.value = data
@@ -55,13 +54,11 @@ const load = async (preservePaidReceipt = false): Promise<void> => {
 
 const applyFilters = (): void => {
   if (loading.value || processing.value) return
-  const loanId = draft.loanId.trim()
-  const readerAccountId = draft.readerAccountId.trim()
-  if ((loanId && !objectId.test(loanId)) || (readerAccountId && !objectId.test(readerAccountId))) {
-    error.value = 'Mã phiếu mượn và mã tài khoản phải gồm 24 ký tự hex.'
-    return
-  }
-  Object.assign(filters, { paymentStatus: draft.paymentStatus, loanId, readerAccountId })
+  Object.assign(filters, {
+    paymentStatus: draft.paymentStatus,
+    readerCode: draft.readerCode.trim(),
+    bookTitle: draft.bookTitle.trim(),
+  })
   page.value = 1
   selected.value = null
   confirming.value = false
@@ -73,7 +70,7 @@ const applyFilters = (): void => {
 
 const clearFilters = (): void => {
   if (loading.value || processing.value) return
-  Object.assign(draft, { paymentStatus: '', loanId: '', readerAccountId: '' })
+  Object.assign(draft, { paymentStatus: '', readerCode: '', bookTitle: '' })
   applyFilters()
 }
 
@@ -145,11 +142,11 @@ onMounted(() => { void load() })
         <label class="loan-field">Thanh toán
           <select v-model="draft.paymentStatus" :disabled="loading || processing"><option value="">Tất cả trạng thái</option><option value="PENDING">Chờ thanh toán</option><option value="PAID">Đã thanh toán</option></select>
         </label>
-        <label class="loan-field">Mã phiếu mượn
-          <input v-model="draft.loanId" type="text" maxlength="24" :disabled="loading || processing" placeholder="ObjectId của phiếu mượn" autocomplete="off" />
+        <label class="loan-field">Mã sinh viên / cán bộ
+          <input v-model="draft.readerCode" type="text" maxlength="64" :disabled="loading || processing" placeholder="Nhập mã SV / CB..." autocomplete="off" />
         </label>
-        <label class="loan-field">Mã tài khoản độc giả
-          <input v-model="draft.readerAccountId" type="text" maxlength="24" :disabled="loading || processing" placeholder="ObjectId tài khoản" autocomplete="off" />
+        <label class="loan-field">Tên sách
+          <input v-model="draft.bookTitle" type="text" maxlength="200" :disabled="loading || processing" placeholder="Nhập tên sách..." autocomplete="off" />
         </label>
       </div>
       <div class="loan-actions"><button type="submit" class="btn primary" :disabled="loading || processing">Áp dụng bộ lọc</button></div>
@@ -163,10 +160,11 @@ onMounted(() => { void load() })
       <p v-else-if="!response" class="loan-placeholder" role="status">Chưa tải được danh sách phiếu phạt.</p>
       <p v-else-if="!items.length" class="loan-placeholder">Không có phiếu phạt phù hợp với bộ lọc hiện tại.</p>
       <div v-else class="loan-table-wrap"><table class="loan-table">
-        <thead><tr><th scope="col">Phiếu phạt</th><th scope="col">Độc giả</th><th scope="col">Ngày lập</th><th scope="col">Tổng tiền</th><th scope="col">Thanh toán</th><th scope="col">Thao tác</th></tr></thead>
+        <thead><tr><th scope="col">Phiếu phạt</th><th scope="col">Mã SV / Cán bộ</th><th scope="col">Tên sách</th><th scope="col">Ngày lập</th><th scope="col">Tổng tiền</th><th scope="col">Thanh toán</th><th scope="col">Thao tác</th></tr></thead>
         <tbody><tr v-for="item in items" :key="item.penaltyId">
           <td data-label="Phiếu phạt"><strong>#{{ item.penaltyId.slice(-8).toUpperCase() }}</strong></td>
-          <td data-label="Độc giả" class="loan-code">{{ item.readerAccountId }}</td>
+          <td data-label="Mã SV / Cán bộ" class="loan-code">{{ item.readerCode || '—' }}</td>
+          <td data-label="Tên sách">{{ item.bookTitle || '—' }}</td>
           <td data-label="Ngày lập">{{ formatLoanDate(item.issuedDate) }}</td>
           <td data-label="Tổng tiền"><strong>{{ money(item.totalPenalty) }}</strong></td>
           <td data-label="Thanh toán"><span class="badge" :class="item.paymentStatus === 'PAID' ? 'green' : 'orange'">{{ item.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</span></td>
@@ -183,15 +181,16 @@ onMounted(() => { void load() })
     <section v-if="selected" class="panel loan-panel loan-detail" aria-labelledby="penalty-detail-title">
       <div class="loan-section-heading"><h2 id="penalty-detail-title">Chi tiết phiếu phạt #{{ selected.penaltyId.slice(-8).toUpperCase() }}</h2><button type="button" class="btn small" :disabled="processing" @click="closeDetail">Đóng</button></div>
       <dl class="loan-detail-grid">
-        <div><dt>Mã phiếu mượn</dt><dd class="loan-code">{{ selected.loanId }}</dd></div>
-        <div><dt>Tài khoản độc giả</dt><dd class="loan-code">{{ selected.readerAccountId }}</dd></div>
+        <div><dt>Tên sách</dt><dd>{{ selected.bookTitle || '—' }}</dd></div>
+        <div><dt>Mã SV / Cán bộ</dt><dd class="loan-code">{{ selected.readerCode || '—' }}</dd></div>
+        <div v-if="selected.readerName"><dt>Họ tên độc giả</dt><dd>{{ selected.readerName }}</dd></div>
         <div><dt>Ngày lập phiếu</dt><dd>{{ formatLoanDate(selected.issuedDate) }}</dd></div>
         <div><dt>Số ngày quá hạn</dt><dd>{{ selected.overdueDays }} ngày</dd></div>
         <div><dt>Tỷ lệ hư hại</dt><dd>{{ selected.damagePercentage }}%</dd></div>
         <div><dt>Giá bìa áp dụng</dt><dd>{{ money(selected.appliedCoverPrice) }}</dd></div>
         <div><dt>Trạng thái</dt><dd>{{ selected.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</dd></div>
         <div v-if="selected.paymentDate"><dt>Thời điểm thanh toán</dt><dd>{{ formatLoanDate(selected.paymentDate) }}</dd></div>
-        <div v-if="selected.collectorAccountId"><dt>Nhân viên thu</dt><dd class="loan-code">{{ selected.collectorAccountId }}</dd></div>
+        <div v-if="selected.collectorCode"><dt>Nhân viên thu</dt><dd class="loan-code">{{ selected.collectorCode }}</dd></div>
       </dl>
       <div v-if="selected.violationNote" class="loan-penalty-box"><strong>Ghi chú vi phạm</strong><p>{{ selected.violationNote }}</p></div>
       <div class="loan-penalty-box">

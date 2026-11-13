@@ -3,6 +3,7 @@ import bookModel from "../models/book.model.js";
 import loanRecordModel from "../models/loanRecord.model.js";
 import readerModel from "../models/reader.model.js";
 import penaltyRecordModel from "../models/penaltyRecord.model.js";
+import { AccountModel } from "../models/user.model.js";
 import { AppError } from "../utils/app-error.js";
 import {
   LOAN_STATUSES,
@@ -553,12 +554,16 @@ export const collectPenaltyPayment = async (input: {
   }
 };
 
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 type LoanListInput = {
   page?: number;
   limit?: number;
   status?: LoanStatus;
   readerId?: string;
+  readerCode?: string;
   bookId?: string;
+  bookTitle?: string;
   fromDate?: Date;
   toDate?: Date;
 };
@@ -596,6 +601,60 @@ const getLoanPage = async (input: LoanListInput) => {
   if (input.status) filter.status = input.status;
   if (input.readerId) filter.readerId = new Types.ObjectId(input.readerId);
   if (input.bookId) filter.bookId = new Types.ObjectId(input.bookId);
+
+  if (input.readerCode?.trim()) {
+    const matchedAccounts = await AccountModel.find({
+      ctuIdentifier: new RegExp(escapeRegex(input.readerCode.trim()), "i"),
+    })
+      .select("_id")
+      .lean();
+    const matchedIds = matchedAccounts.map((acc) => acc._id);
+    if (matchedIds.length === 0) {
+      return {
+        records: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+      };
+    }
+    if (filter.readerId) {
+      const targetId = String(filter.readerId);
+      if (!matchedIds.some((id) => String(id) === targetId)) {
+        return {
+          records: [],
+          pagination: { page, limit, total: 0, totalPages: 0 },
+        };
+      }
+    } else {
+      filter.readerId = { $in: matchedIds };
+    }
+  }
+
+  if (input.bookTitle?.trim()) {
+    const matchedBooks = await bookModel
+      .find({
+        title: new RegExp(escapeRegex(input.bookTitle.trim()), "i"),
+      })
+      .select("_id")
+      .lean();
+    const matchedIds = matchedBooks.map((book) => book._id);
+    if (matchedIds.length === 0) {
+      return {
+        records: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+      };
+    }
+    if (filter.bookId) {
+      const targetId = String(filter.bookId);
+      if (!matchedIds.some((id) => String(id) === targetId)) {
+        return {
+          records: [],
+          pagination: { page, limit, total: 0, totalPages: 0 },
+        };
+      }
+    } else {
+      filter.bookId = { $in: matchedIds };
+    }
+  }
+
   if (input.fromDate || input.toDate) {
     filter.reservationDate = {
       ...(input.fromDate ? { $gte: input.fromDate } : {}),
@@ -603,7 +662,7 @@ const getLoanPage = async (input: LoanListInput) => {
     };
   }
 
-  const [records, total] = await Promise.all([
+  const [rawRecords, total] = await Promise.all([
     loanRecordModel
       .find(filter)
       .sort({ reservationDate: -1, _id: -1 })
@@ -612,6 +671,28 @@ const getLoanPage = async (input: LoanListInput) => {
       .lean(),
     loanRecordModel.countDocuments(filter),
   ]);
+
+  const readerIds = Array.from(new Set(rawRecords.map((r) => String(r.readerId))));
+  const bookIds = Array.from(new Set(rawRecords.map((r) => String(r.bookId))));
+
+  const [accounts, readers, books] = rawRecords.length
+    ? await Promise.all([
+        AccountModel.find({ _id: { $in: readerIds } }).select("_id ctuIdentifier").lean(),
+        readerModel.find({ _id: { $in: readerIds } }).select("_id fullName").lean(),
+        bookModel.find({ _id: { $in: bookIds } }).select("_id title").lean(),
+      ])
+    : [[], [], []];
+
+  const accountById = new Map(accounts.map((a) => [String(a._id), a.ctuIdentifier]));
+  const readerById = new Map(readers.map((r) => [String(r._id), r.fullName]));
+  const bookById = new Map(books.map((b) => [String(b._id), b.title]));
+
+  const records = rawRecords.map((record) => ({
+    ...record,
+    readerCode: accountById.get(String(record.readerId)),
+    readerName: readerById.get(String(record.readerId)),
+    bookTitle: bookById.get(String(record.bookId)),
+  }));
 
   return {
     records,

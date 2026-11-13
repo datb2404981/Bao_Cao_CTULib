@@ -21,9 +21,9 @@ const money = (value: number): string => new Intl.NumberFormat('vi-VN', {
       </span>
     </div>
     <dl class="loan-detail-grid">
-      <div><dt>Mã phiếu</dt><dd class="loan-code">{{ loan._id }}</dd></div>
-      <div><dt>Mã sách</dt><dd class="loan-code">{{ loan.bookId }}</dd></div>
-      <div><dt>Mã độc giả</dt><dd class="loan-code">{{ loan.readerId }}</dd></div>
+      <div><dt>Tên sách</dt><dd>{{ loan.bookTitle || '—' }}</dd></div>
+      <div><dt>Mã SV / Cán bộ</dt><dd class="loan-code">{{ loan.readerCode || '—' }}</dd></div>
+      <div v-if="loan.readerName"><dt>Họ tên độc giả</dt><dd>{{ loan.readerName }}</dd></div>
       <div><dt>Thời điểm đặt</dt><dd>{{ formatLoanDate(loan.reservationDate) }}</dd></div>
       <div><dt>Hạn giữ chỗ</dt><dd>{{ formatLoanDate(loan.reservationExpiryDate) }}</dd></div>
       <div><dt>Ngày bàn giao</dt><dd>{{ formatLoanDate(loan.handoverDate) }}</dd></div>

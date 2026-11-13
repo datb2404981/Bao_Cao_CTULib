@@ -7,7 +7,10 @@ export type LoanStatus = (typeof LOAN_STATUSES)[number]
 export interface LoanRecord {
   _id: string
   readerId: string
+  readerCode?: string
+  readerName?: string
   bookId: string
+  bookTitle?: string
   status: LoanStatus
   reservationDate: string
   reservationExpiryDate: string
@@ -27,7 +30,9 @@ export interface LoanFilters {
   limit?: number
   status?: LoanStatus
   bookId?: string
+  bookTitle?: string
   readerId?: string
+  readerCode?: string
   fromDate?: string
   toDate?: string
 }

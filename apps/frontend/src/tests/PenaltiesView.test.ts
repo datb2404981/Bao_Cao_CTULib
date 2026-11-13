@@ -82,4 +82,37 @@ describe('quản lý phiếu phạt', () => {
     expect(view.find('.loan-detail').exists()).toBe(false)
     view.unmount()
   })
+
+  it('tìm kiếm theo mã sinh viên / cán bộ và tên sách, hiển thị đúng trên bảng và chi tiết', async () => {
+    const richPenalty: PenaltyDetail = {
+      ...pending,
+      readerCode: 'B2203456',
+      readerName: 'Nguyễn Văn B',
+      bookTitle: 'Mạng máy tính',
+    }
+    vi.mocked(penaltiesApi.getPenalties).mockResolvedValue(pageOf([richPenalty]))
+    vi.mocked(penaltiesApi.getPenaltyDetail).mockResolvedValue(richPenalty)
+
+    const view = mount(PenaltiesView)
+    await flushPromises()
+
+    expect(view.text()).toContain('B2203456')
+    expect(view.text()).toContain('Mạng máy tính')
+    expect(view.text()).not.toContain(pending.readerAccountId)
+    expect(view.text()).not.toContain(pending.loanId)
+
+    const inputs = view.findAll('.loan-filter-panel input[type="text"]')
+    await inputs[0]!.setValue('B2203456')
+    await inputs[1]!.setValue('Mạng máy tính')
+    await view.get('form.loan-filter-panel').trigger('submit')
+    await flushPromises()
+
+    expect(penaltiesApi.getPenalties).toHaveBeenLastCalledWith({
+      page: 1,
+      limit: 10,
+      readerCode: 'B2203456',
+      bookTitle: 'Mạng máy tính',
+    })
+    view.unmount()
+  })
 })

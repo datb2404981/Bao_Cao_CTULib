@@ -126,10 +126,10 @@ onMounted(() => { void load() })
       <p v-if="loading" role="status" class="loan-placeholder">Đang tải danh sách phiếu…</p>
       <p v-else-if="!result" class="loan-placeholder" role="status">Không thể hiển thị danh sách phiếu mượn. Hãy thử tải lại.</p>
       <p v-else-if="!records.length" class="loan-placeholder">Chưa có phiếu mượn phù hợp với bộ lọc.</p>
-      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu mượn</th><th>Ấn phẩm</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <div v-else class="loan-table-wrap"><table class="loan-table"><thead><tr><th>Phiếu mượn</th><th>Tên sách</th><th>Ngày đặt</th><th>Hạn giữ / trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
         <tbody><template v-for="loan in records" :key="loan._id"><tr>
           <td data-label="Phiếu mượn"><strong>#{{ loan._id.slice(-8).toUpperCase() }}</strong></td>
-          <td data-label="Mã sách" class="loan-code">{{ loan.bookId }}</td>
+          <td data-label="Tên sách">{{ loan.bookTitle || '—' }}</td>
           <td data-label="Ngày đặt">{{ formatLoanDate(loan.reservationDate) }}</td>
           <td data-label="Hạn giữ / trả">{{ formatLoanDate(loan.dueDate || loan.reservationExpiryDate) }}</td>
           <td data-label="Trạng thái"><span class="badge" :class="isLoanOverdue(loan) ? 'red' : loanStatusTone(loan.status)">{{ isLoanOverdue(loan) ? 'Quá hạn' : loan.status }}</span></td>

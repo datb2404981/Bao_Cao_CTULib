@@ -34,6 +34,8 @@ export const penaltyListQuerySchema = z.object({
   paymentStatus: z.enum(["PENDING", "PAID"]).optional(),
   loanId: objectId.optional(),
   readerAccountId: objectId.optional(),
+  readerCode: z.string().trim().min(1).max(64).optional(),
+  bookTitle: z.string().trim().min(1).max(200).optional(),
 }).strict();
 export const collectPenaltySchema = z.object({
   confirmFullCashReceived: z.literal(true),
@@ -57,7 +59,9 @@ export const loanListQuerySchema = z.object({
   limit: numericPage.max(100).optional(),
   status: loanQueryStatus.optional(),
   readerId: objectId.optional(),
+  readerCode: z.string().trim().min(1).max(64).optional(),
   bookId: objectId.optional(),
+  bookTitle: z.string().trim().min(1).max(200).optional(),
   fromDate: z.coerce.date().optional(),
   toDate: z.coerce.date().optional(),
 }).strict().refine(
@@ -69,6 +73,7 @@ export const readerHistoryQuerySchema = z.object({
   limit: numericPage.max(100).optional(),
   status: z.enum(LOAN_STATUSES).optional(),
   bookId: objectId.optional(),
+  bookTitle: z.string().trim().min(1).max(200).optional(),
   fromDate: z.coerce.date().optional(),
   toDate: z.coerce.date().optional(),
 }).strict().refine(

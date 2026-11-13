@@ -84,7 +84,7 @@ describe('phiếu mượn của độc giả', () => {
     await view.findAll('.loan-table button')[1]!.trigger('click')
     await view.get('.loan-detail > .loan-actions button').trigger('click')
     await view.get('.loan-heading button').trigger('click')
-    expect(view.get('.loan-detail').text()).toContain(reserved._id)
+    expect(view.get('.loan-detail').text()).toContain(`#${reserved._id.slice(-8).toUpperCase()}`)
     expect(api.getMyLoans).toHaveBeenCalledTimes(1)
 
     finishCancel({ ...reserved, status: 'Đã huỷ' })
@@ -111,7 +111,7 @@ describe('phiếu mượn của độc giả', () => {
     await flushPromises()
     finishPenalty(penalty)
     await flushPromises()
-    expect(view.get('.loan-detail').text()).toContain(another._id)
+    expect(view.get('.loan-detail').text()).toContain(`#${another._id.slice(-8).toUpperCase()}`)
     expect(view.get('.loan-detail').text()).not.toContain('25.000')
     expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(another._id.slice(-8).toUpperCase())
     view.unmount()
@@ -150,7 +150,7 @@ describe('quản lý mượn trả của thủ thư', () => {
     expect(view.get('.loan-heading button').attributes('disabled')).toBeDefined()
     await view.findAll('.loan-table button')[1]!.trigger('click')
     await view.get('.loan-filter-panel').trigger('submit')
-    expect(view.get('.loan-detail').text()).toContain(reserved._id)
+    expect(view.get('.loan-detail').text()).toContain(`#${reserved._id.slice(-8).toUpperCase()}`)
     expect(api.getAllLoans).toHaveBeenCalledTimes(1)
     finishCancel({ ...reserved, status: 'Đã huỷ' })
     await flushPromises()
@@ -174,7 +174,7 @@ describe('quản lý mượn trả của thủ thư', () => {
     await flushPromises()
     finishFirst(penalty)
     await flushPromises()
-    expect(view.get('.loan-detail').text()).toContain(another._id)
+    expect(view.get('.loan-detail').text()).toContain(`#${another._id.slice(-8).toUpperCase()}`)
     expect(view.get('.loan-detail').text()).not.toContain('25.000')
     expect(view.get('.loan-expanded-row').element.previousElementSibling?.textContent).toContain(another._id.slice(-8).toUpperCase())
     view.unmount()
@@ -227,6 +227,37 @@ describe('quản lý mượn trả của thủ thư', () => {
     await view.get('.loan-confirm-box button[type=submit]').trigger('submit')
     await flushPromises()
     expect(api.collectLoanPenalty).toHaveBeenCalledExactlyOnceWith(returned._id)
+    view.unmount()
+  })
+
+  it('tìm kiếm theo mã sinh viên / cán bộ và tên sách, hiển thị đúng trên bảng', async () => {
+    const richLoan: LoanRecord = {
+      ...reserved,
+      readerCode: 'B2203456',
+      readerName: 'Nguyễn Văn B',
+      bookTitle: 'Cấu trúc dữ liệu và giải thuật',
+    }
+    vi.mocked(api.getAllLoans).mockResolvedValue(pageOf([richLoan]))
+    const view = mount(LoansManagementView)
+    await flushPromises()
+
+    expect(view.text()).toContain('B2203456')
+    expect(view.text()).toContain('Cấu trúc dữ liệu và giải thuật')
+    expect(view.text()).not.toContain(reserved.readerId)
+    expect(view.text()).not.toContain(reserved.bookId)
+
+    const inputs = view.findAll('.loan-filter-panel input[type="text"]')
+    await inputs[0]!.setValue('B2203456')
+    await inputs[1]!.setValue('Cấu trúc dữ liệu')
+    await view.get('.loan-filter-panel').trigger('submit')
+    await flushPromises()
+
+    expect(api.getAllLoans).toHaveBeenLastCalledWith({
+      page: 1,
+      limit: 5,
+      readerCode: 'B2203456',
+      bookTitle: 'Cấu trúc dữ liệu',
+    })
     view.unmount()
   })
 })
