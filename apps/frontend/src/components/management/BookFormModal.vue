@@ -316,11 +316,6 @@ function handleDialogClick(event: MouseEvent) {
         </div>
 
         <form id="book-form" novalidate @submit.prevent="handleSubmit">
-          <label class="field" style="margin-bottom: 16px">
-            <span>Mã sách</span>
-            <input type="text" name="code" :value="editMode ? 'Đã cấp khi tạo sách' : 'Tự cấp khi lưu'" readonly />
-          </label>
-
           <div class="form-section">
             <div class="grid2">
               <div class="full">
