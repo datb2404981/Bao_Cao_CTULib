@@ -87,7 +87,7 @@ async function syncViewFromPath(normalizeStaffLanding = false) {
   let target = requested
   if (protectedViews.includes(requested)) {
     intendedView = requested
-    try { await refreshAuthorization() }
+    try { await refreshAuthorization(false) }
     catch (cause) {
       if (id !== navigationId) return
       navigationError.value = cause instanceof Error ? cause.message : 'Không thể kiểm tra quyền truy cập.'

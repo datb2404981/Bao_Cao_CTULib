@@ -104,4 +104,30 @@ describe('phiên dùng chung cookie giữa các khung', () => {
     await auth.refreshSession()
     expect(auth.currentUser.value?.role).toBe('READER')
   })
+
+  it('tái sử dụng kết quả kiểm tra quyền trong 60 giây khi chuyển trang để không gọi /auth/me liên tục', async () => {
+    vi.stubGlobal('navigator', {})
+    const fetchMock = vi.fn(async (url: string) => success(
+      url.endsWith('/me') ? reader : { token: 'access', expiresIn: 900 },
+    ))
+    vi.stubGlobal('fetch', fetchMock)
+    const auth = await import('../services/auth')
+    await auth.authenticate('login', { ctuIdentifier: 'B2101234', password: 'password' })
+
+    const meCallsAfterLogin = fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/me')).length
+    expect(meCallsAfterLogin).toBe(1)
+
+    // Chuyển trang trong vòng 60 giây: không gọi lại /auth/me
+    vi.advanceTimersByTime(30_000)
+    await auth.refreshAuthorization(false)
+    await auth.refreshAuthorization(false)
+    const meCallsWithinTtl = fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/me')).length
+    expect(meCallsWithinTtl).toBe(1)
+
+    // Sau 60 giây: gọi lại /auth/me để đồng bộ quyền mới nhất
+    vi.advanceTimersByTime(31_000)
+    await auth.refreshAuthorization(false)
+    const meCallsAfterTtl = fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/me')).length
+    expect(meCallsAfterTtl).toBe(2)
+  })
 })

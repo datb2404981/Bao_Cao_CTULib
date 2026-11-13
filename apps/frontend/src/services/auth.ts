@@ -21,10 +21,12 @@ export class AuthError extends Error {
 const user = ref<AuthUser | null>(null)
 let accessToken = ''
 let expiresAt = 0
+let lastAuthorizedAt = 0
 let timer: ReturnType<typeof setTimeout> | undefined
 let sessionVersion = 0
 let authorizationVersion = 0
 let pendingRefresh: Promise<void> | undefined
+const AUTHORIZATION_CACHE_MS = 60_000
 const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 // Các tab/khung cùng origin dùng chung cookie HttpOnly nhưng có bộ nhớ riêng.
@@ -67,10 +69,12 @@ function clearSession() {
   clearTimeout(timer)
   accessToken = ''
   expiresAt = 0
+  lastAuthorizedAt = 0
   user.value = null
 }
-export async function refreshAuthorization(): Promise<void> {
+export async function refreshAuthorization(force = true): Promise<void> {
   if (!accessToken || Date.now() >= expiresAt) { await refreshSession(); return }
+  if (!force && user.value && Date.now() - lastAuthorizedAt < AUTHORIZATION_CACHE_MS) return
   const version = sessionVersion
   const check = ++authorizationVersion
   const token = accessToken
@@ -98,12 +102,13 @@ export async function refreshAuthorization(): Promise<void> {
     throw new AuthError('Thông tin quyền truy cập không hợp lệ.', 502)
   }
   user.value = data as AuthUser
+  lastAuthorizedAt = Date.now()
 }
 async function acceptSession(data: SessionData) {
   sessionVersion++
   accessToken = data.token
   expiresAt = Date.now() + data.expiresIn * 1000
-  await refreshAuthorization()
+  await refreshAuthorization(true)
   clearTimeout(timer)
   timer = setTimeout(() => { void refreshSession().catch(() => {}) }, Math.max(1000, data.expiresIn * 1000 - 60000))
 }
