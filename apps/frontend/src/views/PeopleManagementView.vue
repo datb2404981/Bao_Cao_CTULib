@@ -45,8 +45,8 @@ const knownPermissions = [
 ]
 const nameOf = (row: Row) => 'permissionName' in row ? row.permissionName : row.fullName || 'Chưa có họ tên'
 const isReaderBlocked = (reader: Reader) => reader.isBorrowingBlocked || !!reader.isBorrowingManuallyBlocked
-const facultyName = (id: string) => faculties.value.find((faculty) => faculty._id === id)?.facultyName || id
-const permissionName = (id: string) => permissions.value.find((permission) => permission._id === id)?.permissionName || `Quyền không còn tồn tại (${id})`
+const facultyName = (id: string) => faculties.value.find((faculty) => faculty._id === id)?.facultyName || 'Chưa rõ khoa'
+const permissionName = (id: string) => permissions.value.find((permission) => permission._id === id)?.permissionName || 'Quyền không còn tồn tại'
 const filtered = computed(() => rows.value.filter((row) => {
   const text = [row._id, nameOf(row), 'phoneNumber' in row ? row.phoneNumber : '', 'position' in row ? row.position : '', 'description' in row ? row.description : '', 'facultyId' in row ? facultyName(row.facultyId) : ''].join(' ').toLocaleLowerCase('vi')
   if (!text.includes(query.value.trim().toLocaleLowerCase('vi'))) return false
@@ -221,7 +221,7 @@ onUnmounted(() => { alive = false })
             <tr v-if="loading"><td :colspan="resource === 'permission' ? 3 : 5" class="empty-state" role="status">Đang tải {{ meta.singular }}…</td></tr>
             <tr v-else-if="!visibleRows.length"><td :colspan="resource === 'permission' ? 3 : 5" class="empty-state"><h3>{{ query || filter ? 'Không tìm thấy kết quả' : 'Chưa có dữ liệu' }}</h3><p>{{ query || filter ? 'Thử thay đổi từ khóa hoặc bộ lọc.' : `Thêm ${meta.singular} đầu tiên để bắt đầu quản lý.` }}</p></td></tr>
             <tr v-for="row in loading ? [] : visibleRows" :key="row._id">
-              <td><strong>{{ nameOf(row) }}</strong><span class="record-id">{{ row._id }}</span></td>
+              <td><strong>{{ nameOf(row) }}</strong></td>
               <template v-if="'facultyId' in row"><td>{{ facultyName(row.facultyId) }}</td><td>{{ readerTypes[row.readerType || ''] || 'Chưa cập nhật' }}</td><td><span class="badge" :class="isReaderBlocked(row) ? 'orange' : 'green'">{{ isReaderBlocked(row) ? 'Đang bị chặn' : 'Được mượn' }}</span></td></template>
               <template v-else-if="'permissionIds' in row"><td>{{ row.position || 'Chưa cập nhật' }}</td><td>{{ row.phoneNumber || 'Chưa cập nhật' }}</td><td><span class="badge" :class="row.permissionIds.length ? 'blue' : ''">{{ row.permissionIds.length }} quyền</span></td></template>
               <td v-else-if="'description' in row">{{ row.description }}</td>
@@ -254,7 +254,7 @@ onUnmounted(() => { alive = false })
                 <template v-if="resource === 'reader'">
                   <label class="field"><span>Ngày sinh</span><input v-model="form.dateOfBirth" type="date" :max="today" :aria-invalid="!!fieldErrors.dateOfBirth"></label>
                   <label class="field"><span>Loại độc giả</span><select v-model="form.readerType"><option value="" :disabled="!!selected && 'readerType' in selected && !!selected.readerType">Chưa cập nhật</option><option v-for="(label, value) in readerTypes" :key="value" :value="value">{{ label }}</option></select></label>
-                  <label class="field full"><span>Khoa/Viện <b class="required">*</b></span><select v-model="form.facultyId" required :aria-invalid="!!fieldErrors.facultyId"><option value="">Chọn khoa/viện</option><option v-if="form.facultyId && !faculties.some(f => f._id === form.facultyId)" :value="form.facultyId">{{ form.facultyId }}</option><option v-for="faculty in faculties" :key="faculty._id" :value="faculty._id">{{ faculty.facultyName }}</option></select></label>
+                  <label class="field full"><span>Khoa/Viện <b class="required">*</b></span><select v-model="form.facultyId" required :aria-invalid="!!fieldErrors.facultyId"><option value="">Chọn khoa/viện</option><option v-if="form.facultyId && !faculties.some(f => f._id === form.facultyId)" :value="form.facultyId">Khoa/Viện không còn trong danh mục</option><option v-for="faculty in faculties" :key="faculty._id" :value="faculty._id">{{ faculty.facultyName }}</option></select></label>
                 </template>
                 <label v-else class="field full"><span>Chức vụ</span><input v-model="form.position"></label>
                 <label class="field full"><span>Địa chỉ</span><textarea v-model="form.address" rows="2"></textarea></label>

@@ -53,7 +53,7 @@ describe('components/author/AuthorTable.vue - Unit Tests', () => {
     expect(wrapper.text()).toContain('Không có kết quả nào khớp với từ khóa "Không tồn tại"');
   });
 
-  it('AUT-TBL-004: Hiển thị chính xác danh sách tác giả và mã định dạng TG-XXXXXX', () => {
+  it('AUT-TBL-004: Hiển thị chính xác danh sách tác giả và không lộ mã thực thể DB', () => {
     const wrapper = mount(AuthorTable, {
       props: {
         authors: sampleAuthors,
@@ -62,11 +62,11 @@ describe('components/author/AuthorTable.vue - Unit Tests', () => {
     });
 
     expect(wrapper.text()).toContain('Nguyễn Văn An');
-    expect(wrapper.text()).toContain('TG-A6B001');
+    expect(wrapper.text()).not.toContain('TG-A6B001');
     expect(wrapper.text()).toContain('Trường Đại học — minh họa');
 
     expect(wrapper.text()).toContain('Trần Minh Hòa');
-    expect(wrapper.text()).toContain('TG-A6B002');
+    expect(wrapper.text()).not.toContain('TG-A6B002');
     expect(wrapper.text()).toContain('Khoa Kinh tế — minh họa');
   });
 

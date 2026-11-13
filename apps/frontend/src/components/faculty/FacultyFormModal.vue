@@ -189,18 +189,6 @@ function handleDialogClick(event: MouseEvent) {
         </div>
 
         <form id="faculty-form" class="stack" novalidate @submit.prevent="handleSubmit">
-          <!-- Hiển thị mã khoa khi ở chế độ chỉnh sửa -->
-          <div v-if="isEditMode && facultyToEdit" class="field">
-            <span class="field-label">Mã khoa</span>
-            <input
-              type="text"
-              :value="facultyToEdit.facultyCode || `KH-${facultyToEdit._id.slice(-6).toUpperCase()}`"
-              readonly
-              disabled
-              class="readonly-id"
-            />
-          </div>
-
           <label class="field" :class="{ 'has-error': !!errors.facultyName || !!serverFieldErrors.facultyName }">
             <span class="field-label">
               Tên Khoa/Viện <b class="required">*</b>

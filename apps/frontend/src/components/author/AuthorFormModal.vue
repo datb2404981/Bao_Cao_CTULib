@@ -37,16 +37,6 @@ const errors = reactive<Record<string, string>>({});
 const showDeleteConfirm = ref(false);
 const dialogRef = ref<HTMLDialogElement | null>(null);
 
-const displayAuthorCode = computed(() => {
-  if (props.authorToEdit?.authorCode) {
-    return props.authorToEdit.authorCode;
-  }
-  if (props.authorToEdit?._id) {
-    return `TG-${props.authorToEdit._id.slice(-6).toUpperCase()}`;
-  }
-  return 'Tự cấp khi lưu';
-});
-
 function resetForm() {
   if (props.authorToEdit) {
     form.fullName = props.authorToEdit.fullName || '';
@@ -212,18 +202,6 @@ function handleDialogClick(event: MouseEvent) {
         </div>
 
         <form id="author-form" class="stack" novalidate @submit.prevent="handleSubmit">
-          <!-- Mã tác giả (Readonly) -->
-          <label class="field">
-            <span>Mã tác giả</span>
-            <input
-              type="text"
-              name="code"
-              :value="displayAuthorCode"
-              readonly
-              class="code-input"
-            />
-          </label>
-
           <!-- Họ tên tác giả (Bắt buộc) -->
           <label class="field">
             <span>Họ tên tác giả <b class="required">*</b></span>

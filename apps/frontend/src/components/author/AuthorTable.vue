@@ -10,12 +10,6 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'edit', author: Author): void;
 }>();
-
-function formatAuthorCode(author: Author): string {
-  if (author.authorCode) return author.authorCode;
-  if (!author._id) return '---';
-  return `TG-${author._id.slice(-6).toUpperCase()}`;
-}
 </script>
 
 <template>
@@ -57,7 +51,6 @@ function formatAuthorCode(author: Author): string {
         <thead>
           <tr>
             <th scope="col">Tác giả</th>
-            <th scope="col">Mã tác giả</th>
             <th scope="col">Đơn vị công tác</th>
             <th scope="col" class="text-right">Hành động</th>
           </tr>
@@ -66,11 +59,6 @@ function formatAuthorCode(author: Author): string {
           <tr v-for="author in authors" :key="author._id">
             <td data-label="Tác giả" class="col-name">
               <span class="author-name-text">{{ author.fullName }}</span>
-            </td>
-            <td data-label="Mã tác giả" class="col-code">
-              <span class="author-code-tag" :title="`ID: ${author._id}`">
-                {{ formatAuthorCode(author) }}
-              </span>
             </td>
             <td data-label="Đơn vị công tác" class="col-affiliation">
               <span class="affiliation-text" :class="{ 'is-muted': !author.affiliation }">

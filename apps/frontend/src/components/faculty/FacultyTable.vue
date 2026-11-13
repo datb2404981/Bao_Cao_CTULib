@@ -10,13 +10,6 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'edit', faculty: Faculty): void;
 }>();
-
-function formatFacultyCode(faculty: Faculty): string {
-  if (faculty.facultyCode) return faculty.facultyCode;
-  if (!faculty._id) return '---';
-  // Hiển thị 6 ký tự cuối của ObjectId dưới dạng mã code dễ nhìn, kèm tooltip full id
-  return `KH-${faculty._id.slice(-6).toUpperCase()}`;
-}
 </script>
 
 <template>
@@ -57,7 +50,6 @@ function formatFacultyCode(faculty: Faculty): string {
         <thead>
           <tr>
             <th scope="col">Khoa/Viện</th>
-            <th scope="col">Mã khoa</th>
             <th scope="col">Mô tả</th>
             <th scope="col" class="text-right">Hành động</th>
           </tr>
@@ -66,11 +58,6 @@ function formatFacultyCode(faculty: Faculty): string {
           <tr v-for="faculty in faculties" :key="faculty._id">
             <td data-label="Khoa/Viện" class="col-name">
               <span class="faculty-name-text">{{ faculty.facultyName }}</span>
-            </td>
-            <td data-label="Mã khoa" class="col-code">
-              <span class="faculty-code-tag" :title="`ID: ${faculty._id}`">
-                {{ formatFacultyCode(faculty) }}
-              </span>
             </td>
             <td data-label="Mô tả" class="col-desc">
               <span class="desc-text" :class="{ 'is-muted': !faculty.description }">

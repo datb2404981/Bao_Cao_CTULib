@@ -38,13 +38,12 @@ describe('components/author/AuthorFormModal.vue - Unit Tests', () => {
     expect(nameInput.exists()).toBe(true);
     expect(nameInput.element.value).toBe('');
 
-    const codeInput = wrapper.find<HTMLInputElement>('input[name="code"]');
-    expect(codeInput.element.value).toBe('Tự cấp khi lưu');
+    expect(wrapper.find('input[name="code"]').exists()).toBe(false);
 
     expect(wrapper.find('.delete-section').exists()).toBe(false);
   });
 
-  it('MODAL-AUT-003: Render đúng thông tin và mã định dạng ở chế độ Chỉnh sửa', () => {
+  it('MODAL-AUT-003: Render đúng thông tin ở chế độ Chỉnh sửa và không hiện mã thực thể DB', () => {
     const wrapper = mount(AuthorFormModal, {
       props: {
         isOpen: true,
@@ -59,8 +58,7 @@ describe('components/author/AuthorFormModal.vue - Unit Tests', () => {
     const affInput = wrapper.find<HTMLInputElement>('input[name="affiliation"]');
     expect(affInput.element.value).toBe(sampleAuthor.affiliation);
 
-    const codeInput = wrapper.find<HTMLInputElement>('input[name="code"]');
-    expect(codeInput.element.value).toBe('TG-A6B001');
+    expect(wrapper.find('input[name="code"]').exists()).toBe(false);
 
     expect(wrapper.find('.delete-section').exists()).toBe(true);
   });
