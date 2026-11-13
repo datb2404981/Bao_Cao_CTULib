@@ -25,7 +25,7 @@ export const createLoanRecord = async (input: { readerId: string; bookId: string
     return await session.withTransaction(async () => {
       // Ghi cùng document Reader để MongoDB tuần tự hoá các yêu cầu của một độc giả.
       // withTransaction sẽ retry khi hai transaction ghi xung đột.
-      const reader = await readerModel.findOneAndUpdate(
+      let reader = await readerModel.findOneAndUpdate(
         {
           _id: input.readerId,
           isBorrowingBlocked: { $ne: true },
@@ -41,24 +41,42 @@ export const createLoanRecord = async (input: { readerId: string; bookId: string
           .session(session)
           .lean();
         if (!existingReader) {
-          throw new AppError(
-            "Tài khoản chưa có hồ sơ độc giả. Vui lòng liên hệ thư viện hoặc cập nhật hồ sơ để mượn sách.",
-            404,
-          );
+          const account = await AccountModel.findById(input.readerId)
+            .select("role")
+            .session(session)
+            .lean();
+          if (account?.role === "READER") {
+            reader = await readerModel.findOneAndUpdate(
+              { _id: input.readerId },
+              {
+                $setOnInsert: { _id: input.readerId, readerType: "STUDENT" },
+                $inc: { loanReservationVersion: 1 },
+              },
+              { session, new: true, upsert: true },
+            );
+          }
         }
-        if (existingReader.isBorrowingBlocked) {
+        if (!reader) {
+          if (!existingReader) {
+            throw new AppError(
+              "Tài khoản chưa có hồ sơ độc giả. Vui lòng liên hệ thư viện hoặc cập nhật hồ sơ để mượn sách.",
+              404,
+            );
+          }
+          if (existingReader.isBorrowingBlocked) {
+            throw new AppError(
+              "Tài khoản đang bị khoá quyền mượn vì bạn đang có quyển sách bị phạt hoặc quá hạn. Vui lòng nộp phạt trước khi mượn sách tiếp theo.",
+              403,
+            );
+          }
+          const reason = existingReader.borrowingBlockReason?.trim();
           throw new AppError(
-            "Tài khoản đang bị khoá quyền mượn vì bạn đang có quyển sách bị phạt hoặc quá hạn. Vui lòng nộp phạt trước khi mượn sách tiếp theo.",
+            reason
+              ? `Tài khoản đang bị khoá quyền mượn (${reason}). Vui lòng liên hệ thư viện trước khi mượn sách tiếp theo.`
+              : "Tài khoản đang bị khoá quyền mượn bởi thủ thư. Vui lòng liên hệ thư viện trước khi mượn sách tiếp theo.",
             403,
           );
         }
-        const reason = existingReader.borrowingBlockReason?.trim();
-        throw new AppError(
-          reason
-            ? `Tài khoản đang bị khoá quyền mượn (${reason}). Vui lòng liên hệ thư viện trước khi mượn sách tiếp theo.`
-            : "Tài khoản đang bị khoá quyền mượn bởi thủ thư. Vui lòng liên hệ thư viện trước khi mượn sách tiếp theo.",
-          403,
-        );
       }
 
       const book = await bookModel.findById(input.bookId).session(session).lean();

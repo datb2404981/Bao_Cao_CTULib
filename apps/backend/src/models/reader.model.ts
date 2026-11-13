@@ -18,7 +18,7 @@ const readerSchema = new Schema({
   facultyId: {
     type: Schema.Types.ObjectId,
     ref: "Faculty",
-    required: true,
+    required: false,
   },
   // Version dùng để tuần tự hóa các lần đặt sách đồng thời của cùng độc giả.
   // Không dùng làm bộ đếm: số phiếu đang hoạt động lấy trực tiếp từ Loan_Record.

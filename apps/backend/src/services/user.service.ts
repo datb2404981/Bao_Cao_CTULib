@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { AccountModel, RefreshTokenModel, } from "../models/user.model.js";
+import readerModel from "../models/reader.model.js";
 import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { AppError } from "../utils/app-error.js";
@@ -101,6 +102,13 @@ const register = async (input: RegisterInput):Promise<LoginResponse> => {
     isActive: true,
     role: "READER",
   });
+
+  // Tự động tạo hồ sơ độc giả mặc định để tài khoản mới có thể đặt mượn sách ngay.
+  await readerModel.findOneAndUpdate(
+    { _id: newAccount._id },
+    { $setOnInsert: { _id: newAccount._id, readerType: "STUDENT" } },
+    { upsert: true, new: true },
+  );
 
   const tokens = await genarateToken(newAccount._id.toString(), newAccount.ctuIdentifier, newAccount.role);
 
