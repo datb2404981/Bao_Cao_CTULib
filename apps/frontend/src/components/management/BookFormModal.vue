@@ -43,6 +43,8 @@ const emit = defineEmits<{
 
 const isPending = computed(() => props.isSubmitting || props.submitting);
 const dialogRef = ref<HTMLDialogElement | null>(null);
+const authorQuery = ref('');
+const authorDropdownOpen = ref(false);
 
 const form = reactive({
   title: '',
@@ -71,11 +73,66 @@ function getAuthorName(a: AuthorItem): string {
   return a.fullName || '';
 }
 
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
+}
+
+const selectedAuthors = computed(() =>
+  form.authorIds.map((id) => {
+    const found = props.authors.find((a) => getAuthorId(a) === id);
+    return { id, fullName: found ? getAuthorName(found) : id };
+  })
+);
+
+const filteredAuthors = computed(() => {
+  const q = normalizeSearchText(authorQuery.value);
+  return props.authors.filter((author) => {
+    const id = getAuthorId(author);
+    if (!id || form.authorIds.includes(id)) return false;
+    if (!q) return true;
+    return normalizeSearchText(getAuthorName(author)).includes(q);
+  });
+});
+
+function addAuthor(author: AuthorItem) {
+  const id = getAuthorId(author);
+  if (!id || form.authorIds.includes(id)) return;
+  form.authorIds.push(id);
+  authorQuery.value = '';
+  authorDropdownOpen.value = false;
+  delete errors.authorIds;
+}
+
+function removeAuthor(id: string) {
+  form.authorIds = form.authorIds.filter((item) => item !== id);
+}
+
+function handleAuthorKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    if (filteredAuthors.value.length > 0) {
+      addAuthor(filteredAuthors.value[0]!);
+    }
+  } else if (event.key === 'Backspace' && !authorQuery.value && form.authorIds.length > 0) {
+    form.authorIds.pop();
+  } else if (event.key === 'Escape') {
+    authorDropdownOpen.value = false;
+  }
+}
+
 function resetForm() {
   form.title = props.initialData?.title || '';
   form.bookType = props.initialData?.bookType || 'TEXTBOOK';
   form.facultyId = props.initialData?.facultyId || '';
   form.authorIds = props.initialData?.authorIds ? [...props.initialData.authorIds] : [];
+  authorQuery.value = '';
+  authorDropdownOpen.value = false;
   form.publisher = props.initialData?.publisher || '';
   form.publicationYear = props.initialData?.publicationYear ?? new Date().getFullYear();
   form.coverPrice = props.initialData?.coverPrice ?? 0;
@@ -314,14 +371,61 @@ function handleDialogClick(event: MouseEvent) {
               </label>
 
               <div class="full">
-                <label class="field">
+                <div class="field">
                   <span>Tác giả <b class="required">*</b></span>
+                  <div class="author-picker" :class="{ invalid: !!(errors.authorIds || serverFieldErrors?.authorIds) }">
+                    <div v-if="selectedAuthors.length > 0" class="author-chips">
+                      <span v-for="author in selectedAuthors" :key="author.id" class="author-chip">
+                        <span>{{ author.fullName }}</span>
+                        <button
+                          type="button"
+                          class="author-chip-remove"
+                          :aria-label="`Bỏ chọn ${author.fullName}`"
+                          :disabled="isPending"
+                          @click="removeAuthor(author.id)"
+                        >×</button>
+                      </span>
+                    </div>
+                    <div class="author-input-wrap">
+                      <input
+                        v-model="authorQuery"
+                        type="text"
+                        name="authorSearch"
+                        autocomplete="off"
+                        placeholder="Nhập tên tác giả để tìm và chọn..."
+                        :disabled="isPending"
+                        :aria-invalid="!!(errors.authorIds || serverFieldErrors?.authorIds)"
+                        aria-label="Nhập tên tác giả"
+                        @focus="authorDropdownOpen = true"
+                        @input="authorDropdownOpen = true"
+                        @blur="authorDropdownOpen = false"
+                        @keydown="handleAuthorKeydown"
+                      />
+                      <div v-if="authorDropdownOpen" class="author-dropdown" role="listbox" aria-label="Danh sách tác giả gợi ý">
+                        <button
+                          v-for="author in filteredAuthors"
+                          :key="getAuthorId(author)"
+                          type="button"
+                          class="author-option"
+                          role="option"
+                          @mousedown.prevent="addAuthor(author)"
+                        >
+                          <span>{{ getAuthorName(author) }}</span>
+                          <span v-if="author.affiliation" class="author-affiliation">{{ author.affiliation }}</span>
+                        </button>
+                        <div v-if="filteredAuthors.length === 0" class="author-empty">
+                          {{ authorQuery.trim() ? 'Không tìm thấy tác giả phù hợp' : 'Đã chọn hết tác giả trong danh mục' }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <select
                     v-model="form.authorIds"
                     name="authorIds"
                     multiple
-                    size="4"
-                    required
+                    class="sr-only"
+                    tabindex="-1"
+                    aria-hidden="true"
                     :aria-invalid="!!(errors.authorIds || serverFieldErrors?.authorIds)"
                   >
                     <option
@@ -335,7 +439,7 @@ function handleDialogClick(event: MouseEvent) {
                   <p v-if="errors.authorIds || serverFieldErrors?.authorIds" class="field-error">
                     {{ errors.authorIds || serverFieldErrors?.authorIds }}
                   </p>
-                </label>
+                </div>
               </div>
             </div>
           </div>
@@ -503,29 +607,123 @@ function handleDialogClick(event: MouseEvent) {
   margin-bottom: 12px;
 }
 
-select[multiple] {
-  min-height: 104px;
-  padding: 6px;
+.author-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
+  background: var(--bg-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-select[multiple]:focus-visible {
+.author-picker:focus-within {
   outline: 2px solid var(--color-focus);
   outline-offset: 1px;
   border-color: var(--color-focus);
 }
 
-select[multiple] option {
-  padding: 6px 8px;
-  border-radius: 4px;
-  margin-bottom: 2px;
+.author-picker.invalid {
+  border-color: var(--color-danger);
 }
 
-select[multiple] option:checked {
+.author-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.author-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
   background: var(--bg-primary-subtle);
   color: var(--color-primary);
+  font-size: 0.84rem;
   font-weight: 600;
+}
+
+.author-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.author-chip-remove:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.author-input-wrap {
+  position: relative;
+}
+
+.author-input-wrap input {
+  width: 100%;
+  border: none;
+  padding: 4px 2px;
+  background: transparent;
+  font-size: 0.92rem;
+}
+
+.author-input-wrap input:focus-visible {
+  outline: none;
+}
+
+.author-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: -9px;
+  right: -9px;
+  z-index: 20;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+}
+
+.author-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.author-option:hover {
+  background: var(--bg-primary-subtle);
+  color: var(--color-primary);
+}
+
+.author-affiliation {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.author-empty {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
 }
 
 .checkline {
