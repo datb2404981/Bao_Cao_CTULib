@@ -138,17 +138,43 @@ function handleKeyDown(e: KeyboardEvent) {
     handleClose();
   }
 }
+
+function handleBackdropClick(e: MouseEvent) {
+  if (e.target === e.currentTarget && !props.isSubmitting) {
+    handleClose();
+  }
+}
+
+function handleDialogClick(event: MouseEvent) {
+  if (event.target !== event.currentTarget || !dialogRef.value) return;
+  const bounds = dialogRef.value.getBoundingClientRect();
+  if (
+    event.clientX < bounds.left ||
+    event.clientX > bounds.right ||
+    event.clientY < bounds.top ||
+    event.clientY > bounds.bottom
+  ) {
+    handleClose();
+  }
+}
 </script>
 
 <template>
-  <dialog
+  <div
     v-if="isOpen"
-    ref="dialogRef"
-    class="dialog modern-dialog"
-    aria-labelledby="publisher-dialog-title"
-    aria-modal="true"
-    @keydown="handleKeyDown"
+    class="modal-backdrop"
+    role="presentation"
+    @click="handleBackdropClick"
   >
+    <dialog
+      ref="dialogRef"
+      class="dialog narrow modern-dialog"
+      aria-labelledby="publisher-dialog-title"
+      aria-modal="true"
+      @cancel.prevent="handleClose"
+      @click="handleDialogClick"
+      @keydown="handleKeyDown"
+    >
     <div class="dialog-content">
       <header class="dialog-header">
         <div class="header-titles">
@@ -280,6 +306,7 @@ function handleKeyDown(e: KeyboardEvent) {
               class="btn primary"
               :disabled="isSubmitting"
             >
+              <span v-if="isSubmitting" class="spinner small" aria-hidden="true"></span>
               <span>{{ isSubmitting ? 'Đang lưu…' : isEditMode ? 'Lưu thay đổi' : 'Tạo mới' }}</span>
             </button>
           </div>
@@ -287,42 +314,57 @@ function handleKeyDown(e: KeyboardEvent) {
       </form>
     </div>
   </dialog>
+  </div>
 </template>
 
 <style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
 .modern-dialog {
   padding: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow-dialog);
-  max-width: 520px;
-  width: 90vw;
+  border: 1px solid var(--line-light, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface, #ffffff);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 500px;
+  width: 100%;
+  overflow: hidden;
+  margin: auto;
 }
 
 .modern-dialog::backdrop {
-  background: var(--backdrop-dialog);
-  backdrop-filter: blur(4px);
+  background: var(--backdrop-dialog, rgba(15, 23, 42, 0.45));
+  backdrop-filter: blur(2px);
 }
 
 .dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--line-light);
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line-light, #e2e8f0);
 }
 
 .header-titles h2 {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--text, #0f172a);
   margin: 0;
 }
 
 .dialog-subtitle {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--muted, #64748b);
   margin: 4px 0 0;
 }
 
@@ -330,16 +372,17 @@ function handleKeyDown(e: KeyboardEvent) {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--muted);
-  padding: 4px;
-  border-radius: var(--radius-sm);
+  color: var(--muted, #64748b);
+  padding: 6px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
+  transition: all 0.15s ease;
 }
 
-.close-button:hover {
-  background: var(--ground);
-  color: var(--text);
+.close-button:hover:not(:disabled) {
+  background: var(--bg-hover, #f1f5f9);
+  color: var(--text, #0f172a);
 }
 
 .dialog-body {
@@ -347,18 +390,74 @@ function handleKeyDown(e: KeyboardEvent) {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  max-height: calc(85vh - 130px);
+  overflow-y: auto;
+}
+
+.alert.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 13.5px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .field label span {
   display: block;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--text);
-  margin-bottom: 6px;
+  color: var(--text, #0f172a);
+}
+
+.required {
+  color: var(--danger, #ef4444);
 }
 
 .field input {
   width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid var(--line-light, #cbd5e1);
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: var(--text, #0f172a);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:focus {
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.field input[aria-invalid='true'] {
+  border-color: var(--danger, #ef4444);
+}
+
+.field input[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.field input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.field-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--danger, #dc2626);
 }
 
 .dialog-footer {
@@ -366,7 +465,7 @@ function handleKeyDown(e: KeyboardEvent) {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-top: 1px solid var(--line-light);
+  border-top: 1px solid var(--line-light, #e2e8f0);
   background: #f8fafc;
 }
 
@@ -377,9 +476,9 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 .delete-warning-panel {
-  background: var(--bg-danger-subtle);
-  border: 1px solid var(--border-danger-subtle);
-  border-radius: var(--radius-sm);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -387,12 +486,12 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 .delete-warning-text strong {
-  color: var(--color-danger);
+  color: #b91c1c;
   font-size: 13.5px;
 }
 
 .delete-warning-text p {
-  color: var(--color-danger);
+  color: #b91c1c;
   font-size: 12.5px;
   margin: 4px 0 0;
 }
@@ -401,5 +500,22 @@ function handleKeyDown(e: KeyboardEvent) {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.spinner.small {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 6px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
