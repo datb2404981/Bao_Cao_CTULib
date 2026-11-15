@@ -22,6 +22,7 @@ const employeePermissionSpecs = [
   { permissionName: "COLLECT_PENALTY", description: "Thu và quản lý phiếu phạt" },
   { permissionName: "MANAGE_FACULTIES", description: "Quản lý khoa/viện" },
   { permissionName: "MANAGE_AUTHORS", description: "Quản lý tác giả" },
+  { permissionName: "MANAGE_PUBLISHERS", description: "Quản lý nhà xuất bản" },
 ] as const;
 
 async function ensureEmployeeManagementAccess(): Promise<void> {
