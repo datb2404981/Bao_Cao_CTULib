@@ -5,6 +5,7 @@ import {
   createFaculty,
   updateFaculty,
   deleteFaculty,
+  clearFacultyCache,
   FacultyApiError,
 } from '../services/faculty';
 import type { Faculty } from '../types/faculty';
@@ -23,6 +24,7 @@ describe('services/faculty.ts - Unit Tests', () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
+    clearFacultyCache();
     vi.stubGlobal('fetch', vi.fn());
   });
 

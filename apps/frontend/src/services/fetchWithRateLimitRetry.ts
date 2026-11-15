@@ -1,5 +1,5 @@
 const DEFAULT_RETRY_DELAY_MS = 1000;
-const MAX_RETRY_DELAY_MS = 3000;
+const MAX_RETRY_DELAY_MS = 10000;
 
 export const fetchWithRateLimitRetry = async (url: string, options: RequestInit): Promise<Response> => {
   const response = await fetch(url, options);

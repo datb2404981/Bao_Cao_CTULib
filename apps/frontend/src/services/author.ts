@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth';
+import { createCachedResource } from './cachedResource';
 import { fetchWithRateLimitRetry } from './fetchWithRateLimitRetry';
 import type {
   Author,
@@ -81,14 +82,22 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   return result.data;
 }
 
+const authorsCache = createCachedResource(() =>
+  request<Author[]>('/author', {
+    method: 'GET',
+    requireAuth: false,
+  }),
+);
+
+export const clearAuthorCache = (): void => {
+  authorsCache.invalidate();
+};
+
 /**
  * Lấy toàn bộ danh sách Tác giả
  */
 export async function getAllAuthors(): Promise<Author[]> {
-  return request<Author[]>('/author', {
-    method: 'GET',
-    requireAuth: false,
-  });
+  return authorsCache.get();
 }
 
 /**
@@ -109,11 +118,13 @@ export async function getAuthorById(id: string): Promise<Author> {
  * Tạo mới một Tác giả
  */
 export async function createAuthor(payload: CreateAuthorPayload): Promise<Author> {
-  return request<Author>('/author', {
+  const created = await request<Author>('/author', {
     method: 'POST',
     body: payload,
     requireAuth: true,
   });
+  clearAuthorCache();
+  return created;
 }
 
 /**
@@ -124,11 +135,13 @@ export async function updateAuthor(id: string, payload: UpdateAuthorPayload): Pr
   if (!cleanId) {
     throw new AuthorApiError('Mã tác giả không hợp lệ.', 400);
   }
-  return request<Author>(`/author/${encodeURIComponent(cleanId)}`, {
+  const updated = await request<Author>(`/author/${encodeURIComponent(cleanId)}`, {
     method: 'PUT',
     body: payload,
     requireAuth: true,
   });
+  clearAuthorCache();
+  return updated;
 }
 
 /**
@@ -139,9 +152,11 @@ export async function deleteAuthor(id: string): Promise<Author> {
   if (!cleanId) {
     throw new AuthorApiError('Mã tác giả không hợp lệ.', 400);
   }
-  return request<Author>(`/author/${encodeURIComponent(cleanId)}`, {
+  const deleted = await request<Author>(`/author/${encodeURIComponent(cleanId)}`, {
     method: 'DELETE',
     requireAuth: true,
   });
+  clearAuthorCache();
+  return deleted;
 }
 

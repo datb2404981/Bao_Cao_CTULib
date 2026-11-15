@@ -5,6 +5,7 @@ import {
   createAuthor,
   updateAuthor,
   deleteAuthor,
+  clearAuthorCache,
   AuthorApiError,
 } from '../services/author';
 import type { Author } from '../types/author';
@@ -24,6 +25,7 @@ describe('services/author.ts - Unit Tests', () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
+    clearAuthorCache();
     vi.stubGlobal('fetch', vi.fn());
   });
 

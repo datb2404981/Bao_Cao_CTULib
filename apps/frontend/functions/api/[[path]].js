@@ -22,6 +22,12 @@ export async function onRequest({ request, env }) {
   target.search = incoming.search;
   const headers = new Headers(request.headers);
   headers.delete('host');
+  headers.delete('cdn-loop');
+  for (const key of Array.from(headers.keys())) {
+    if (key.toLowerCase().startsWith('cf-')) {
+      headers.delete(key);
+    }
+  }
   // Giữ nguyên Origin: backend vẫn kiểm tra CSRF, không thay bằng origin tin cậy.
   const init = { method: request.method, headers, redirect: 'manual' };
   if (!['GET', 'HEAD'].includes(request.method)) init.body = request.body;

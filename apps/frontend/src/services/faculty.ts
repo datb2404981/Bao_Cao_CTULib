@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth';
+import { createCachedResource } from './cachedResource';
 import { fetchWithRateLimitRetry } from './fetchWithRateLimitRetry';
 import type {
   Faculty,
@@ -81,14 +82,22 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   return result.data;
 }
 
+const facultiesCache = createCachedResource(() =>
+  request<Faculty[]>('/faculty', {
+    method: 'GET',
+    requireAuth: false,
+  }),
+);
+
+export const clearFacultyCache = (): void => {
+  facultiesCache.invalidate();
+};
+
 /**
  * Lấy toàn bộ danh sách Khoa/Viện
  */
 export async function getAllFaculties(): Promise<Faculty[]> {
-  return request<Faculty[]>('/faculty', {
-    method: 'GET',
-    requireAuth: false,
-  });
+  return facultiesCache.get();
 }
 
 /**
@@ -109,11 +118,13 @@ export async function getFacultyById(id: string): Promise<Faculty> {
  * Tạo mới một Khoa/Viện
  */
 export async function createFaculty(payload: CreateFacultyPayload): Promise<Faculty> {
-  return request<Faculty>('/faculty', {
+  const created = await request<Faculty>('/faculty', {
     method: 'POST',
     body: payload,
     requireAuth: true,
   });
+  clearFacultyCache();
+  return created;
 }
 
 /**
@@ -124,11 +135,13 @@ export async function updateFaculty(id: string, payload: UpdateFacultyPayload): 
   if (!cleanId) {
     throw new FacultyApiError('Mã khoa không hợp lệ.', 400);
   }
-  return request<Faculty>(`/faculty/${encodeURIComponent(cleanId)}`, {
+  const updated = await request<Faculty>(`/faculty/${encodeURIComponent(cleanId)}`, {
     method: 'PUT',
     body: payload,
     requireAuth: true,
   });
+  clearFacultyCache();
+  return updated;
 }
 
 /**
@@ -139,9 +152,11 @@ export async function deleteFaculty(id: string): Promise<Faculty> {
   if (!cleanId) {
     throw new FacultyApiError('Mã khoa không hợp lệ.', 400);
   }
-  return request<Faculty>(`/faculty/${encodeURIComponent(cleanId)}`, {
+  const deleted = await request<Faculty>(`/faculty/${encodeURIComponent(cleanId)}`, {
     method: 'DELETE',
     requireAuth: true,
   });
+  clearFacultyCache();
+  return deleted;
 }
 

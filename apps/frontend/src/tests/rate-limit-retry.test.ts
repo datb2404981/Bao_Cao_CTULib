@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAllBooks } from '../services/book';
-import { getAllAuthors } from '../services/author';
-import { getAllFaculties } from '../services/faculty';
+import { getAllAuthors, clearAuthorCache } from '../services/author';
+import { getAllFaculties, clearFacultyCache } from '../services/faculty';
 import { fetchWithRateLimitRetry } from '../services/fetchWithRateLimitRetry';
 
 vi.mock('@/services/auth', () => ({ getAccessToken: vi.fn().mockResolvedValue(null) }));
@@ -14,6 +14,8 @@ const rateLimitResponse = (headers: HeadersInit = {}): Response =>
 
 describe('Phục hồi khi Cloudflare giới hạn truy cập API', () => {
   beforeEach(() => {
+    clearAuthorCache();
+    clearFacultyCache();
     vi.useFakeTimers();
     vi.stubGlobal('fetch', vi.fn());
   });
@@ -66,6 +68,33 @@ describe('Phục hồi khi Cloudflare giới hạn truy cập API', () => {
 
     const response = await fetchWithRateLimitRetry('/api/v1/book', { method: 'POST', body: '{}' });
     expect(response.status).toBe(429);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('Thử lại khi Retry-After <= 10 giây (ví dụ 5s)', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(rateLimitResponse({ 'Retry-After': '5' }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'success', data: [] }), { status: 200 }));
+
+    const pending = getAllFaculties();
+    await vi.advanceTimersByTimeAsync(5000);
+    const data = await pending;
+
+    expect(data).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('Gộp request đồng thời và cache danh mục khoa/tác giả trong 60s', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ status: 'success', data: [{ _id: 'f1', facultyName: 'CNTT' }] }), { status: 200 }),
+    );
+
+    const [first, second] = await Promise.all([getAllFaculties(), getAllFaculties()]);
+    const third = await getAllFaculties();
+
+    expect(first).toEqual([{ _id: 'f1', facultyName: 'CNTT' }]);
+    expect(second).toEqual(first);
+    expect(third).toEqual(first);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
