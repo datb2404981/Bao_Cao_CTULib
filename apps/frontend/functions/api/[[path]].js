@@ -2,10 +2,7 @@
 export async function onRequest({ request, env }) {
   let origin;
   try {
-    const hostname = new URL(request.url).hostname;
-    const isPagesDev = hostname.endsWith('.pages.dev') || hostname === 'localhost' || hostname === '127.0.0.1';
-    const fallbackOrigin = isPagesDev ? 'https://bao-cao-ctulib.onrender.com' : '';
-    const configuredOrigin = env.API_ORIGIN || fallbackOrigin;
+    const configuredOrigin = env.API_ORIGIN || 'https://bao-cao-ctulib.onrender.com';
     origin = new URL(configuredOrigin);
     if (origin.protocol !== 'https:' || origin.username || origin.password ||
         origin.pathname !== '/' || origin.search || origin.hash ||
