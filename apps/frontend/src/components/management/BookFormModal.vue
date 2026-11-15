@@ -15,11 +15,18 @@ interface AuthorItem {
   affiliation?: string;
 }
 
+interface PublisherItem {
+  _id?: string;
+  publisherId?: string;
+  publisherName: string;
+}
+
 const props = withDefaults(
   defineProps<{
     isOpen: boolean;
     faculties: FacultyItem[];
     authors: AuthorItem[];
+    publishers?: PublisherItem[];
     initialData?: Partial<CreateBookPayload> & { availableCopies?: number };
     editMode?: boolean;
     isSubmitting?: boolean;
@@ -28,6 +35,7 @@ const props = withDefaults(
     serverFieldErrors?: Record<string, string>;
   }>(),
   {
+    publishers: () => [],
     isSubmitting: false,
     editMode: false,
     submitting: false,
@@ -52,6 +60,7 @@ const form = reactive({
   facultyId: '',
   authorIds: [] as string[],
   publisher: '',
+  publisherId: '',
   publicationYear: new Date().getFullYear(),
   coverPrice: 0,
   totalCopies: 1,
@@ -63,6 +72,31 @@ const errors = reactive<Record<string, string>>({});
 
 function getFacultyId(f: FacultyItem): string {
   return f._id || f.facultyId || '';
+}
+
+function getPublisherId(p: PublisherItem): string {
+  return p._id || p.publisherId || '';
+}
+
+function getPublisherName(p: PublisherItem): string {
+  return p.publisherName || '';
+}
+
+function onPublisherChange(event: Event) {
+  const select = event.target as HTMLSelectElement;
+  const selectedPub = props.publishers.find(p => getPublisherId(p) === select.value);
+  if (selectedPub) {
+    form.publisher = getPublisherName(selectedPub);
+    form.publisherId = getPublisherId(selectedPub);
+  } else {
+    form.publisherId = '';
+  }
+}
+
+function onPublisherInput() {
+  const typed = form.publisher.trim();
+  const matched = typed ? props.publishers.find(p => getPublisherName(p) === typed) : undefined;
+  form.publisherId = matched ? getPublisherId(matched) : '';
 }
 
 function getAuthorId(a: AuthorItem): string {
@@ -134,6 +168,11 @@ function resetForm() {
   authorQuery.value = '';
   authorDropdownOpen.value = false;
   form.publisher = props.initialData?.publisher || '';
+  form.publisherId = props.initialData?.publisherId || '';
+  if (!form.publisherId && form.publisher && props.publishers && props.publishers.length > 0) {
+    const matched = props.publishers.find(p => getPublisherName(p) === form.publisher);
+    if (matched) form.publisherId = getPublisherId(matched);
+  }
   form.publicationYear = props.initialData?.publicationYear ?? new Date().getFullYear();
   form.coverPrice = props.initialData?.coverPrice ?? 0;
   form.totalCopies = props.initialData?.totalCopies ?? 1;
@@ -251,6 +290,7 @@ async function handleSubmit() {
     coverPrice: Number(form.coverPrice),
     publicationYear: hasPublicationYear ? Number(form.publicationYear) : undefined,
     publisher: form.publisher.trim() || undefined,
+    publisherId: form.publisherId || (props.editMode ? null : undefined),
     coverImageUrl: form.coverImageUrl.trim() || undefined,
     isAvailableForCirculation: form.isAvailableForCirculation,
   };
@@ -444,11 +484,28 @@ function handleDialogClick(event: MouseEvent) {
             <div class="grid2">
               <label class="field">
                 <span>Nhà xuất bản</span>
+                <select
+                  v-if="publishers && publishers.length > 0"
+                  :value="form.publisherId"
+                  name="publisherId"
+                  @change="onPublisherChange"
+                >
+                  <option value="">-- Chọn Nhà xuất bản từ danh mục --</option>
+                  <option
+                    v-for="pub in publishers"
+                    :key="getPublisherId(pub)"
+                    :value="getPublisherId(pub)"
+                  >
+                    {{ getPublisherName(pub) }}
+                  </option>
+                </select>
                 <input
                   v-model="form.publisher"
                   type="text"
                   name="publisher"
-                  placeholder="NXB Đại học Cần Thơ"
+                  placeholder="Tên Nhà xuất bản"
+                  :style="publishers && publishers.length > 0 ? 'margin-top: 6px;' : ''"
+                  @input="onPublisherInput"
                 />
               </label>
 

@@ -1,9 +1,9 @@
-import id from "zod/v4/locales/id.cjs";
 import authorModel from "../models/author.model.js";
 import BookModel, {Book} from "../models/book.model.js";
 import facultyModel from "../models/faculty.model.js";
+import publisherModel from "../models/publisher.model.js";
 import { AppError } from "../utils/app-error.js";
-import type { InventoryAdjustmentInput } from "../schemas/book.schema.js";
+import type { InventoryAdjustmentInput, UpdateBookInput } from "../schemas/book.schema.js";
 
 
 const toBookResponse = (b: any) => {
@@ -14,12 +14,17 @@ const toBookResponse = (b: any) => {
     ...rest,
     facultyId: rest.facultyId?._id?.toString() || rest.facultyId?.toString(),
     authorIds: (rest.authorIds || []).map((a: any) => a?._id?.toString() || a?.toString()),
+    ...(rest.publisherId ? { publisherId: rest.publisherId?._id?.toString() || rest.publisherId?.toString() } : {}),
     availableCopies: rest.availableCopies ?? rest.totalCopies,
     ...(coverImageURL || rest.coverImageUrl ? { coverImageUrl: coverImageURL || rest.coverImageUrl } : {}),
   };
 };
 
-const checkRelations = async (facultyId?: string, authorIds?: string[]) => {
+const checkRelations = async (
+  facultyId?: string,
+  authorIds?: string[],
+  publisherId?: string | null,
+): Promise<string | undefined> => {
   if (facultyId && !(await facultyModel.exists({ _id: facultyId }))) {
     throw new AppError("Khoa không tồn tại", 400);
   }
@@ -32,14 +37,27 @@ const checkRelations = async (facultyId?: string, authorIds?: string[]) => {
       throw new AppError("Một số tác giả không tồn tại", 400);
     }
   }
+  if (publisherId) {
+    const pub = await publisherModel.findById(publisherId).select("publisherName").lean();
+    if (!pub) {
+      throw new AppError("Nhà xuất bản không tồn tại", 400);
+    }
+    return pub.publisherName;
+  }
+  return undefined;
 };
 
 export const createBook = async (input: Book) => {
-  await checkRelations(input.facultyId.toString(), input.authorIds?.map((id)=> id.toString()));
+  const resolvedPublisherName = await checkRelations(
+    input.facultyId.toString(),
+    input.authorIds?.map((id) => id.toString()),
+    input.publisherId?.toString(),
+  );
 
   // availableCopies do server tính từ totalCopies, không nhận từ client
   const book = await BookModel.create({
     ...input,
+    ...(resolvedPublisherName && !input.publisher?.trim() ? { publisher: resolvedPublisherName } : {}),
     availableCopies: input.totalCopies,
   });
 
@@ -133,13 +151,36 @@ export const getBookById = async (id: string) => {
   return toBookResponse(book);
 };
 
-export const updateBook = async (id: string, input: Book) => {
+export const updateBook = async (id: string, input: UpdateBookInput) => {
   if (!/^[a-fA-F0-9]{24}$/.test(id)) {
     throw new AppError("Sách không tồn tại", 404);
   }
 
-  await checkRelations(input.facultyId.toString(), input.authorIds.map(id => id.toString()));
-  const book = await BookModel.findByIdAndUpdate(id, input, {
+  const resolvedPublisherName = await checkRelations(
+    input.facultyId?.toString(),
+    input.authorIds?.map((authorId) => authorId.toString()),
+    input.publisherId,
+  );
+
+  const { publisherId, ...restInput } = input as UpdateBookInput & Record<string, unknown>;
+  delete restInput.totalCopies;
+  delete restInput.availableCopies;
+  delete restInput.inventoryAdjustments;
+
+  const setFields: Record<string, unknown> = { ...restInput };
+  if (publisherId) {
+    setFields.publisherId = publisherId;
+    if (resolvedPublisherName && !input.publisher?.trim()) {
+      setFields.publisher = resolvedPublisherName;
+    }
+  }
+
+  const updateQuery: Record<string, unknown> = { $set: setFields };
+  if (publisherId === null) {
+    updateQuery.$unset = { publisherId: 1 };
+  }
+
+  const book = await BookModel.findByIdAndUpdate(id, updateQuery, {
     new: true,
     runValidators: true,
   });

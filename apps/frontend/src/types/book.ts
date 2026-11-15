@@ -17,6 +17,7 @@ export interface Book {
   coverPrice: number;
   publicationYear?: number;
   publisher?: string;
+  publisherId?: string | null;
   coverImageUrl?: string;
   isAvailableForCirculation: boolean;
   createdAt?: string;
@@ -52,6 +53,7 @@ export interface CreateBookPayload {
   coverPrice: number;
   publicationYear?: number;
   publisher?: string;
+  publisherId?: string | null;
   coverImageUrl?: string;
   isAvailableForCirculation?: boolean;
 }

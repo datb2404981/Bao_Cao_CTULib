@@ -5,6 +5,7 @@ import BookCatalogView from './views/BookCatalogView.vue'
 import BookManagementView from './views/BookManagementView.vue'
 import FacultyManagementView from './views/FacultyManagementView.vue'
 import AuthorManagementView from './views/AuthorManagementView.vue'
+import PublisherManagementView from './views/PublisherManagementView.vue'
 
 import PeopleManagementView from './views/PeopleManagementView.vue'
 import AccountsManagementView from './views/AccountsManagementView.vue'
@@ -59,6 +60,7 @@ const isStaffUser = computed(() => !!currentUser.value && ['EMPLOYEE', 'ADMIN'].
 const canManageBooks = computed(() => canAccess(currentUser.value, 'management'))
 const canManageFaculties = computed(() => canAccess(currentUser.value, 'faculty'))
 const canManageAuthors = computed(() => canAccess(currentUser.value, 'author'))
+const canManagePublishers = computed(() => canAccess(currentUser.value, 'publisher'))
 const canManagePeople = computed(() => canAccess(currentUser.value, 'reader'))
 const canManageAccounts = computed(() => canAccess(currentUser.value, 'accounts'))
 const canManageSettings = computed(() => canAccess(currentUser.value, 'settings'))
@@ -359,6 +361,14 @@ onUnmounted(() => {
           >
             Tác giả
           </a>
+          <a
+            v-if="canManagePublishers"
+            :class="{ active: currentView === 'publisher' }"
+            href="/publisher"
+            @click.prevent="navigateTo('publisher')"
+          >
+            Nhà xuất bản
+          </a>
           <a v-if="canManagePeople" href="/reader" :class="{ active: currentView === 'reader' }" @click.prevent="navigateTo('reader')">Độc giả</a>
           <a v-if="canManagePeople" href="/employee" :class="{ active: currentView === 'employee' }" @click.prevent="navigateTo('employee')">Nhân viên</a>
           <a v-if="canManagePeople" href="/permission" :class="{ active: currentView === 'permission' }" @click.prevent="navigateTo('permission')">Quyền chức năng</a>
@@ -466,6 +476,19 @@ onUnmounted(() => {
               </button>
 
               <button
+                v-if="canManagePublishers"
+                class="dropdown-item"
+                type="button"
+                @click="navigateTo('publisher')"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                <span>Quản lý Nhà xuất bản</span>
+              </button>
+
+              <button
                 class="dropdown-item logout-btn"
                 type="button"
                 :disabled="busy"
@@ -542,6 +565,11 @@ onUnmounted(() => {
       <!-- 4. Author Management View (SC16) -->
       <section v-else-if="currentView === 'author' && canAccess(currentUser, 'author')" aria-label="Quản lý Tác giả">
         <AuthorManagementView />
+      </section>
+
+      <!-- 5. Publisher Management View -->
+      <section v-else-if="currentView === 'publisher' && canAccess(currentUser, 'publisher')" aria-label="Quản lý Nhà xuất bản">
+        <PublisherManagementView />
       </section>
 
       <section v-else-if="(currentView === 'reader' || currentView === 'employee' || currentView === 'permission') && canManagePeople" :aria-label="currentView === 'reader' ? 'Quản lý độc giả' : currentView === 'employee' ? 'Quản lý nhân viên' : 'Quản lý quyền'">

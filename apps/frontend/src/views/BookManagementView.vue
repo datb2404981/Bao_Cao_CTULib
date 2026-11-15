@@ -5,9 +5,11 @@ import { canAccess } from '../middlewares/access';
 import { getAllBooks, createBook, updateBook, adjustBookInventory, BookApiError } from '../services/book';
 import { getAllAuthors } from '../services/author';
 import { getAllFaculties } from '../services/faculty';
+import { getAllPublishers } from '../services/publisher';
 import type { Book, CreateBookPayload, PaginationMeta } from '../types/book';
 import type { Author } from '../types/author';
 import type { Faculty } from '../types/faculty';
+import type { Publisher } from '../types/publisher';
 import { FACULTIES, AUTHORS } from '../types/book';
 import BookManagementTable from '../components/management/BookManagementTable.vue';
 import BookFormModal from '../components/management/BookFormModal.vue';
@@ -51,6 +53,7 @@ let inventoryReturnFocus: HTMLElement | null = null;
 // Dynamic catalog options
 const dynamicAuthors = ref<Author[]>([]);
 const dynamicFaculties = ref<Faculty[]>([]);
+const dynamicPublishers = ref<Publisher[]>([]);
 const catalogLoading = ref(true);
 const catalogError = ref('');
 const catalogReady = computed(() => !catalogLoading.value && !catalogError.value && dynamicFaculties.value.length > 0 && dynamicAuthors.value.length > 0);
@@ -69,6 +72,13 @@ const authorOptions = computed(() => {
     _id: a._id,
     fullName: a.fullName,
     affiliation: a.affiliation,
+  }));
+});
+
+const publisherOptions = computed(() => {
+  return dynamicPublishers.value.map((p) => ({
+    _id: p._id,
+    publisherName: p.publisherName,
   }));
 });
 
@@ -98,13 +108,15 @@ async function loadCatalogs() {
   const requestId = ++catalogRequestId;
   catalogLoading.value = true;
   catalogError.value = '';
-  const [fetchedAuthors, fetchedFaculties] = await Promise.allSettled([
+  const [fetchedAuthors, fetchedFaculties, fetchedPublishers] = await Promise.allSettled([
       getAllAuthors(),
       getAllFaculties(),
+      getAllPublishers(),
   ]);
   if (requestId !== catalogRequestId) return;
   dynamicAuthors.value = fetchedAuthors.status === 'fulfilled' && Array.isArray(fetchedAuthors.value) ? fetchedAuthors.value : [];
   dynamicFaculties.value = fetchedFaculties.status === 'fulfilled' && Array.isArray(fetchedFaculties.value) ? fetchedFaculties.value : [];
+  dynamicPublishers.value = fetchedPublishers.status === 'fulfilled' && Array.isArray(fetchedPublishers.value) ? fetchedPublishers.value : [];
   if (fetchedAuthors.status === 'rejected' || fetchedFaculties.status === 'rejected') {
     catalogError.value = 'Không thể tải danh mục khoa/viện hoặc tác giả từ hệ thống. Hãy thử tải lại trước khi lưu sách.';
   } else if (!dynamicAuthors.value.length || !dynamicFaculties.value.length) {
@@ -359,6 +371,7 @@ onBeforeUnmount(() => {
         :initial-data="editingBook || undefined"
         :faculties="facultyOptions"
         :authors="authorOptions"
+        :publishers="publisherOptions"
         :is-submitting="isSubmitting"
         :server-error="serverError"
         :server-field-errors="serverFieldErrors"

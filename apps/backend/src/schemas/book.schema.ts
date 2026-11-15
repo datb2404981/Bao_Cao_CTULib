@@ -25,6 +25,7 @@ export const createBookSchema = z.object({
     .number({ message: "Vui lòng nhập giá bìa" })
     .min(0, { message: "Giá bìa không được âm" }),
   publisher: z.string().trim().optional(),
+  publisherId: z.string().regex(objectIdRegex, { message: "Mã nhà xuất bản không hợp lệ" }).optional(),
   publicationYear: z
     .number()
     .int({ message: "Năm xuất bản phải là số nguyên" })
@@ -46,6 +47,18 @@ export const createBookSchema = z.object({
 });
 
 export const bookSchema = createBookSchema;
+export const updateBookSchema = createBookSchema
+  .omit({ totalCopies: true, availableCopies: true })
+  .extend({
+    publisherId: z
+      .string()
+      .regex(objectIdRegex, { message: "Mã nhà xuất bản không hợp lệ" })
+      .nullable()
+      .optional(),
+  })
+  .partial();
+export type UpdateBookInput = z.infer<typeof updateBookSchema>;
+
 export const inventoryAdjustmentSchema = z.object({
   delta: z.number().int().refine((value) => value !== 0, 'Số điều chỉnh không được bằng 0'),
   reason: z.string().trim().min(5).max(500),

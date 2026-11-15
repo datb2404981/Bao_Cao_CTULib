@@ -1,13 +1,13 @@
 import type { AuthUser } from '../services/auth'
 
-export type AppView = 'catalog' | 'dashboard' | 'management' | 'faculty' | 'author' | 'reader' | 'employee' | 'permission' | 'accounts' | 'settings' | 'my-loans' | 'loans' | 'penalties' | 'auth' | 'forbidden'
+export type AppView = 'catalog' | 'dashboard' | 'management' | 'faculty' | 'author' | 'publisher' | 'reader' | 'employee' | 'permission' | 'accounts' | 'settings' | 'my-loans' | 'loans' | 'penalties' | 'auth' | 'forbidden'
 export const viewPaths: Record<AppView, string> = {
-  catalog: 'catalog', dashboard: 'dashboard', management: 'manage', faculty: 'faculty', author: 'author',
+  catalog: 'catalog', dashboard: 'dashboard', management: 'manage', faculty: 'faculty', author: 'author', publisher: 'publisher',
   reader: 'reader', employee: 'employee', permission: 'permission', accounts: 'accounts', settings: 'settings', 'my-loans': 'my-loans', loans: 'loans', penalties: 'penalties', auth: 'auth', forbidden: 'forbidden',
 }
-export const protectedViews: AppView[] = ['dashboard', 'management', 'faculty', 'author', 'reader', 'employee', 'permission', 'accounts', 'settings', 'my-loans', 'loans', 'penalties']
+export const protectedViews: AppView[] = ['dashboard', 'management', 'faculty', 'author', 'publisher', 'reader', 'employee', 'permission', 'accounts', 'settings', 'my-loans', 'loans', 'penalties']
 const permissions: Partial<Record<AppView, string>> = {
-  dashboard: 'MANAGE_LOANS', management: 'MANAGE_BOOKS', faculty: 'MANAGE_FACULTIES', author: 'MANAGE_AUTHORS', loans: 'MANAGE_LOANS', penalties: 'COLLECT_PENALTY',
+  dashboard: 'MANAGE_LOANS', management: 'MANAGE_BOOKS', faculty: 'MANAGE_FACULTIES', author: 'MANAGE_AUTHORS', publisher: 'MANAGE_PUBLISHERS', loans: 'MANAGE_LOANS', penalties: 'COLLECT_PENALTY',
 }
 export const canAccess = (user: AuthUser | null, view: AppView): boolean => {
   if (view === 'forbidden') return user !== null
@@ -38,6 +38,6 @@ export const brandHomeViewForUser = (user: AuthUser | null): AppView =>
 
 export const viewFromPath = (pathname: string): AppView => {
   const path = pathname.toLowerCase().replace(/^\/|\/$/g, '')
-  const aliases: Record<string, AppView> = { management: 'management', faculties: 'faculty', authors: 'author', readers: 'reader', employees: 'employee', permissions: 'permission', login: 'auth', register: 'auth' }
+  const aliases: Record<string, AppView> = { management: 'management', faculties: 'faculty', authors: 'author', publishers: 'publisher', readers: 'reader', employees: 'employee', permissions: 'permission', login: 'auth', register: 'auth' }
   return (Object.hasOwn(aliases, path) ? aliases[path] : undefined) || (Object.entries(viewPaths).find(([, value]) => value === path)?.[0] as AppView | undefined) || 'catalog'
 }

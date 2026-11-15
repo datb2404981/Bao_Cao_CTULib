@@ -42,6 +42,7 @@ const knownPermissions = [
   { name: 'MANAGE_BOOKS', label: 'Quản lý sách' },
   { name: 'MANAGE_FACULTIES', label: 'Quản lý khoa/viện' },
   { name: 'MANAGE_AUTHORS', label: 'Quản lý tác giả' },
+  { name: 'MANAGE_PUBLISHERS', label: 'Quản lý nhà xuất bản' },
 ]
 const nameOf = (row: Row) => 'permissionName' in row ? row.permissionName : row.fullName || 'Chưa có họ tên'
 const isReaderBlocked = (reader: Reader) => reader.isBorrowingBlocked || !!reader.isBorrowingManuallyBlocked

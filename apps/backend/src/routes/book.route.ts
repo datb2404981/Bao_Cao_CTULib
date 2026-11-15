@@ -12,7 +12,7 @@ import {
   requireManageBooks,
 } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
-import { bookSchema, inventoryAdjustmentSchema } from "../schemas/book.schema.js";
+import { bookSchema, updateBookSchema, inventoryAdjustmentSchema } from "../schemas/book.schema.js";
 
 const bookRouter = Router();
 
@@ -26,7 +26,7 @@ bookRouter.post(
 );
 bookRouter.get("/:bookId", authenticate, getBookByIdController);
 bookRouter.patch("/:bookId/inventory", authenticate, requireManageBooks, validate(inventoryAdjustmentSchema), adjustBookInventoryController);
-bookRouter.put("/:bookId", authenticate, requireManageBooks, updateBookController);
+bookRouter.put("/:bookId", authenticate, requireManageBooks, validate(updateBookSchema), updateBookController);
 bookRouter.delete("/:bookId", authenticate, requireManageBooks, deleteBookController);
 
 export default bookRouter;

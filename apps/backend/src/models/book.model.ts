@@ -5,6 +5,7 @@ const bookSchema = new Schema(
     title: { type: String, required: true, trim: true },
     bookType: { type: String, enum: ["TEXTBOOK", "REFERENCE"], required: true },
     publisher: { type: String, default: "" },
+    publisherId: { type: Schema.Types.ObjectId, ref: "Publisher" },
     publicationYear: { type: Number, default: () => new Date().getFullYear() },
     coverPrice: { type: Number, required: true, min: 0 },
     totalCopies: { type: Number, required: true, min: 0 },

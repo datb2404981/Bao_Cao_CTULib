@@ -5,6 +5,7 @@ import bookRouter from "./book.route.js";
 import { AUTH_PATH } from "../utils/auth-cookie.util.js";
 import facultyRouter from "./faculty.route.js";
 import authorRouter from "./author.route.js";
+import publisherRouter from "./publisher.route.js";
 
 import readerRouter from "./reader.route.js";
 import employeeRouter from "./employee.route.js";
@@ -28,6 +29,7 @@ router.use("/auth", authRouter);
 libraryApiRouter.use("/book", bookRouter);
 libraryApiRouter.use("/faculty", facultyRouter);
 libraryApiRouter.use("/author", authorRouter);
+libraryApiRouter.use("/publisher", publisherRouter);
 
 libraryApiRouter.use("/reader", readerRouter);
 libraryApiRouter.use("/employee", employeeRouter);
