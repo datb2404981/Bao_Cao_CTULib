@@ -177,11 +177,19 @@ function handleDialogClick(event: MouseEvent) {
     >
     <div class="dialog-content">
       <header class="dialog-header">
-        <div class="header-titles">
-          <h2 id="publisher-dialog-title" tabindex="-1">{{ titleText }}</h2>
-          <p class="dialog-subtitle">
-            {{ isEditMode ? 'Cập nhật thông tin chi tiết của Nhà xuất bản' : 'Thêm đối tác xuất bản sách vào hệ thống thư viện' }}
-          </p>
+        <div class="header-lead">
+          <div class="header-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </div>
+          <div class="header-titles">
+            <h2 id="publisher-dialog-title" tabindex="-1">{{ titleText }}</h2>
+            <p class="dialog-subtitle">
+              {{ isEditMode ? 'Cập nhật thông tin chi tiết của Nhà xuất bản' : 'Thêm đối tác xuất bản sách vào hệ thống thư viện' }}
+            </p>
+          </div>
         </div>
         <button
           type="button"
@@ -210,14 +218,18 @@ function handleDialogClick(event: MouseEvent) {
 
           <!-- Tên NXB -->
           <div class="field">
-            <label for="pub-name">
-              <span>Tên Nhà xuất bản <b class="required">*</b></span>
-            </label>
+            <div class="field-label-row">
+              <label for="pub-name">
+                <span>Tên Nhà xuất bản <b class="required">*</b></span>
+              </label>
+              <span class="char-count">{{ form.publisherName.trim().length }}/100</span>
+            </div>
             <input
               id="pub-name"
               v-model="form.publisherName"
               type="text"
               name="publisherName"
+              autocomplete="off"
               placeholder="VD: NXB Đại học Cần Thơ, NXB Giáo dục…"
               :disabled="isSubmitting"
               :aria-invalid="!!(errors.publisherName || serverFieldErrors?.publisherName)"
@@ -230,15 +242,19 @@ function handleDialogClick(event: MouseEvent) {
 
           <!-- Địa chỉ -->
           <div class="field">
-            <label for="pub-address">
-              <span>Địa chỉ</span>
-            </label>
+            <div class="field-label-row">
+              <label for="pub-address">
+                <span>Địa chỉ</span>
+              </label>
+              <span class="field-hint">Không bắt buộc</span>
+            </div>
             <input
               id="pub-address"
               v-model="form.address"
               type="text"
               name="address"
-              placeholder="Khu II, Đường 3/2, P. Xuân Khánh, Q. Ninh Kiều, TP. Cần Thơ"
+              autocomplete="off"
+              placeholder="VD: Khu II, Đường 3/2, P. Xuân Khánh, Q. Ninh Kiều, TP. Cần Thơ"
               :disabled="isSubmitting"
               :aria-invalid="!!(errors.address || serverFieldErrors?.address)"
               aria-describedby="pub-address-error"
@@ -330,12 +346,17 @@ function handleDialogClick(event: MouseEvent) {
   padding: 16px;
 }
 
+.modern-dialog,
+.modern-dialog * {
+  box-sizing: border-box;
+}
+
 .modern-dialog {
   padding: 0;
   border: 1px solid var(--line-light, #e2e8f0);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: 14px;
   background: var(--surface, #ffffff);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.18), 0 8px 16px -6px rgba(15, 23, 42, 0.08);
   max-width: 500px;
   width: 100%;
   overflow: hidden;
@@ -351,21 +372,42 @@ function handleDialogClick(event: MouseEvent) {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 18px 24px;
+  gap: 12px;
+  padding: 20px 24px 18px;
   border-bottom: 1px solid var(--line-light, #e2e8f0);
 }
 
+.header-lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.header-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+  display: grid;
+  place-items: center;
+}
+
 .header-titles h2 {
-  font-size: 18px;
+  font-size: 17.5px;
   font-weight: 700;
   color: var(--text, #0f172a);
   margin: 0;
+  line-height: 1.3;
 }
 
 .dialog-subtitle {
   font-size: 13px;
   color: var(--muted, #64748b);
-  margin: 4px 0 0;
+  margin: 3px 0 0;
+  line-height: 1.4;
 }
 
 .close-button {
@@ -412,11 +454,24 @@ function handleDialogClick(event: MouseEvent) {
   gap: 6px;
 }
 
+.field-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .field label span {
   display: block;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--text, #0f172a);
+}
+
+.char-count,
+.field-hint {
+  font-size: 12px;
+  color: var(--muted, #64748b);
 }
 
 .required {
@@ -430,14 +485,15 @@ function handleDialogClick(event: MouseEvent) {
   border: 1px solid var(--line-light, #cbd5e1);
   border-radius: 8px;
   outline: none;
-  background: #ffffff;
+  background: #f8fafc;
   color: var(--text, #0f172a);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .field input:focus {
+  background: #ffffff;
   border-color: var(--primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
 }
 
 .field input[aria-invalid='true'] {
