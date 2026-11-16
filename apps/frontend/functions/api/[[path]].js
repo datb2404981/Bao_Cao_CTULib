@@ -2,7 +2,7 @@
 export async function onRequest({ request, env }) {
   let origin;
   try {
-    const configuredOrigin = env.API_ORIGIN || 'https://bao-cao-ctulib.onrender.com';
+    const configuredOrigin = env.API_ORIGIN;
     origin = new URL(configuredOrigin);
     if (origin.protocol !== 'https:' || origin.username || origin.password ||
         origin.pathname !== '/' || origin.search || origin.hash ||
