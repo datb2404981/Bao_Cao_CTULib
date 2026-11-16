@@ -27,7 +27,7 @@ pnpm --filter @ctulib/frontend build
 
 ## Triển khai
 
-Proxy Vite chỉ hoạt động trong chế độ dev. Khi triển khai, cấu hình reverse proxy `/api/*`, `/book/*`, `/loans/*`, `/penalties/*`, `/dashboard/*` (bao gồm đường dẫn gốc của mỗi nhóm) đến backend trước SPA fallback, hoặc đặt `VITE_API_BASE_URL` lúc build. Cloudflare Pages có Functions chuyển tiếp `/api/*`, `/book/*`, `/loans/*`, `/penalties/*` và `/dashboard/*`. `vercel.json` hiện chỉ cung cấp SPA fallback, chưa có đích backend để cấu hình rewrite API.
+Proxy Vite chỉ hoạt động trong chế độ dev. Trên Cloudflare Pages, Function `functions/api/[[path]].js` chuyển tiếp `/api/*` đến origin HTTPS được cấu hình qua biến môi trường `API_ORIGIN`. Khai báo biến này trong Cloudflare Pages > Settings > Variables and Secrets cho môi trường Production (và Preview nếu cần), sau đó triển khai lại để Function nhận giá trị. Không cần nhập lại mỗi khi truy cập website. Giữ `VITE_API_BASE_URL` trống để frontend gọi API cùng origin qua Function. `vercel.json` hiện chỉ cung cấp SPA fallback, chưa có đích backend để cấu hình rewrite API.
 
 Backend dùng cookie `SameSite=strict`, `Secure` trong production: dùng HTTPS và triển khai frontend/API cùng site (hoặc reverse proxy cùng origin). Hai tên miền khác site sẽ không duy trì phiên bằng cấu hình backend hiện tại. CORS và `CLIENT_URL` phải khớp origin frontend.
 
