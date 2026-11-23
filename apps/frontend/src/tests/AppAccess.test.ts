@@ -225,6 +225,27 @@ describe('chặn màn hình trước khi mount', () => {
     expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(false)
     wrapper.unmount()
   })
+
+  it('dừng ở màn hình chờ thử lại và không mount danh mục khi request đánh thức đầu tiên bị 429 hoặc lỗi mạng', async () => {
+    user.value = null
+    window.history.replaceState(null, '', '/catalog')
+    vi.mocked(refreshSession)
+      .mockRejectedValueOnce(new AuthError('Máy chủ đang giới hạn truy cập. Vui lòng thử lại sau ít phút.', 429))
+      .mockRejectedValueOnce(new AuthError('Chưa đăng nhập', 401))
+
+    const wrapper = mount(App, { global })
+    await flushPromises()
+
+    expect(wrapper.get('#startup-error-title').text()).toContain('Máy chủ chưa sẵn sàng')
+    expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(false)
+
+    await wrapper.get('section[aria-labelledby="startup-error-title"] button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('#startup-error-title').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="catalog"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
 })
 
 describe('kiểm tra dữ liệu đăng ký trên giao diện', () => {

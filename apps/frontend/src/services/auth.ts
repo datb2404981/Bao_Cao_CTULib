@@ -38,13 +38,13 @@ const withSessionLock = async <T>(action: () => Promise<T>): Promise<T> => {
   return action()
 }
 
-async function request(endpoint: string, body: object = {}): Promise<SessionData> {
+async function request(endpoint: string, body: object = {}, timeoutMs = 15000): Promise<SessionData> {
   let response: Response
   try {
     response = await fetch(`${base}/api/v1/auth/${endpoint}`, {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(timeoutMs),
     })
   } catch {
     throw new AuthError('Không thể kết nối máy chủ. Vui lòng thử lại.', 0)
@@ -112,10 +112,10 @@ async function acceptSession(data: SessionData) {
   clearTimeout(timer)
   timer = setTimeout(() => { void refreshSession().catch(() => {}) }, Math.max(1000, data.expiresIn * 1000 - 60000))
 }
-export function refreshSession(): Promise<void> {
+export function refreshSession(options?: { timeoutMs?: number }): Promise<void> {
   if (!pendingRefresh) {
     pendingRefresh = withSessionLock(async () => {
-      await acceptSession(await request('refresh'))
+      await acceptSession(await request('refresh', {}, options?.timeoutMs))
     }).catch((error: unknown) => {
       if (error instanceof AuthError && [401, 403].includes(error.status)) {
         clearSession()
