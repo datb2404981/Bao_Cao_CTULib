@@ -1,264 +1,219 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
-import {
-  authenticate,
-  AuthError,
-  currentUser,
-  logout,
-  refreshSession,
-  refreshAuthorization,
-} from "./services/auth";
-import BookCatalogView from "./views/BookCatalogView.vue";
-import BookManagementView from "./views/BookManagementView.vue";
-import FacultyManagementView from "./views/FacultyManagementView.vue";
-import AuthorManagementView from "./views/AuthorManagementView.vue";
-import PublisherManagementView from "./views/PublisherManagementView.vue";
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { authenticate, AuthError, currentUser, logout, refreshSession, refreshAuthorization } from './services/auth'
+import BookCatalogView from './views/BookCatalogView.vue'
+import BookManagementView from './views/BookManagementView.vue'
+import FacultyManagementView from './views/FacultyManagementView.vue'
+import AuthorManagementView from './views/AuthorManagementView.vue'
+import PublisherManagementView from './views/PublisherManagementView.vue'
 
-import PeopleManagementView from "./views/PeopleManagementView.vue";
-import AccountsManagementView from "./views/AccountsManagementView.vue";
-import SettingsView from "./views/SettingsView.vue";
-import MyLoansView from "./views/MyLoansView.vue";
-import LoansManagementView from "./views/LoansManagementView.vue";
-import PenaltiesView from "./views/PenaltiesView.vue";
-import DashboardView from "./views/DashboardView.vue";
-import AccountProfile from "./components/profile/AccountProfile.vue";
-import "./styles/loans.css";
-import {
-  canAccess,
-  defaultViewForUser,
-  guardView,
-  protectedViews,
-  viewFromPath,
-  viewPaths,
-} from "./middlewares/access";
-import type { AppView } from "./middlewares/access";
-export type { AppView } from "./middlewares/access";
-import type { Book } from "./types/book";
+import PeopleManagementView from './views/PeopleManagementView.vue'
+import AccountsManagementView from './views/AccountsManagementView.vue'
+import SettingsView from './views/SettingsView.vue'
+import MyLoansView from './views/MyLoansView.vue'
+import LoansManagementView from './views/LoansManagementView.vue'
+import PenaltiesView from './views/PenaltiesView.vue'
+import DashboardView from './views/DashboardView.vue'
+import AccountProfile from './components/profile/AccountProfile.vue'
+import './styles/loans.css'
+import { canAccess, defaultViewForUser, guardView, protectedViews, viewFromPath, viewPaths } from './middlewares/access'
+import type { AppView } from './middlewares/access'
+export type { AppView } from './middlewares/access'
+import type { Book } from './types/book'
 
 // View routing state
-const currentView = ref<AppView>("catalog");
-const mobileMenuOpen = ref(false);
-const profileDropdownOpen = ref(false);
-const catalogViewRef = ref<InstanceType<typeof BookCatalogView> | null>(null);
-const pendingBorrowBook = ref<Book | null>(null);
+const currentView = ref<AppView>('catalog')
+const mobileMenuOpen = ref(false)
+const profileDropdownOpen = ref(false)
+const catalogViewRef = ref<InstanceType<typeof BookCatalogView> | null>(null)
+const pendingBorrowBook = ref<Book | null>(null)
 
 function clearPendingBorrowBook() {
-  pendingBorrowBook.value = null;
+  pendingBorrowBook.value = null
   try {
-    sessionStorage.removeItem("ctulib_pending_borrow_book");
+    sessionStorage.removeItem('ctulib_pending_borrow_book')
   } catch {
     // ignore
   }
 }
 
 function handleRequireLogin(book: Book) {
-  pendingBorrowBook.value = book;
+  pendingBorrowBook.value = book
   try {
-    sessionStorage.setItem("ctulib_pending_borrow_book", JSON.stringify(book));
+    sessionStorage.setItem('ctulib_pending_borrow_book', JSON.stringify(book))
   } catch {
     // ignore
   }
-  navigateTo("auth");
+  navigateTo('auth')
 }
 
 function openDirectLogin() {
-  clearPendingBorrowBook();
-  navigateTo("auth");
+  clearPendingBorrowBook()
+  navigateTo('auth')
 }
 
 function toggleProfileDropdown() {
-  profileDropdownOpen.value = !profileDropdownOpen.value;
+  profileDropdownOpen.value = !profileDropdownOpen.value
 }
 
-const isStaffUser = computed(
-  () => !!currentUser.value && ["EMPLOYEE", "ADMIN"].includes(currentUser.value.role),
-);
-const canManageBooks = computed(() => canAccess(currentUser.value, "management"));
-const canManageFaculties = computed(() => canAccess(currentUser.value, "faculty"));
-const canManageAuthors = computed(() => canAccess(currentUser.value, "author"));
-const canManagePublishers = computed(() => canAccess(currentUser.value, "publisher"));
-const canManagePeople = computed(() => canAccess(currentUser.value, "reader"));
-const canManageAccounts = computed(() => canAccess(currentUser.value, "accounts"));
-const canManageSettings = computed(() => canAccess(currentUser.value, "settings"));
-const canManageLoans = computed(() => canAccess(currentUser.value, "loans"));
-const canCollectPenalty = computed(() => canAccess(currentUser.value, "penalties"));
-const canViewDashboard = computed(() => canAccess(currentUser.value, "dashboard"));
-const canViewMyLoans = computed(() => canAccess(currentUser.value, "my-loans"));
-const checkingAccess = ref(false);
-const navigationError = ref("");
-const accessCheckFailed = ref(false);
-const startupFailed = ref(false);
-const startupError = ref("");
-let navigationId = 0;
-let intendedView: AppView | null = null;
+const isStaffUser = computed(() => !!currentUser.value && ['EMPLOYEE', 'ADMIN'].includes(currentUser.value.role))
+const canManageBooks = computed(() => canAccess(currentUser.value, 'management'))
+const canManageFaculties = computed(() => canAccess(currentUser.value, 'faculty'))
+const canManageAuthors = computed(() => canAccess(currentUser.value, 'author'))
+const canManagePublishers = computed(() => canAccess(currentUser.value, 'publisher'))
+const canManagePeople = computed(() => canAccess(currentUser.value, 'reader'))
+const canManageAccounts = computed(() => canAccess(currentUser.value, 'accounts'))
+const canManageSettings = computed(() => canAccess(currentUser.value, 'settings'))
+const canManageLoans = computed(() => canAccess(currentUser.value, 'loans'))
+const canCollectPenalty = computed(() => canAccess(currentUser.value, 'penalties'))
+const canViewDashboard = computed(() => canAccess(currentUser.value, 'dashboard'))
+const canViewMyLoans = computed(() => canAccess(currentUser.value, 'my-loans'))
+const checkingAccess = ref(false)
+const navigationError = ref('')
+const accessCheckFailed = ref(false)
+const startupFailed = ref(false)
+const startupError = ref('')
+let navigationId = 0
+let intendedView: AppView | null = null
 
 const userInitials = computed(() => {
-  const id = currentUser.value?.ctuIdentifier || "U";
-  return id.slice(0, 2).toUpperCase();
-});
+  const id = currentUser.value?.ctuIdentifier || 'U'
+  return id.slice(0, 2).toUpperCase()
+})
 
 async function syncViewFromPath(normalizeStaffLanding = false) {
-  if (starting.value) return;
-  const id = ++navigationId;
-  const requested = viewFromPath(window.location.pathname);
-  navigationError.value = "";
-  accessCheckFailed.value = false;
-  checkingAccess.value = protectedViews.includes(requested);
-  let target = requested;
+  if (starting.value) return
+  const id = ++navigationId
+  const requested = viewFromPath(window.location.pathname)
+  navigationError.value = ''
+  accessCheckFailed.value = false
+  checkingAccess.value = protectedViews.includes(requested)
+  let target = requested
   if (protectedViews.includes(requested)) {
-    intendedView = requested;
-    try {
-      await refreshAuthorization(false);
-    } catch (cause) {
-      if (id !== navigationId) return;
-      navigationError.value =
-        cause instanceof Error ? cause.message : "Không thể kiểm tra quyền truy cập.";
+    intendedView = requested
+    try { await refreshAuthorization(false) }
+    catch (cause) {
+      if (id !== navigationId) return
+      navigationError.value = cause instanceof Error ? cause.message : 'Không thể kiểm tra quyền truy cập.'
       if (cause instanceof AuthError && [401, 403].includes(cause.status)) {
-        target = "auth";
-        error.value = navigationError.value;
+        target = 'auth'
+        error.value = navigationError.value
       } else {
-        accessCheckFailed.value = true;
+        accessCheckFailed.value = true
       }
     }
   }
-  if (id !== navigationId) return;
-  if (
-    normalizeStaffLanding &&
-    requested === "catalog" &&
-    currentUser.value &&
-    ["EMPLOYEE", "ADMIN"].includes(currentUser.value.role)
-  ) {
-    target = defaultViewForUser(currentUser.value);
+  if (id !== navigationId) return
+  if (normalizeStaffLanding && requested === 'catalog' && currentUser.value && ['EMPLOYEE', 'ADMIN'].includes(currentUser.value.role)) {
+    target = defaultViewForUser(currentUser.value)
   }
-  currentView.value = accessCheckFailed.value
-    ? requested
-    : guardView(currentUser.value, target);
-  checkingAccess.value = false;
-  if (currentView.value !== requested)
-    window.history.replaceState(null, "", `/${viewPaths[currentView.value]}`);
+  currentView.value = accessCheckFailed.value ? requested : guardView(currentUser.value, target)
+  checkingAccess.value = false
+  if (currentView.value !== requested) window.history.replaceState(null, '', `/${viewPaths[currentView.value]}`)
 }
 
 function navigateTo(view: AppView) {
-  mobileMenuOpen.value = false;
-  profileDropdownOpen.value = false;
-  const path = `/${viewPaths[view]}`;
-  if (window.location.pathname !== path) window.history.pushState(null, "", path);
-  void syncViewFromPath();
+  mobileMenuOpen.value = false
+  profileDropdownOpen.value = false
+  const path = `/${viewPaths[view]}`
+  if (window.location.pathname !== path) window.history.pushState(null, '', path)
+  void syncViewFromPath()
 }
 
 function retryAccess() {
-  navigateTo(intendedView || "catalog");
+  navigateTo(intendedView || 'catalog')
 }
 
 function handleBrandHomeClick() {
-  navigateTo("catalog");
+  navigateTo('catalog')
   nextTick(() => {
-    catalogViewRef.value?.resetAllAndScrollTop();
-  });
+    catalogViewRef.value?.resetAllAndScrollTop()
+  })
 }
 
 function handleSearchNavClick() {
-  navigateTo("catalog");
+  navigateTo('catalog')
   nextTick(() => {
-    catalogViewRef.value?.focusSearchInput();
-  });
+    catalogViewRef.value?.focusSearchInput()
+  })
 }
 
 function toggleMobileMenu() {
-  mobileMenuOpen.value = !mobileMenuOpen.value;
+  mobileMenuOpen.value = !mobileMenuOpen.value
 }
 
 function handleEscape(e: KeyboardEvent) {
-  if (e.key === "Escape") {
-    mobileMenuOpen.value = false;
-    profileDropdownOpen.value = false;
+  if (e.key === 'Escape') {
+    mobileMenuOpen.value = false
+    profileDropdownOpen.value = false
   }
 }
 
 // Existing authentication state
-const mode = ref<"login" | "register">("login");
-const identifier = ref("");
-const email = ref("");
-const password = ref("");
-const confirmation = ref("");
-const visible = ref(false);
-const busy = ref(false);
-const starting = ref(true);
-const error = ref("");
-const fields = ref<Record<string, string>>({});
-const registering = computed(() => mode.value === "register");
-const role = computed(
-  () =>
-    ({ READER: "Bạn đọc", EMPLOYEE: "Nhân viên", ADMIN: "Quản trị viên" })[
-      currentUser.value?.role || ""
-    ] || currentUser.value?.role,
-);
+const mode = ref<'login' | 'register'>('login')
+const identifier = ref('')
+const email = ref('')
+const password = ref('')
+const confirmation = ref('')
+const visible = ref(false)
+const busy = ref(false)
+const starting = ref(true)
+const error = ref('')
+const fields = ref<Record<string, string>>({})
+const registering = computed(() => mode.value === 'register')
+const role = computed(() => ({ READER: 'Bạn đọc', EMPLOYEE: 'Nhân viên', ADMIN: 'Quản trị viên' })[currentUser.value?.role || ''] || currentUser.value?.role)
 
-function switchMode(next: "login" | "register") {
-  mode.value = next;
-  password.value = confirmation.value = error.value = "";
-  visible.value = false;
-  fields.value = {};
+function switchMode(next: 'login' | 'register') {
+  mode.value = next
+  password.value = confirmation.value = error.value = ''
+  visible.value = false
+  fields.value = {}
 }
 
 async function togglePassword() {
-  const input = document.getElementById("password") as HTMLInputElement | null;
-  const start = input?.selectionStart ?? 0;
-  const end = input?.selectionEnd ?? 0;
-  visible.value = !visible.value;
-  await nextTick();
-  input?.focus();
-  input?.setSelectionRange(start, end);
+  const input = document.getElementById('password') as HTMLInputElement | null
+  const start = input?.selectionStart ?? 0
+  const end = input?.selectionEnd ?? 0
+  visible.value = !visible.value
+  await nextTick()
+  input?.focus()
+  input?.setSelectionRange(start, end)
 }
 
 async function submit() {
-  if (busy.value) return;
-  error.value = "";
-  fields.value = {};
-  const ctuIdentifier = identifier.value.trim().toUpperCase();
-  if (!ctuIdentifier) fields.value.ctuIdentifier = "Vui lòng nhập mã định danh.";
-  if (registering.value && !/^(B\d{7}|CB\d{5}|ADMIN\d*)$/.test(ctuIdentifier))
-    fields.value.ctuIdentifier = "Mã số sinh viên hoặc cán bộ không hợp lệ.";
-  if (ctuIdentifier.length > 10 && registering.value)
-    fields.value.ctuIdentifier = "Mã định danh không được vượt quá 10 ký tự.";
-  if (!password.value) fields.value.password = "Vui lòng nhập mật khẩu.";
-  else if (registering.value && password.value.length < 8)
-    fields.value.password = "Mật khẩu phải từ 8 kí tự.";
-  else if (registering.value && password.value.trim().length < 8)
-    fields.value.password =
-      "Mật khẩu phải có ít nhất 8 ký tự không tính khoảng trắng ở đầu/cuối.";
-  if (registering.value && confirmation.value !== password.value)
-    fields.value.confirmation = "Mật khẩu nhập lại chưa khớp.";
+  if (busy.value) return
+  error.value = ''
+  fields.value = {}
+  const ctuIdentifier = identifier.value.trim().toUpperCase()
+  if (!ctuIdentifier) fields.value.ctuIdentifier = 'Vui lòng nhập mã định danh.'
+  if (registering.value && !/^(B\d{7}|CB\d{5}|ADMIN\d*)$/.test(ctuIdentifier)) fields.value.ctuIdentifier = 'Mã số sinh viên hoặc cán bộ không hợp lệ.'
+  if (ctuIdentifier.length > 10 && registering.value) fields.value.ctuIdentifier = 'Mã định danh không được vượt quá 10 ký tự.'
+  if (!password.value) fields.value.password = 'Vui lòng nhập mật khẩu.'
+  else if (registering.value && password.value.length < 8) fields.value.password = 'Mật khẩu phải từ 8 kí tự.'
+  else if (registering.value && password.value.trim().length < 8) fields.value.password = 'Mật khẩu phải có ít nhất 8 ký tự không tính khoảng trắng ở đầu/cuối.'
+  if (registering.value && confirmation.value !== password.value) fields.value.confirmation = 'Mật khẩu nhập lại chưa khớp.'
   if (registering.value) {
-    if (!email.value.trim()) fields.value.email = "Vui lòng nhập địa chỉ email.";
-    else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) ||
-      !/[a-z]/i.test(email.value.trim().split("@")[1]?.split(".")[0] ?? "")
-    )
-      fields.value.email = "Địa chỉ email không hợp lệ (tên miền phải có chữ cái).";
-    if (!confirmation.value) fields.value.confirmation = "Vui lòng xác nhận mật khẩu.";
+    if (!email.value.trim()) fields.value.email = 'Vui lòng nhập địa chỉ email.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) || !/[a-z]/i.test(email.value.trim().split('@')[1]?.split('.')[0] ?? '')) fields.value.email = 'Địa chỉ email không hợp lệ (tên miền phải có chữ cái).'
+    if (!confirmation.value) fields.value.confirmation = 'Vui lòng xác nhận mật khẩu.'
   }
   if (Object.keys(fields.value).length) {
-    await nextTick();
-    document.querySelector<HTMLInputElement>('input[aria-invalid="true"]')?.focus();
-    return;
+    await nextTick()
+    document.querySelector<HTMLInputElement>('input[aria-invalid="true"]')?.focus()
+    return
   }
-  busy.value = true;
+  busy.value = true
   try {
-    await authenticate(mode.value, {
-      ctuIdentifier,
-      password: password.value,
-      ...(registering.value ? { email: email.value.trim() } : {}),
-    });
-    password.value = confirmation.value = "";
-    visible.value = false;
+    await authenticate(mode.value, { ctuIdentifier, password: password.value, ...(registering.value ? { email: email.value.trim() } : {}) })
+    password.value = confirmation.value = ''
+    visible.value = false
 
-    let bookToBorrow = pendingBorrowBook.value;
+    let bookToBorrow = pendingBorrowBook.value
     if (!bookToBorrow) {
       try {
-        const stored = sessionStorage.getItem("ctulib_pending_borrow_book");
+        const stored = sessionStorage.getItem('ctulib_pending_borrow_book')
         if (stored) {
-          bookToBorrow = JSON.parse(stored);
+          bookToBorrow = JSON.parse(stored)
         }
       } catch {
         // ignore
@@ -266,115 +221,94 @@ async function submit() {
     }
 
     if (bookToBorrow) {
-      pendingBorrowBook.value = bookToBorrow;
+      pendingBorrowBook.value = bookToBorrow
       try {
-        sessionStorage.removeItem("ctulib_pending_borrow_book");
+        sessionStorage.removeItem('ctulib_pending_borrow_book')
       } catch {
         // ignore
       }
-      intendedView = null;
-      navigateTo("catalog");
-      return;
+      intendedView = null
+      navigateTo('catalog')
+      return
     }
 
-    navigateTo(
-      intendedView ||
-        (canViewMyLoans.value
-          ? "my-loans"
-          : canViewDashboard.value
-            ? "dashboard"
-            : canManagePeople.value
-              ? "reader"
-              : canManageBooks.value
-                ? "management"
-                : "catalog"),
-    );
+    navigateTo(intendedView || (canViewMyLoans.value ? 'my-loans' : canViewDashboard.value ? 'dashboard' : canManagePeople.value ? 'reader' : canManageBooks.value ? 'management' : 'catalog'))
   } catch (cause) {
-    error.value =
-      cause instanceof Error ? cause.message : "Đã xảy ra lỗi. Vui lòng thử lại.";
-    if (cause instanceof AuthError) fields.value = cause.fields;
-  } finally {
-    busy.value = false;
-  }
+    error.value = cause instanceof Error ? cause.message : 'Đã xảy ra lỗi. Vui lòng thử lại.'
+    if (cause instanceof AuthError) fields.value = cause.fields
+  } finally { busy.value = false }
 }
 
 async function signOut() {
-  busy.value = true;
-  error.value = "";
-  profileDropdownOpen.value = false;
+  busy.value = true
+  error.value = ''
+  profileDropdownOpen.value = false
   try {
-    await logout();
-    switchMode("login");
-    intendedView = null;
-    clearPendingBorrowBook();
-    navigateTo("catalog");
-  } catch (cause) {
-    error.value =
-      cause instanceof Error ? cause.message : "Không thể đăng xuất. Vui lòng thử lại.";
-  } finally {
-    busy.value = false;
-  }
+    await logout()
+    switchMode('login')
+    intendedView = null
+    clearPendingBorrowBook()
+    navigateTo('catalog')
+  } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Không thể đăng xuất. Vui lòng thử lại.' }
+  finally { busy.value = false }
 }
 
 function handleGlobalClick(e: MouseEvent) {
-  const target = e.target as HTMLElement | null;
-  if (!target?.closest(".profile-menu-container")) {
-    profileDropdownOpen.value = false;
+  const target = e.target as HTMLElement | null
+  if (!target?.closest('.profile-menu-container')) {
+    profileDropdownOpen.value = false
   }
 }
 
 function handlePopState() {
-  mobileMenuOpen.value = false;
-  profileDropdownOpen.value = false;
-  void syncViewFromPath();
+  mobileMenuOpen.value = false
+  profileDropdownOpen.value = false
+  void syncViewFromPath()
 }
 
 async function bootstrapSession() {
-  starting.value = true;
-  startupFailed.value = false;
-  startupError.value = "";
+  starting.value = true
+  startupFailed.value = false
+  startupError.value = ''
   try {
-    await refreshSession({ timeoutMs: 60_000 });
+    await refreshSession({ timeoutMs: 60_000 })
   } catch (cause) {
     if (cause instanceof AuthError && [401, 403].includes(cause.status)) {
       // Máy chủ đã phản hồi bình thường (khách chưa đăng nhập hoặc phiên hết hạn).
     } else {
-      startupFailed.value = true;
-      startupError.value =
-        cause instanceof Error
-          ? cause.message
-          : "Không thể kết nối máy chủ. Vui lòng thử lại.";
+      startupFailed.value = true
+      startupError.value = cause instanceof Error ? cause.message : 'Không thể kết nối máy chủ. Vui lòng thử lại.'
     }
   } finally {
-    starting.value = false;
-    if (!startupFailed.value) void syncViewFromPath(true);
+    starting.value = false
+    if (!startupFailed.value) void syncViewFromPath(true)
   }
 }
 
 onMounted(async () => {
-  if (window.location.hash.startsWith("#/")) {
-    window.history.replaceState(null, "", window.location.hash.slice(1));
+  if (window.location.hash.startsWith('#/')) {
+    window.history.replaceState(null, '', window.location.hash.slice(1))
   }
-  document.addEventListener("click", handleGlobalClick);
-  document.addEventListener("keydown", handleEscape);
-  window.addEventListener("popstate", handlePopState);
+  document.addEventListener('click', handleGlobalClick)
+  document.addEventListener('keydown', handleEscape)
+  window.addEventListener('popstate', handlePopState)
   try {
-    const stored = sessionStorage.getItem("ctulib_pending_borrow_book");
+    const stored = sessionStorage.getItem('ctulib_pending_borrow_book')
     if (stored) {
-      pendingBorrowBook.value = JSON.parse(stored);
+      pendingBorrowBook.value = JSON.parse(stored)
     }
   } catch {
     // ignore
   }
-  await bootstrapSession();
-});
+  await bootstrapSession()
+})
 
 onUnmounted(() => {
-  navigationId++;
-  document.removeEventListener("click", handleGlobalClick);
-  document.removeEventListener("keydown", handleEscape);
-  window.removeEventListener("popstate", handlePopState);
-});
+  navigationId++
+  document.removeEventListener('click', handleGlobalClick)
+  document.removeEventListener('keydown', handleEscape)
+  window.removeEventListener('popstate', handlePopState)
+})
 </script>
 
 <template>
@@ -390,44 +324,22 @@ onUnmounted(() => {
           aria-controls="main-navigation"
           @click="toggleMobileMenu"
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="6" x2="20" y2="6" />
             <line x1="4" y1="12" x2="20" y2="12" />
             <line x1="4" y1="18" x2="20" y2="18" />
           </svg>
         </button>
 
-        <a
-          class="brand"
-          href="/catalog"
-          @click.prevent="handleBrandHomeClick"
-          aria-label="CTULib - Thư viện Đại học Cần Thơ"
-        >
+        <a class="brand" href="/catalog" @click.prevent="handleBrandHomeClick" aria-label="CTULib - Thư viện Đại học Cần Thơ">
           <img src="/ctu-logo.png" alt="Logo Đại học Cần Thơ" class="brand-logo" />
           <div class="brand-meta">
-            <strong
-              ><span class="brand-ctu">CTU</span
-              ><span class="brand-lib">Lib</span></strong
-            >
+            <strong><span class="brand-ctu">CTU</span><span class="brand-lib">Lib</span></strong>
             <span class="brand-sub">Đại học Cần Thơ</span>
           </div>
         </a>
 
-        <nav
-          id="main-navigation"
-          aria-label="Điều hướng chính"
-          class="topnav"
-          :class="{ 'is-open': mobileMenuOpen }"
-        >
+        <nav id="main-navigation" aria-label="Điều hướng chính" class="topnav" :class="{ 'is-open': mobileMenuOpen }">
           <a
             v-if="!isStaffUser"
             :class="{ active: currentView === 'catalog' }"
@@ -436,14 +348,7 @@ onUnmounted(() => {
           >
             Tìm sách
           </a>
-          <a
-            v-if="canViewDashboard"
-            href="/dashboard"
-            :class="{ active: currentView === 'dashboard' }"
-            :aria-current="currentView === 'dashboard' ? 'page' : undefined"
-            @click.prevent="navigateTo('dashboard')"
-            >Tổng quan</a
-          >
+          <a v-if="canViewDashboard" href="/dashboard" :class="{ active: currentView === 'dashboard' }" :aria-current="currentView === 'dashboard' ? 'page' : undefined" @click.prevent="navigateTo('dashboard')">Tổng quan</a>
           <a
             v-if="canManageBooks"
             :class="{ active: currentView === 'management' }"
@@ -452,28 +357,9 @@ onUnmounted(() => {
           >
             Quản lý sách
           </a>
-          <a
-            v-if="canViewMyLoans"
-            href="/my-loans"
-            :class="{ active: currentView === 'my-loans' }"
-            @click.prevent="navigateTo('my-loans')"
-            >Phiếu mượn của tôi</a
-          >
-          <a
-            v-if="canManageLoans"
-            href="/loans"
-            :class="{ active: currentView === 'loans' }"
-            @click.prevent="navigateTo('loans')"
-            >Mượn – trả</a
-          >
-          <a
-            v-if="canCollectPenalty"
-            href="/penalties"
-            :class="{ active: currentView === 'penalties' }"
-            :aria-current="currentView === 'penalties' ? 'page' : undefined"
-            @click.prevent="navigateTo('penalties')"
-            >Phiếu phạt</a
-          >
+          <a v-if="canViewMyLoans" href="/my-loans" :class="{ active: currentView === 'my-loans' }" @click.prevent="navigateTo('my-loans')">Phiếu mượn của tôi</a>
+          <a v-if="canManageLoans" href="/loans" :class="{ active: currentView === 'loans' }" @click.prevent="navigateTo('loans')">Mượn – trả</a>
+          <a v-if="canCollectPenalty" href="/penalties" :class="{ active: currentView === 'penalties' }" :aria-current="currentView === 'penalties' ? 'page' : undefined" @click.prevent="navigateTo('penalties')">Phiếu phạt</a>
           <a
             v-if="canManageFaculties"
             :class="{ active: currentView === 'faculty' }"
@@ -498,43 +384,11 @@ onUnmounted(() => {
           >
             Nhà xuất bản
           </a>
-          <a
-            v-if="canManagePeople"
-            href="/reader"
-            :class="{ active: currentView === 'reader' }"
-            @click.prevent="navigateTo('reader')"
-            >Độc giả</a
-          >
-          <a
-            v-if="canManagePeople"
-            href="/employee"
-            :class="{ active: currentView === 'employee' }"
-            @click.prevent="navigateTo('employee')"
-            >Nhân viên</a
-          >
-          <a
-            v-if="canManagePeople"
-            href="/permission"
-            :class="{ active: currentView === 'permission' }"
-            @click.prevent="navigateTo('permission')"
-            >Quyền chức năng</a
-          >
-          <a
-            v-if="canManageAccounts"
-            href="/accounts"
-            :class="{ active: currentView === 'accounts' }"
-            :aria-current="currentView === 'accounts' ? 'page' : undefined"
-            @click.prevent="navigateTo('accounts')"
-            >Quản lý tài khoản</a
-          >
-          <a
-            v-if="canManageSettings"
-            href="/settings"
-            :class="{ active: currentView === 'settings' }"
-            :aria-current="currentView === 'settings' ? 'page' : undefined"
-            @click.prevent="navigateTo('settings')"
-            >Cài đặt hệ thống</a
-          >
+          <a v-if="canManagePeople" href="/reader" :class="{ active: currentView === 'reader' }" @click.prevent="navigateTo('reader')">Độc giả</a>
+          <a v-if="canManagePeople" href="/employee" :class="{ active: currentView === 'employee' }" @click.prevent="navigateTo('employee')">Nhân viên</a>
+          <a v-if="canManagePeople" href="/permission" :class="{ active: currentView === 'permission' }" @click.prevent="navigateTo('permission')">Quyền chức năng</a>
+          <a v-if="canManageAccounts" href="/accounts" :class="{ active: currentView === 'accounts' }" :aria-current="currentView === 'accounts' ? 'page' : undefined" @click.prevent="navigateTo('accounts')">Quản lý tài khoản</a>
+          <a v-if="canManageSettings" href="/settings" :class="{ active: currentView === 'settings' }" :aria-current="currentView === 'settings' ? 'page' : undefined" @click.prevent="navigateTo('settings')">Cài đặt hệ thống</a>
         </nav>
       </div>
 
@@ -575,9 +429,7 @@ onUnmounted(() => {
               <span class="avatar large">{{ userInitials }}</span>
               <div class="user-meta">
                 <span class="user-identifier">{{ currentUser.ctuIdentifier }}</span>
-                <span v-if="currentUser.email" class="user-email">{{
-                  currentUser.email
-                }}</span>
+                <span v-if="currentUser.email" class="user-email">{{ currentUser.email }}</span>
                 <span class="badge blue small user-role-pill">{{ role }}</span>
               </div>
             </div>
@@ -585,41 +437,15 @@ onUnmounted(() => {
             <div class="dropdown-divider"></div>
 
             <div class="dropdown-actions">
+              <button v-if="canViewDashboard" type="button" class="dropdown-item" @click="navigateTo('dashboard')">Tổng quan thư viện</button>
+              <button v-if="canViewMyLoans" type="button" class="dropdown-item" @click="navigateTo('my-loans')">Phiếu mượn của tôi</button>
+              <button v-if="canManageLoans" type="button" class="dropdown-item" @click="navigateTo('loans')">Quản lý mượn – trả</button>
               <button
-                v-if="canViewDashboard"
-                type="button"
                 class="dropdown-item"
-                @click="navigateTo('dashboard')"
-              >
-                Tổng quan thư viện
-              </button>
-              <button
-                v-if="canViewMyLoans"
                 type="button"
-                class="dropdown-item"
-                @click="navigateTo('my-loans')"
+                @click="navigateTo('auth')"
               >
-                Phiếu mượn của tôi
-              </button>
-              <button
-                v-if="canManageLoans"
-                type="button"
-                class="dropdown-item"
-                @click="navigateTo('loans')"
-              >
-                Quản lý mượn – trả
-              </button>
-              <button class="dropdown-item" type="button" @click="navigateTo('auth')">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -632,20 +458,9 @@ onUnmounted(() => {
                 type="button"
                 @click="navigateTo('management')"
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path
-                    d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-                  />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
                 </svg>
                 <span>Quản lý kho sách</span>
               </button>
@@ -656,17 +471,8 @@ onUnmounted(() => {
                 type="button"
                 @click="navigateTo('faculty')"
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/>
                 </svg>
                 <span>Quản lý Khoa/Viện</span>
               </button>
@@ -677,20 +483,9 @@ onUnmounted(() => {
                 type="button"
                 @click="navigateTo('author')"
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="9" cy="8" r="3" />
-                  <path
-                    d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3"
-                  />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="8" r="3"/>
+                  <path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3"/>
                 </svg>
                 <span>Quản lý Tác giả</span>
               </button>
@@ -701,20 +496,9 @@ onUnmounted(() => {
                 type="button"
                 @click="navigateTo('publisher')"
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path
-                    d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-                  />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
                 </svg>
                 <span>Quản lý Nhà xuất bản</span>
               </button>
@@ -725,21 +509,12 @@ onUnmounted(() => {
                 :disabled="busy"
                 @click="signOut"
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
-                <span>{{ busy ? "Đang đăng xuất…" : "Đăng xuất" }}</span>
+                <span>{{ busy ? 'Đang đăng xuất…' : 'Đăng xuất' }}</span>
               </button>
             </div>
           </div>
@@ -759,55 +534,18 @@ onUnmounted(() => {
     <!-- Main Workspace Content according to Hash View -->
     <main class="main-content">
       <!-- 1. Catalog View (SC02) -->
-      <div
-        v-if="starting || checkingAccess"
-        class="container"
-        role="status"
-        aria-live="polite"
-        style="padding-top: 40px"
-      >
-        {{
-          starting
-            ? "Đang kết nối máy chủ thư viện… (có thể mất 30–60 giây nếu máy chủ vừa khởi động)"
-            : "Đang kiểm tra quyền truy cập…"
-        }}
-      </div>
-      <section
-        v-else-if="startupFailed"
-        class="container"
-        aria-labelledby="startup-error-title"
-        style="padding-top: 40px"
-      >
+      <div v-if="starting || checkingAccess" class="container" role="status" aria-live="polite" style="padding-top: 40px">{{ starting ? 'Đang kết nối máy chủ thư viện… (có thể mất 30–60 giây nếu máy chủ vừa khởi động)' : 'Đang kiểm tra quyền truy cập…' }}</div>
+      <section v-else-if="startupFailed" class="container" aria-labelledby="startup-error-title" style="padding-top: 40px">
         <div class="notice warning" role="alert">
-          <div>
-            <h1 id="startup-error-title">Máy chủ chưa sẵn sàng</h1>
-            <p>{{ startupError }}</p>
-          </div>
+          <div><h1 id="startup-error-title">Máy chủ chưa sẵn sàng</h1><p>{{ startupError }}</p></div>
         </div>
-        <div class="row">
-          <button class="btn primary" type="button" @click="bootstrapSession">
-            Thử kết nối lại
-          </button>
-        </div>
+        <div class="row"><button class="btn primary" type="button" @click="bootstrapSession">Thử kết nối lại</button></div>
       </section>
-      <section
-        v-else-if="accessCheckFailed"
-        class="container"
-        aria-labelledby="access-check-error-title"
-        style="padding-top: 40px"
-      >
+      <section v-else-if="accessCheckFailed" class="container" aria-labelledby="access-check-error-title" style="padding-top: 40px">
         <div class="notice warning" role="alert">
-          <div>
-            <h1 id="access-check-error-title">Chưa thể kiểm tra quyền truy cập</h1>
-            <p>{{ navigationError }}</p>
-          </div>
+          <div><h1 id="access-check-error-title">Chưa thể kiểm tra quyền truy cập</h1><p>{{ navigationError }}</p></div>
         </div>
-        <div class="row">
-          <button class="btn primary" type="button" @click="retryAccess">Thử lại</button
-          ><button class="btn" type="button" @click="navigateTo('catalog')">
-            Về tìm sách
-          </button>
-        </div>
+        <div class="row"><button class="btn primary" type="button" @click="retryAccess">Thử lại</button><button class="btn" type="button" @click="navigateTo('catalog')">Về tìm sách</button></div>
       </section>
       <section v-else-if="currentView === 'catalog'" aria-label="Tra cứu sách">
         <BookCatalogView
@@ -819,129 +557,59 @@ onUnmounted(() => {
         />
       </section>
 
-      <section
-        v-else-if="currentView === 'my-loans' && canViewMyLoans"
-        aria-label="Phiếu mượn của tôi"
-      >
+      <section v-else-if="currentView === 'my-loans' && canViewMyLoans" aria-label="Phiếu mượn của tôi">
         <MyLoansView />
       </section>
 
-      <section
-        v-else-if="currentView === 'dashboard' && canViewDashboard"
-        aria-label="Tổng quan thư viện"
-      >
+      <section v-else-if="currentView === 'dashboard' && canViewDashboard" aria-label="Tổng quan thư viện">
         <DashboardView @navigate="navigateTo" />
       </section>
 
-      <section
-        v-else-if="currentView === 'loans' && canManageLoans"
-        aria-label="Quản lý mượn trả"
-      >
+      <section v-else-if="currentView === 'loans' && canManageLoans" aria-label="Quản lý mượn trả">
         <LoansManagementView />
       </section>
 
-      <section
-        v-else-if="currentView === 'penalties' && canCollectPenalty"
-        aria-label="Quản lý phiếu phạt"
-      >
+      <section v-else-if="currentView === 'penalties' && canCollectPenalty" aria-label="Quản lý phiếu phạt">
         <PenaltiesView />
       </section>
 
       <!-- 2. Management View (SC12) -->
-      <section
-        v-else-if="currentView === 'management' && canAccess(currentUser, 'management')"
-        aria-label="Quản lý kho sách"
-      >
+      <section v-else-if="currentView === 'management' && canAccess(currentUser, 'management')" aria-label="Quản lý kho sách">
         <BookManagementView />
       </section>
 
       <!-- 3. Faculty Management View (SC15) -->
-      <section
-        v-else-if="currentView === 'faculty' && canAccess(currentUser, 'faculty')"
-        aria-label="Quản lý Khoa/Viện"
-      >
+      <section v-else-if="currentView === 'faculty' && canAccess(currentUser, 'faculty')" aria-label="Quản lý Khoa/Viện">
         <FacultyManagementView />
       </section>
 
       <!-- 4. Author Management View (SC16) -->
-      <section
-        v-else-if="currentView === 'author' && canAccess(currentUser, 'author')"
-        aria-label="Quản lý Tác giả"
-      >
+      <section v-else-if="currentView === 'author' && canAccess(currentUser, 'author')" aria-label="Quản lý Tác giả">
         <AuthorManagementView />
       </section>
 
       <!-- 5. Publisher Management View -->
-      <section
-        v-else-if="currentView === 'publisher' && canAccess(currentUser, 'publisher')"
-        aria-label="Quản lý Nhà xuất bản"
-      >
+      <section v-else-if="currentView === 'publisher' && canAccess(currentUser, 'publisher')" aria-label="Quản lý Nhà xuất bản">
         <PublisherManagementView />
       </section>
 
-      <section
-        v-else-if="
-          (currentView === 'reader' ||
-            currentView === 'employee' ||
-            currentView === 'permission') &&
-          canManagePeople
-        "
-        :aria-label="
-          currentView === 'reader'
-            ? 'Quản lý độc giả'
-            : currentView === 'employee'
-              ? 'Quản lý nhân viên'
-              : 'Quản lý quyền'
-        "
-      >
+      <section v-else-if="(currentView === 'reader' || currentView === 'employee' || currentView === 'permission') && canManagePeople" :aria-label="currentView === 'reader' ? 'Quản lý độc giả' : currentView === 'employee' ? 'Quản lý nhân viên' : 'Quản lý quyền'">
         <PeopleManagementView :key="currentView" :resource="currentView" />
       </section>
-      <section
-        v-else-if="currentView === 'accounts' && canManageAccounts"
-        aria-label="Quản lý tài khoản"
-      >
+      <section v-else-if="currentView === 'accounts' && canManageAccounts" aria-label="Quản lý tài khoản">
         <AccountsManagementView />
       </section>
-      <section
-        v-else-if="currentView === 'settings' && canManageSettings"
-        aria-label="Cài đặt hệ thống"
-      >
+      <section v-else-if="currentView === 'settings' && canManageSettings" aria-label="Cài đặt hệ thống">
         <SettingsView />
       </section>
-      <section
-        v-else-if="
-          currentView === 'forbidden' ||
-          (protectedViews.includes(currentView) && !canAccess(currentUser, currentView))
-        "
-        class="container"
-        style="padding-top: 40px"
-        aria-labelledby="access-denied-title"
-      >
-        <div class="notice warning" role="alert">
-          <div>
-            <h1 id="access-denied-title">Không có quyền truy cập</h1>
-            <p>
-              {{
-                navigationError ||
-                "Tài khoản hiện tại chưa được cấp quyền truy cập màn hình này."
-              }}
-            </p>
-          </div>
-        </div>
-        <div class="row">
-          <button class="btn primary" @click="navigateTo('catalog')">Về tìm sách</button
-          ><button class="btn" @click="retryAccess">Kiểm tra lại quyền</button>
-        </div>
+      <section v-else-if="currentView === 'forbidden' || (protectedViews.includes(currentView) && !canAccess(currentUser, currentView))" class="container" style="padding-top: 40px" aria-labelledby="access-denied-title">
+        <div class="notice warning" role="alert"><div><h1 id="access-denied-title">Không có quyền truy cập</h1><p>{{ navigationError || 'Tài khoản hiện tại chưa được cấp quyền truy cập màn hình này.' }}</p></div></div>
+        <div class="row"><button class="btn primary" @click="navigateTo('catalog')">Về tìm sách</button><button class="btn" @click="retryAccess">Kiểm tra lại quyền</button></div>
       </section>
 
       <!-- 3. Auth Layout (SC01) -->
       <!-- 3. Auth Layout (SC01) -->
-      <AccountProfile
-        v-else-if="currentView === 'auth' && currentUser && !starting"
-        :busy="busy"
-        :sign-out-error="error"
-        @sign-out="signOut"
-      />
+      <AccountProfile v-else-if="currentView === 'auth' && currentUser && !starting" :busy="busy" :sign-out-error="error" @sign-out="signOut" />
       <div v-else-if="currentView === 'auth'" class="auth-layout">
         <section class="intro" aria-labelledby="intro-title">
           <div class="intro-brand">
@@ -954,8 +622,7 @@ onUnmounted(() => {
 
           <h1 id="intro-title">Hệ thống Thư viện CTULib</h1>
           <p class="intro-lead">
-            Cổng tra cứu học liệu số, mục lục giáo trình chính quy và tài nguyên nghiên
-            cứu khoa học dành cho cán bộ, giảng viên và sinh viên.
+            Cổng tra cứu học liệu số, mục lục giáo trình chính quy và tài nguyên nghiên cứu khoa học dành cho cán bộ, giảng viên và sinh viên.
           </p>
 
           <div class="intro-quick-meta">
@@ -977,26 +644,12 @@ onUnmounted(() => {
           </div>
 
           <div class="intro-notice-tip">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <span
-              >Bạn đọc sử dụng tài khoản <strong>MSSV</strong> hoặc
-              <strong>MSCB</strong> do nhà trường cung cấp để tra cứu và đặt mượn tài liệu
-              trực tuyến.</span
-            >
+            <span>Bạn đọc sử dụng tài khoản <strong>MSSV</strong> hoặc <strong>MSCB</strong> do nhà trường cung cấp để tra cứu và đặt mượn tài liệu trực tuyến.</span>
           </div>
         </section>
 
@@ -1007,27 +660,12 @@ onUnmounted(() => {
 
           <template v-else>
             <div class="auth-form-header">
-              <h2>
-                {{ registering ? "Đăng ký tài khoản bạn đọc" : "Đăng nhập tài khoản" }}
-              </h2>
-              <span class="auth-portal-tag">{{
-                registering
-                  ? "Thành viên mới hệ thống thư viện"
-                  : "Học liệu số & tra cứu tài liệu Đại học Cần Thơ"
-              }}</span>
+              <h2>{{ registering ? 'Đăng ký tài khoản bạn đọc' : 'Đăng nhập tài khoản' }}</h2>
+              <span class="auth-portal-tag">{{ registering ? 'Thành viên mới hệ thống thư viện' : 'Học liệu số & tra cứu tài liệu Đại học Cần Thơ' }}</span>
             </div>
 
             <div v-if="error" class="alert error" role="alert">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -1052,12 +690,7 @@ onUnmounted(() => {
                       aria-describedby="identifier-error"
                     />
                   </div>
-                  <p
-                    v-if="fields.ctuIdentifier"
-                    id="identifier-error"
-                    class="field-error"
-                    aria-live="polite"
-                  >
+                  <p v-if="fields.ctuIdentifier" id="identifier-error" class="field-error" aria-live="polite">
                     {{ fields.ctuIdentifier }}
                   </p>
                 </div>
@@ -1078,12 +711,7 @@ onUnmounted(() => {
                       aria-describedby="email-error"
                     />
                   </div>
-                  <p
-                    v-if="fields.email"
-                    id="email-error"
-                    class="field-error"
-                    aria-live="polite"
-                  >
+                  <p v-if="fields.email" id="email-error" class="field-error" aria-live="polite">
                     {{ fields.email }}
                   </p>
                 </div>
@@ -1111,44 +739,17 @@ onUnmounted(() => {
                       @mousedown.prevent
                       @click="togglePassword"
                     >
-                      <svg
-                        v-if="!visible"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
+                      <svg v-if="!visible" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
                       </svg>
-                      <svg
-                        v-else
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path
-                          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-                        ></path>
+                      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                         <line x1="1" y1="1" x2="23" y2="23"></line>
                       </svg>
                     </button>
                   </div>
-                  <p
-                    v-if="fields.password"
-                    id="password-error"
-                    class="field-error"
-                    aria-live="polite"
-                  >
+                  <p v-if="fields.password" id="password-error" class="field-error" aria-live="polite">
                     {{ fields.password }}
                   </p>
                 </div>
@@ -1168,34 +769,16 @@ onUnmounted(() => {
                       aria-describedby="confirmation-error"
                     />
                   </div>
-                  <p
-                    v-if="fields.confirmation"
-                    id="confirmation-error"
-                    class="field-error"
-                    aria-live="polite"
-                  >
+                  <p v-if="fields.confirmation" id="confirmation-error" class="field-error" aria-live="polite">
                     {{ fields.confirmation }}
                   </p>
                 </div>
 
                 <!-- Submit Button -->
                 <button class="auth-submit-btn" type="submit">
-                  <span>{{
-                    busy ? "Đang xử lý…" : registering ? "Tạo tài khoản" : "Đăng nhập"
-                  }}</span>
+                  <span>{{ busy ? 'Đang xử lý…' : registering ? 'Tạo tài khoản' : 'Đăng nhập' }}</span>
                   <span v-if="busy" class="spinner" aria-hidden="true"></span>
-                  <svg
-                    v-else
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
                   </svg>
@@ -1206,23 +789,13 @@ onUnmounted(() => {
             <div class="auth-form-switch">
               <span v-if="!registering">
                 Chưa có tài khoản?
-                <button
-                  type="button"
-                  class="auth-text-link"
-                  :disabled="busy"
-                  @click="switchMode('register')"
-                >
+                <button type="button" class="auth-text-link" :disabled="busy" @click="switchMode('register')">
                   Đăng ký tài khoản
                 </button>
               </span>
               <span v-else>
                 Đã có tài khoản bạn đọc?
-                <button
-                  type="button"
-                  class="auth-text-link"
-                  :disabled="busy"
-                  @click="switchMode('login')"
-                >
+                <button type="button" class="auth-text-link" :disabled="busy" @click="switchMode('login')">
                   Đăng nhập
                 </button>
               </span>
@@ -1239,16 +812,7 @@ onUnmounted(() => {
         href="/catalog"
         @click.prevent="navigateTo('catalog')"
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="10.5" cy="10.5" r="6.5" />
           <path d="m16 16 4.5 4.5" />
         </svg>
@@ -1260,16 +824,7 @@ onUnmounted(() => {
         href="/manage"
         @click.prevent="navigateTo('management')"
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-3H4z" />
           <path d="M20 4h-4a3 3 0 0 0-3 3v14a4 4 0 0 1 4-3h3z" />
         </svg>
@@ -1281,16 +836,7 @@ onUnmounted(() => {
         href="/faculty"
         @click.prevent="navigateTo('faculty')"
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
         </svg>
         <span>Khoa/Viện</span>
@@ -1300,25 +846,17 @@ onUnmounted(() => {
         href="/auth"
         @click.prevent="navigateTo('auth')"
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="7" r="4" />
           <path d="M6 21v-2a4 4 0 0 1 8 0v2" />
         </svg>
-        <span>{{ currentUser ? "Tài khoản" : "Đăng nhập" }}</span>
+        <span>{{ currentUser ? 'Tài khoản' : 'Đăng nhập' }}</span>
       </a>
     </nav>
 
     <!-- Footer -->
-    <footer class="footer"></footer>
+    <footer class="footer">
+    </footer>
   </div>
 </template>
 
@@ -1348,10 +886,7 @@ onUnmounted(() => {
   border: 1px solid #dbe4f0;
   border-radius: 999px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .profile:hover {
@@ -1385,9 +920,7 @@ onUnmounted(() => {
   background: #ffffff;
   border: 1px solid #dbe4f0;
   border-radius: 16px;
-  box-shadow:
-    0 18px 36px -8px rgba(15, 23, 42, 0.16),
-    0 4px 12px -4px rgba(15, 23, 42, 0.06); /* taste-skill-ignore: floating menu */
+  box-shadow: 0 18px 36px -8px rgba(15, 23, 42, 0.16), 0 4px 12px -4px rgba(15, 23, 42, 0.06); /* taste-skill-ignore: floating menu */
   padding: 14px;
   z-index: 100;
 }
@@ -1459,9 +992,7 @@ onUnmounted(() => {
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .dropdown-item:hover {
@@ -1495,34 +1026,18 @@ onUnmounted(() => {
   color: var(--pill-negative-ink);
 }
 
-.topnav a {
-  white-space: nowrap;
-}
+.topnav a { white-space: nowrap; }
 @media (max-width: 768px) {
-  .topbar {
-    position: sticky;
-  }
-  .menu-button {
-    display: block;
-  }
-  .topnav {
-    display: none;
-  }
+  .topbar { position: sticky; }
+  .menu-button { display: block; }
+  .topnav { display: none; }
   .topnav.is-open {
-    display: flex;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    padding: 16px 24px;
-    max-height: calc(100dvh - 70px);
-    overflow-y: auto;
-    background: var(--surface);
-    border-bottom: 1px solid var(--line);
+    display: flex; position: absolute; top: 100%; left: 0; right: 0;
+    flex-direction: column; align-items: stretch; gap: 6px;
+    padding: 16px 24px; max-height: calc(100dvh - 70px); overflow-y: auto;
+    background: var(--surface); border-bottom: 1px solid var(--line);
     box-shadow: 0 12px 24px #17203312;
   }
 }
+
 </style>
