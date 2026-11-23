@@ -68,4 +68,24 @@ describe('lỗi kiểm tra phiên sau đăng nhập', () => {
     await expect(auth.authenticate('login', { ctuIdentifier: 'B2109999', password: 'test-password' })).rejects.toMatchObject({ status: 503 })
     expect(auth.currentUser.value).toBeNull()
   })
+
+  it('không đặt timer tự gọi lại /refresh khi chưa đăng nhập bị 429', async () => {
+    const fetchMock = vi.fn(async () => Response.json({ status: 'error', message: 'Too Many Requests' }, { status: 429 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const auth = await import('../services/auth')
+
+    await expect(auth.refreshSession()).rejects.toMatchObject({ status: 429 })
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('không đặt timer tự gọi lại /refresh khi đang đăng nhập gặp 429', async () => {
+    const { auth, fetchMock } = await signedIn()
+    fetchMock.mockResolvedValue(Response.json({ status: 'error', message: 'Too Many Requests' }, { status: 429 }))
+
+    await expect(auth.refreshSession()).rejects.toMatchObject({ status: 429 })
+    const callsAfterFailure = fetchMock.mock.calls.length
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(fetchMock).toHaveBeenCalledTimes(callsAfterFailure)
+  })
 })

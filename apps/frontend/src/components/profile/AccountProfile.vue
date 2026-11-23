@@ -28,7 +28,7 @@ function fill(data: Profile) {
 async function load() {
   loading.value = true
   error.value = ''
-  try { fill(await request<Profile>('/api/v1/auth/profile')) }
+  try { fill(await request<Profile>('/auth/profile')) }
   catch (cause) { error.value = cause instanceof Error ? cause.message : 'Không thể tải hồ sơ.' }
   finally { loading.value = false }
 }
@@ -85,7 +85,7 @@ async function saveField() {
     const body = field === 'email'
       ? { email: value }
       : { fullName: profile.value.fullName, phoneNumber: profile.value.phoneNumber, address: profile.value.address, [field]: value }
-    fill(await request<Profile>(`/api/v1/auth/profile/${field === 'email' ? 'email' : 'personal'}`, 'PATCH', body))
+    fill(await request<Profile>(`/auth/profile/${field === 'email' ? 'email' : 'personal'}`, 'PATCH', body))
     editingField.value = null
     if (field === 'email') {
       try { await refreshAuthorization() } catch { /* Hồ sơ đã lưu; phiên sẽ được đồng bộ lần kiểm tra tiếp theo. */ }

@@ -117,8 +117,11 @@ export function refreshSession(): Promise<void> {
     pendingRefresh = withSessionLock(async () => {
       await acceptSession(await request('refresh'))
     }).catch((error: unknown) => {
-      if (error instanceof AuthError && [401, 403].includes(error.status)) clearSession()
-      else timer = setTimeout(() => { void refreshSession().catch(() => {}) }, 30000)
+      if (error instanceof AuthError && [401, 403].includes(error.status)) {
+        clearSession()
+      } else if ((user.value || accessToken) && !(error instanceof AuthError && error.status === 429)) {
+        timer = setTimeout(() => { void refreshSession().catch(() => {}) }, 30000)
+      }
       throw error
     }).finally(() => { pendingRefresh = undefined })
   }

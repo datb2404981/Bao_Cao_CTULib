@@ -97,4 +97,14 @@ describe('Phục hồi khi Cloudflare giới hạn truy cập API', () => {
     expect(third).toEqual(first);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+
+  it('Không thử lại khi nhận Cloudflare challenge hoặc Render hibernate rate-limit', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(rateLimitResponse({ 'cf-mitigated': 'challenge' }));
+    await expect(getAllAuthors()).rejects.toMatchObject({ status: 429 });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    vi.mocked(fetch).mockResolvedValueOnce(rateLimitResponse({ 'x-render-routing': 'hibernate-rate-limited' }));
+    await expect(getAllFaculties()).rejects.toMatchObject({ status: 429 });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
 });

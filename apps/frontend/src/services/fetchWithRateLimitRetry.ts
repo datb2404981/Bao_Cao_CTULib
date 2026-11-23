@@ -7,6 +7,12 @@ export const fetchWithRateLimitRetry = async (url: string, options: RequestInit)
     return response;
   }
 
+  const cfMitigated = response.headers.get('cf-mitigated');
+  const renderRouting = response.headers.get('x-render-routing') ?? '';
+  if (cfMitigated === 'challenge' || renderRouting.toLowerCase().includes('rate-limited')) {
+    return response;
+  }
+
   const retryAfter = response.headers.get('Retry-After');
   const delayMs = retryAfter === null
     ? DEFAULT_RETRY_DELAY_MS
